@@ -146,7 +146,15 @@
                 const zoneData = gameState.zones[zoneId];
                 if (zoneData.length > 0) {
                     const topCards = zoneData.slice(-3);
-                    topCards.forEach(cardId => zoneEl.appendChild(createCardElement(cardId, false, zoneId, 'none')));
+                    topCards.forEach(cardData => {
+                        // ### MODIFIED SECTION START ###
+                        // This ensures that even if an object gets into a pile zone, we only use its ID.
+                        const cardId = (typeof cardData === 'object' && cardData.cardId) ? cardData.cardId : cardData;
+                        if (cardId) {
+                           zoneEl.appendChild(createCardElement(cardId, false, zoneId, 'none'));
+                        }
+                        // ### MODIFIED SECTION END ###
+                    });
                     const countEl = document.createElement('span');
                     countEl.className = 'zone-count';
                     countEl.textContent = zoneData.length;
@@ -230,8 +238,7 @@
                     if (draggedCardData.isStandby) draggedCardVisual.classList.add('standby');
                     draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.png')`;
                     document.body.appendChild(draggedCardVisual);
-                    
-                    // This renderAll call was removed to improve stability
+                    renderAll();
                 }
                 if (isDragging) { draggedCardVisual.style.left = `${moveX - offsetX}px`; draggedCardVisual.style.top = `${moveY - offsetY}px`; }
             };
