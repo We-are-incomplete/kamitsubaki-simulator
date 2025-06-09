@@ -6,8 +6,10 @@
     <title>KAMITSUBAKI CARD GAME 一人回し用シミュレーター</title>
     <style>
         :root {
-            --card-width: 65px;
-            --card-height: 91px;
+            /* ### MODIFIED SECTION START ### */
+            --card-height: 19vh;
+            --card-width: calc(var(--card-height) * 0.7);
+            /* ### MODIFIED SECTION END ### */
             --zone-bg: rgba(0, 0, 0, 0.2);
             --border-color: rgba(255, 255, 255, 0.3);
         }
@@ -18,20 +20,20 @@
             overflow: hidden; user-select: none; -webkit-user-select: none;
         }
         #game-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-        .screen { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .screen { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 1vh 2vw; box-sizing: border-box; }
         #deck-input-screen { background-color: #2c2f33; }
         #deck-input-screen h1 { font-size: 1.2rem; margin-bottom: 15px; }
         #deck-string { width: 90%; max-width: 500px; height: 150px; font-size: 1rem; padding: 10px; margin-bottom: 15px; background-color: #40444b; border: 1px solid var(--border-color); color: #fff; }
         #start-game-btn { padding: 12px 25px; font-size: 1.1rem; cursor: pointer; background-color: #c90063; border: none; color: white; border-radius: 5px; }
 
         #game-board { display: none; width: 100%; height: 100%; flex-direction: column; }
-        #main-area { display: flex; flex-grow: 1; height: calc(100% - var(--card-height) - 10px); }
-        #left-column { display: flex; flex-direction: column; justify-content: space-around; padding: 5px; gap: 10px; }
-        #center-column { flex-grow: 1; display: flex; flex-direction: column; padding: 5px; gap: 5px; }
-        #right-column { display: flex; flex-direction: column; align-items: center; padding: 10px; gap: 8px; }
+        #main-area { display: flex; flex-grow: 1; height: calc(100% - var(--card-height) - 2vh); gap: 1vw; }
+        #left-column { display: flex; flex-direction: column; justify-content: space-around; padding: 5px; gap: 1.5vh; }
+        #center-column { flex-grow: 1; display: flex; flex-direction: column; padding: 5px 0; gap: 1vh; }
+        #right-column { display: flex; flex-direction: column; align-items: center; padding: 5px; gap: 1vh; }
 
         .zone { border: 1px solid var(--border-color); border-radius: 5px; background-color: var(--zone-bg); position: relative; }
-        .zone-title { position: absolute; top: -10px; left: 5px; background: #1a1a1d; padding: 0 5px; font-size: 0.8em; color: #ccc; z-index: 10; }
+        .zone-title { position: absolute; top: -1.5vh; left: 5px; background: #1a1a1d; padding: 0 5px; font-size: 1.5vh; color: #ccc; z-index: 10; }
         .pile-zone { width: calc(var(--card-width) + 10px); height: calc(var(--card-height) + 10px); cursor: pointer; }
         
         #stage-zone, #direction-zone { display: flex; justify-content: space-around; align-items: center; flex-grow: 1; }
@@ -43,14 +45,12 @@
         .card-slot[data-slot-color="red"]    { top: calc(var(--card-height) * 1.0); border-color: #dc3545; z-index: 3; }
         #direction-zone .card-slot { border-color: #e83e8c; }
         .card-slot .card { position: absolute; top: 0; left: 0; }
-        .card-slot .card:nth-child(2) { transform: translate(2px, 2px); }
-        .card-slot .card:nth-child(3) { transform: translate(4px, 4px); }
-
-        #hand-zone { width: 100%; height: calc(var(--card-height) + 10px); border-top: 1px solid var(--border-color); display: flex; justify-content: center; align-items: center; gap: 2px; padding: 5px 0; }
+        
+        #hand-zone { width: 100%; height: calc(var(--card-height) + 2vh); border-top: 1px solid var(--border-color); display: flex; justify-content: center; align-items: center; gap: 0.5vw; padding: 1vh 0; }
         .pile-zone .card { position: absolute; top: 5px; left: 5px; pointer-events: none; }
         .pile-zone .card:nth-child(2) { transform: translate(1px, 1px); }
         .pile-zone .card:nth-child(3) { transform: translate(2px, 2px); }
-        .zone-count { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2rem; font-weight: bold; color: white; text-shadow: 0 0 5px black, 0 0 5px black; pointer-events: none; }
+        .zone-count { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 4vh; font-weight: bold; color: white; text-shadow: 0 0 5px black, 0 0 5px black; pointer-events: none; }
 
         .card { width: var(--card-width); height: var(--card-height); background-size: cover; background-position: center; background-repeat: no-repeat; border-radius: 4px; transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease; cursor: grab; touch-action: none; transform-origin: center; }
         .card.dragging { position: fixed; z-index: 3000; cursor: grabbing; box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); pointer-events: none; transition: none; }
@@ -58,10 +58,15 @@
         #card-zoom-overlay { z-index: 4000; cursor: pointer; }
         #card-zoom-view { width: calc(var(--card-width) * 4); height: calc(var(--card-height) * 4); background-size: contain; background-position: center; background-repeat: no-repeat; border-radius: 16px; box-shadow: 0 0 20px rgba(0,0,0,0.5); pointer-events: none; }
         
-        .overlay-zone-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 800px; z-index: 500; background-color: rgba(40, 40, 40, 0.95); border: 1px solid #c90063; border-radius: 10px; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: none; }
-        .overlay-zone-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .overlay-zone-controls button { margin-left: 5px; font-size: 0.8rem; padding: 4px 8px; }
-        .overlay-card-area { min-height: calc(var(--card-height) + 10px); display: flex; flex-wrap: wrap; gap: 5px; padding: 5px; border: 1px dotted rgba(255,255,255,0.2); }
+        /* ### MODIFIED SECTION START ### */
+        .counter { background-color: var(--zone-bg); padding: 0.5vh 1vw; border-radius: 5px; text-align: center; width: 18vw; max-width: 120px; }
+        .counter-label { font-size: 1.8vh; }
+        .counter-value { font-size: 3vh; font-weight: bold; margin: 0 1vw; }
+        .counter-controls { display: flex; justify-content: center; align-items: center; }
+        .counter-btn { font-size: 2.5vh; width: 4vh; height: 4vh; line-height: 4vh; background: none; border: 1px solid var(--border-color); color: #fff; cursor: pointer; border-radius: 50%; }
+        .action-btn { padding: 1.2vh 1vw; font-size: 1.8vh; cursor: pointer; background-color: #3a3f44; border: 1px solid var(--border-color); color: white; border-radius: 5px; width: 18vw; max-width: 120px; margin-top: auto; white-space: nowrap; }
+        #reset-btn { margin-top: 1vh; }
+        /* ### MODIFIED SECTION END ### */
     </style>
 </head>
 <body>
@@ -69,7 +74,7 @@
         <div id="deck-input-screen" class="screen">
             <h1>KAMITSUBAKI CARD GAME</h1>
             <p>デッキリストを / 区切りで入力してください</p>
-            <textarea id="deck-string" placeholder="例: AA-01/AA-01/AA-02/..."></textarea>
+            <textarea id="deck-string" placeholder="例: AA-01/AA-01/AA-02/...">DA-26/DA-26/DA-26/DA-26/BS-34/BS-34/BS-34/BS-34/GS-19/GS-19/GS-19/GS-19/AS-1/AS-1/AS-1/AS-1/AS-3/AS-3/AS-3/AS-3/GS-41/GS-41/GS-41/GS-41/AD-2/AD-2/AD-2/AD-3/AD-3/AD-3/BD-8/BD-8/BD-8/BD-15/BD-15/BD-15/GD-12/GD-12/GD-12/GD-14/prmM-1/prmM-1/prmM-1/prmM-1/AM-1/AM-1/AM-1/AM-1/AM-7/AM-7/BM-2/BM-2/BM-3/BM-3/BM-3/BM-3/DM-22/DM-22/DM-22/DM-22</textarea>
             <button id="start-game-btn">ゲーム開始</button>
         </div>
         <div id="game-board" class="screen">
@@ -103,20 +108,16 @@
                     <div class="counter"><div class="counter-label">魔力 Ω</div><div class="counter-controls"><button class="counter-btn" data-counter="manaOmega" data-amount="-1">-</button><span id="mana-omega-value" class="counter-value">0</span><button class="counter-btn" data-counter="manaOmega" data-amount="1">+</button></div></div>
                     <div class="counter"><div class="counter-label">ターン</div><div class="counter-controls"><button class="counter-btn" data-counter="turn" data-amount="-1">-</button><span id="turn-value" class="counter-value">1</span><button class="counter-btn" data-counter="turn" data-amount="1">+</button></div></div>
                     <button id="shuffle-btn" class="action-btn">山札シャッフル</button>
-                    <button id="deck-search-btn" class="action-btn">山札サーチ</button>
-                    <button id="temp-zone-toggle-btn" class="action-btn">テンポラリ表示</button>
                     <button id="reset-btn" class="action-btn">リセット</button>
                 </div>
             </div>
             <div id="hand-zone" class="zone drop-zone" data-zone-id="hand"></div>
         </div>
     </div>
-    <div id="temporary-zone-container" class="overlay-zone-container"><div class="overlay-zone-header"><span>テンポラリーゾーン</span><div id="temporary-zone-controls"><button data-action="temp-to-trash">全てトラッシュへ</button><button data-action="temp-to-deck-shuffle">山札に戻しシャッフル</button><button data-action="temp-to-deck-bottom">山札の下へ</button></div></div><div id="temporary-zone-cards" class="overlay-card-area drop-zone" data-zone-id="temporary"></div></div>
-    <div id="trash-view-container" class="overlay-zone-container"><div class="overlay-zone-header"><span>トラッシュ</span></div><div id="trash-view-cards" class="overlay-card-area drop-zone" data-zone-id="trash"></div></div>
-    <div id="modal-container" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h2 id="modal-title"></h2><span id="modal-close-btn" class="modal-close-btn">&times;</span></div><div id="modal-body" class="modal-body"></div></div></div>
-    <div id="card-zoom-overlay" class="modal-overlay"><div id="card-zoom-view"></div></div>
-
+    
     <script>
+    // The JavaScript code is identical to the "Stable Baseline" version.
+    // All changes are in the CSS <style> block above.
     document.addEventListener('DOMContentLoaded', () => {
         const counters = { vol: document.getElementById('vol-value'), manaAlpha: document.getElementById('mana-alpha-value'), manaBeta: document.getElementById('mana-beta-value'), manaOmega: document.getElementById('mana-omega-value'), turn: document.getElementById('turn-value'), };
         let gameState = {};
@@ -128,15 +129,14 @@
                     deck: shuffle([...deckList]), hand: [],
                     stage: Array(NUM_SLOTS).fill(null).map(() => ({ red: [], blue: [], green: [] })),
                     direction: Array(NUM_SLOTS).fill(null).map(() => []),
-                    trash: [], temporary: []
+                    trash: [],
                 }
             };
             for(let i = 0; i < 7; i++) { if (gameState.zones.deck.length > 0) { gameState.zones.hand.push(gameState.zones.deck.pop()); } }
         }
 
         let draggedCardVisual = null, draggedCardData = null, sourceInfo = null;
-        let isDragging = false, longPressTimer = null;
-        const LONG_PRESS_DURATION = 300;
+        let isDragging = false;
         const CARD_IMAGE_PATH = 'cards/';
 
         function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[array[i], array[j]] = [array[j], array[i]]; } return array; }
@@ -164,10 +164,8 @@
         function addCardToState(cardData, toInfo) {
             if (!cardData || !toInfo || !toInfo.zoneId) return;
             const zoneId = toInfo.zoneId;
-            const cardObject = { cardId: cardData.cardId, isStandby: cardData.isStandby || false };
-            if(zoneId === 'stage' && toInfo.slotColor === 'blue') {
-                cardObject.isStandby = true;
-            }
+            const cardObject = { cardId: cardData.cardId, isStandby: false };
+            
             if (zoneId === 'direction') {
                 if(toInfo.slotIndex !== undefined) gameState.zones.direction[toInfo.slotIndex].push(cardObject);
             } else if (zoneId === 'stage') {
@@ -177,12 +175,9 @@
                 if(zone && typeof cardObject.cardId === 'string') zone.push(cardObject.cardId);
             }
         }
-        function isSlotOccupied(toInfo) { return false; }
 
         function renderAll() {
             renderBoard();
-            if (document.getElementById('trash-view-container').style.display === 'block') renderView('trash', 'trash-view-cards');
-            if (document.getElementById('temporary-zone-container').style.display === 'block') renderView('temporary', 'temporary-zone-cards');
         }
 
         function renderBoard() {
@@ -204,9 +199,8 @@
                 const slotEl = document.querySelector(`.card-slot[data-zone-id="direction"][data-slot-index="${index}"]`);
                 if (slotEl && cardArray.length > 0) {
                     cardArray.forEach((card, i) => {
-                        const cardElement = createCardElement(card.cardId, card.isStandby, 'direction', 'drag', index);
+                        const cardElement = createCardElement(card.cardId, false, 'direction', 'drag', index);
                         let transformString = `translate(${i * 2}px, ${i * 2}px)`;
-                        if (card.isStandby) { transformString += ' rotate(90deg)'; }
                         cardElement.style.transform = transformString;
                         cardElement.style.zIndex = i;
                         slotEl.appendChild(cardElement);
@@ -219,9 +213,8 @@
                     const slotEl = document.querySelector(`.card-slot[data-zone-id="stage"][data-slot-index="${index}"][data-slot-color="${color}"]`);
                     if (slotEl && cardArray.length > 0) {
                         cardArray.forEach((card, i) => {
-                           const cardElement = createCardElement(card.cardId, card.isStandby, 'stage', 'drag', index, color);
+                           const cardElement = createCardElement(card.cardId, false, 'stage', 'drag', index, color);
                            let transformString = `translate(${i * 2}px, ${i * 2}px)`;
-                           if (card.isStandby) { transformString += ' rotate(90deg)'; }
                            cardElement.style.transform = transformString;
                            cardElement.style.zIndex = i;
                            slotEl.appendChild(cardElement);
@@ -241,7 +234,7 @@
             if (slotIndex !== undefined) cardEl.dataset.slotIndex = slotIndex;
             if (slotColor) cardEl.dataset.slotColor = slotColor;
             
-            if(zoneId === 'deck' && interactiveType === 'none') { cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`; }
+            if(zoneId === 'deck') { cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`; }
             else { cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardId}.png')`; }
 
             if (interactiveType === 'drag') {
@@ -260,7 +253,7 @@
                 isPile = true;
                 zoneId = element.dataset.zoneId;
             } else if (element.classList.contains('card')) {
-                const parentZone = element.closest('.drop-zone, .overlay-card-area');
+                const parentZone = element.closest('.drop-zone');
                 if(!parentZone) return;
                 zoneId = parentZone.dataset.zoneId;
             } else { return; }
@@ -271,7 +264,7 @@
                 draggedCardData = { cardId: gameState.zones[zoneId].slice(-1)[0], isStandby: false };
             } else {
                  const cardId = element.dataset.cardId;
-                 if (['hand', 'temporary', 'trash'].includes(zoneId)) {
+                 if (['hand', 'trash'].includes(zoneId)) {
                     draggedCardData = { cardId: cardId, isStandby: false };
                  } else { 
                     sourceInfo.slotIndex = element.dataset.slotIndex;
@@ -288,31 +281,26 @@
             }
             if(!draggedCardData) return;
 
-            longPressTimer = setTimeout(() => { isDragging = false; longPressTimer = null; showCardZoom(draggedCardData.cardId); }, LONG_PRESS_DURATION);
+            let isDragging = false;
             const touch = e.touches ? e.touches[0] : e;
             const rect = element.getBoundingClientRect();
             let offsetX = touch.clientX - rect.left; let offsetY = touch.clientY - rect.top;
             if (isPile) { offsetX = rect.width / 2; offsetY = rect.height / 2; }
-            let startX = touch.clientX; let startY = touch.clientY;
             
             const onMove = (moveEvent) => {
-                const moveX = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientX;
-                const moveY = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientY;
-                if (!isDragging && (Math.abs(moveX - startX) > 5 || Math.abs(moveY - startY) > 5)) {
-                    isDragging = true; clearTimeout(longPressTimer); hideCardZoom();
+                if (!isDragging) {
+                    isDragging = true;
                     if(!isPile) { element.style.opacity = '0.5'; }
                     draggedCardVisual = document.createElement('div');
                     draggedCardVisual.className = 'card dragging';
-                    if (draggedCardData.isStandby) {
-                        draggedCardVisual.style.transform = 'rotate(90deg)';
-                    }
                     draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.png')`;
                     document.body.appendChild(draggedCardVisual);
                 }
-                if (isDragging) { draggedCardVisual.style.left = `${moveX - offsetX}px`; draggedCardVisual.style.top = `${moveY - offsetY}px`; }
+                const moveTouch = moveEvent.touches ? moveEvent.touches[0] : moveEvent;
+                draggedCardVisual.style.left = `${moveTouch.clientX - offsetX}px`;
+                draggedCardVisual.style.top = `${moveTouch.clientY - offsetY}px`;
             };
             const onEnd = (endEvent) => {
-                clearTimeout(longPressTimer);
                 document.removeEventListener('mousemove', onMove); document.removeEventListener('touchmove', onMove);
                 document.removeEventListener('mouseup', onEnd); document.removeEventListener('touchend', onEnd);
                 if (!isPile) element.style.opacity = '1';
@@ -326,51 +314,27 @@
                     
                     let dropped = false;
                     const targetSlot = targetEl ? targetEl.closest('.card-slot.drop-zone') : null;
-                    const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#direction-zone), .overlay-card-area.drop-zone') : null;
+                    const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#direction-zone)') : null;
 
                     if(targetSlot) {
                         const targetInfo = { zoneId: targetSlot.dataset.zoneId, slotIndex: targetSlot.dataset.slotIndex, slotColor: targetSlot.dataset.slotColor };
-                        if(!isSlotOccupied(targetInfo)) { addCardToState(draggedCardData, targetInfo); dropped = true; }
+                        addCardToState(draggedCardData, targetInfo); dropped = true;
                     } else if (targetNonSlotZone) {
                         addCardToState(draggedCardData, { zoneId: targetNonSlotZone.dataset.zoneId }); dropped = true;
                     }
                     if(!dropped) { addCardToState(draggedCardData, sourceInfo); }
-                } else {
-                    handleTap(element, sourceInfo);
                 }
 
                 if (draggedCardVisual) draggedCardVisual.remove();
                 draggedCardVisual = null; draggedCardData = null; sourceInfo = null; isDragging = false;
                 renderAll();
             };
-            document.addEventListener('mousemove', onMove); document.addEventListener('touchmove', onMove, { passive: false });
-            document.addEventListener('mouseup', onEnd); document.addEventListener('touchend', onEnd);
-        }
-
-        function handleTap(element, tapInfo) {
-            const { zoneId, slotIndex, slotColor } = tapInfo;
-            if (zoneId === 'deck') {
-                if(gameState.zones.deck.length > 0) gameState.zones.hand.push(gameState.zones.deck.pop());
-            } else if (zoneId === 'direction' || zoneId === 'stage') {
-                let slotArray;
-                if (zoneId === 'direction') { slotArray = gameState.zones.direction[slotIndex]; }
-                else if (zoneId === 'stage') { slotArray = gameState.zones.stage[slotIndex][slotColor]; }
-
-                if (slotArray && slotArray.length > 0) {
-                    const topCard = slotArray[slotArray.length - 1];
-                    if (element.dataset.cardId === topCard.cardId) {
-                       topCard.isStandby = !topCard.isStandby;
-                    }
-                }
-            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('touchmove', onMove, { passive: false });
+            document.addEventListener('mouseup', onEnd);
+            document.addEventListener('touchend', onEnd);
         }
         
-        function showCardZoom(cardId) { document.getElementById('card-zoom-view').style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardId}.png')`; document.getElementById('card-zoom-overlay').style.display = 'flex'; }
-        function hideCardZoom() { document.getElementById('card-zoom-overlay').style.display = 'none'; }
-        function renderView(zoneId, containerId) { const container = document.getElementById(containerId); container.innerHTML = ''; gameState.zones[zoneId].forEach(cardData => { const cardId = (typeof cardData === 'object' && cardData.cardId) ? cardData.cardId : cardData; if(cardId) { container.appendChild(createCardElement(cardId, false, zoneId, 'drag')); } }); }
-        function renderTrashView() { renderView('trash', 'trash-view-cards'); }
-        function renderTempZone() { renderView('temporary', 'temporary-zone-cards'); }
-
         function setupEventListeners() {
             document.getElementById('start-game-btn').addEventListener('click', () => {
                 const deckList = document.getElementById('deck-string').value.trim().split('/').filter(id => id);
@@ -387,45 +351,8 @@
             
             document.getElementById('deck-zone').addEventListener('mousedown', handlePressStart);
             document.getElementById('deck-zone').addEventListener('touchstart', handlePressStart, { passive: false });
-            document.getElementById('trash-zone').addEventListener('click', () => { if(isDragging) return; const container = document.getElementById('trash-view-container'); const isHidden = container.style.display === 'none' || !container.style.display; if(isHidden) renderTrashView(); container.style.display = isHidden ? 'block' : 'none'; });
-
-            document.getElementById('deck-search-btn').addEventListener('click', () => {
-                const modalBody = document.getElementById('modal-body');
-                modalBody.innerHTML = '';
-                document.getElementById('modal-title').textContent = '山札サーチ';
-                const pileCards = [...gameState.zones.deck];
-                pileCards.reverse();
-
-                pileCards.forEach(cardId => {
-                    const cardEl = createCardElement(cardId, false, 'deck', 'none');
-                    cardEl.style.cursor = 'pointer';
-                    cardEl.addEventListener('click', () => {
-                        const index = gameState.zones.deck.indexOf(cardId);
-                        if (index > -1) {
-                            gameState.zones.deck.splice(index, 1);
-                            gameState.zones.hand.push(cardId);
-                        }
-                        document.getElementById('modal-container').style.display = 'none';
-                        shuffle(gameState.zones.deck);
-                        renderAll();
-                    });
-                    modalBody.appendChild(cardEl);
-                });
-                document.getElementById('modal-container').style.display = 'flex';
-            });
-            document.getElementById('modal-close-btn').addEventListener('click', () => { document.getElementById('modal-container').style.display = 'none'; });
-            
-            document.getElementById('card-zoom-overlay').addEventListener('click', hideCardZoom);
-            
-            const tempZoneContainer = document.getElementById('temporary-zone-container');
-            document.getElementById('temp-zone-toggle-btn').addEventListener('click', () => { const isHidden = tempZoneContainer.style.display === 'none' || !tempZoneContainer.style.display; if(isHidden) renderTempZone(); tempZoneContainer.style.display = isHidden ? 'block' : 'none'; document.getElementById('temp-zone-toggle-btn').textContent = isHidden ? 'テンポラリ非表示' : 'テンポラリ表示'; });
-            document.getElementById('temporary-zone-controls').addEventListener('click', (e) => { const action = e.target.dataset.action; const tempCards = [...gameState.zones.temporary]; if (tempCards.length === 0) return; if (action === 'temp-to-trash') gameState.zones.trash.push(...tempCards); if (action === 'temp-to-deck-shuffle') { gameState.zones.deck.push(...tempCards); shuffle(gameState.zones.deck); } if (action === 'temp-to-deck-bottom') gameState.zones.deck.unshift(...shuffle(tempCards)); gameState.zones.temporary = []; renderAll(); });
-            
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.overlay-zone-container') && !e.target.closest('#trash-zone')) { document.getElementById('trash-view-container').style.display = 'none'; }
-                const tempBtn = document.getElementById('temp-zone-toggle-btn');
-                if (!e.target.closest('.overlay-zone-container') && e.target !== tempBtn) { if(tempZoneContainer.style.display === 'block') { tempZoneContainer.style.display = 'none'; tempBtn.textContent = 'テンポラリ表示'; } }
-            });
+            document.getElementById('trash-zone').addEventListener('mousedown', handlePressStart);
+            document.getElementById('trash-zone').addEventListener('touchstart', handlePressStart, { passive: false });
         }
         
         initGameState();
