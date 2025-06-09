@@ -31,7 +31,7 @@
         #main-area { display: flex; flex-grow: 1; height: calc(100% - var(--card-height) - 2vh); gap: 1vw; }
         #left-column { display: flex; flex-direction: column; justify-content: space-around; padding: 5px; gap: 1.5vh; }
         #center-column { flex-grow: 1; display: flex; flex-direction: column; padding: 5px 0; gap: 1vh; }
-        #right-column { display: flex; flex-direction: column; align-items: center; padding: 5px; gap: 1vh; }
+        #right-column { display: flex; flex-direction: column; align-items: center; padding: 5px; gap: 1vh; /* justify-content: space-between; を削除 */ }
 
         .zone { border: 1px solid var(--border-color); border-radius: 5px; background-color: var(--zone-bg); position: relative; }
         .zone-title { position: absolute; top: -1.5vh; left: 5px; background: #1a1a1d; padding: 0 5px; font-size: 1.5vh; color: #ccc; z-index: 10; }
@@ -116,7 +116,7 @@
         <div id="game-board" class="screen">
             <div id="main-area">
                 <div id="left-column">
-                    <div id="deck-zone" class="zone pile-zone drop-zone" data-zone-id="deck"><div class="zone-title">山札</div></div>
+                    <div id="volNoise-zone" class="zone pile-zone drop-zone" data-zone-id="volNoise"><div class="zone-title">VOLノイズ</div></div>
                     <div id="trash-zone" class="zone pile-zone drop-zone" data-zone-id="trash"><div class="zone-title">トラッシュ</div></div>
                 </div>
                 <div id="center-column">
@@ -148,6 +148,7 @@
                     <button id="mulligan-btn" class="action-btn">マリガン</button>
                     <button id="reset-btn" class="action-btn">リセット</button>
                     <button id="change-mat-btn">プレイマット変更</button>
+                    <div id="deck-zone" class="zone pile-zone drop-zone" data-zone-id="deck"><div class="zone-title">山札</div></div>
                 </div>
             </div>
             <div id="hand-zone" class="zone drop-zone" data-zone-id="hand"></div>
@@ -188,6 +189,7 @@
                     stage: Array(NUM_SLOTS).fill(null).map(() => ({ red: [], blue: [], green: [] })),
                     direction: Array(NUM_SLOTS).fill(null).map(() => []),
                     trash: [],
+                    volNoise: [], // VOLノイズ置き場を初期化
                 }
             };
             for (let i = 0; i < 7; i++) {
@@ -201,16 +203,45 @@
             // Remove all cards and zone counts
             document.querySelectorAll('.card, .zone-count').forEach(el => el.remove());
 
-            // Render deck and trash pile
-            ['deck', 'trash'].forEach(zoneId => {
+            // Render deck, trash, and volNoise pile
+            ['deck', 'trash', 'volNoise'].forEach(zoneId => {
                 const zoneEl = document.getElementById(`${zoneId}-zone`);
+                if (!zoneEl) {
+                    console.error(`[RenderAll] Zone element with ID '${zoneId}-zone' not found.`);
+                    return;
+                }
+                zoneEl.innerHTML = ''; // Clear the zone before re-rendering
+
                 const zoneData = gameState.zones[zoneId];
-                if (zoneData.length > 0) {
-                    zoneEl.appendChild(createCardElement(zoneData.slice(-1)[0], false, zoneId, 'none'));
+                if (zoneData) { 
+                    // if (zoneId === 'volNoise') { // VOLノイズゾーンの処理開始ログ (必要に応じてコメント解除)
+                    //     console.log(`[RenderAll] Processing volNoise zone. Card count: ${zoneData.length}`);
+                    // }
+                    if (zoneData.length > 0) {
+                        // パイルの一番上のカードIDを取得 (gameState.zonesの各パイルはカードID文字列の配列を想定)
+                        const topCardDisplayId = zoneData.slice(-1)[0];
+                        // if (zoneId === 'volNoise') console.log(`[RenderAll] volNoise has cards. Top card for display (should be back): ${topCardDisplayId}`);
+                        zoneEl.appendChild(createCardElement(topCardDisplayId, false, zoneId, 'none'));
+                    } 
+                    // else { // カードがない場合は、以前はプレースホルダーを表示していたが、何も表示しないように変更
+                        // zoneEl.appendChild(createCardElement(null, false, zoneId, 'none')); 
+                    // }
                     const countEl = document.createElement('span');
                     countEl.className = 'zone-count';
                     countEl.textContent = zoneData.length;
                     zoneEl.appendChild(countEl);
+
+                    // if (zoneId === 'volNoise') { // VOLノイズゾーンの処理完了後、中身を確認 (必要に応じてコメント解除)
+                    //     console.log(`[RenderAll] volNoise-zone innerHTML after append:`, zoneEl.innerHTML);
+                    //     const cardInVolNoise = zoneEl.querySelector('.card');
+                    //     if (cardInVolNoise) {
+                    //         console.log('[RenderAll] volNoise-zone .card style:', cardInVolNoise.style.backgroundImage);
+                    //     } else {
+                    //         console.log('[RenderAll] volNoise-zone .card not found after append.');
+                    //     }
+                    // }
+                } else {
+                    console.warn(`[RenderAll] gameState.zones.${zoneId} is undefined.`);
                 }
             });
 
@@ -278,11 +309,28 @@
             const actualCardId = (typeof cardId === 'object' && cardId !== null) ? cardId.cardId : cardId;
             cardEl.dataset.cardId = actualCardId;
 
-            if (zoneId === 'deck' && interactiveType === 'none') { // 山札のパイル表示のみ裏面
-                 cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`;
-            } else {
-                 cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}${actualCardId}.png')`;
+            // if (zoneId === 'volNoise' && interactiveType === 'none') { // 必要に応じてコメント解除
+            //     console.log(`[CreateCardElement] For volNoise pile. actualCardId: "${actualCardId}", interactiveType: ${interactiveType}`);
+            // }
+            // デバッグログ: トラッシュのパイル表示時にactualCardIdを確認
+            if (zoneId === 'trash' && interactiveType === 'none') {
+                // console.log(`[CreateCardElement] Rendering trash pile card. actualCardId: "${actualCardId}", type: ${typeof actualCardId}`);
             }
+
+            if ((zoneId === 'deck' || zoneId === 'volNoise') && interactiveType === 'none') { // 山札またはVOLノイズのパイル表示のみ裏面
+                 cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`;
+                 // if (zoneId === 'volNoise') console.log('[CreateCardElement] volNoise: Set back.png (condition: deck/volNoise pile)');
+            } else if (actualCardId && typeof actualCardId === 'string' && actualCardId.trim() !== '') { // actualCardId が null でなく、空でない有効な文字列の場合のみ表面画像を設定
+                 cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}${actualCardId}.png')`;
+            } else {
+                 // カードIDがない、または無効な場合（空のパイルゾーンのプレースホルダーや、actualCardIdが期待する文字列でない場合など）は裏面を表示
+                 // if (zoneId === 'volNoise') console.log('[CreateCardElement] volNoise: Set back.png (condition: else - invalid actualCardId or not deck/volNoise pile)');
+                 if (interactiveType === 'none' && zoneId === 'trash') { // トラッシュのパイル表示でactualCardIdが無効だった場合
+                    // console.warn(`[CreateCardElement] Trash pile: actualCardId "${actualCardId}" was invalid or empty. Displaying back.png.`);
+                 }
+                 cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`;
+            }
+
 
             if (isStandby) cardEl.style.transform = 'rotate(90deg)';
             
@@ -445,7 +493,12 @@
                 }
             } else {
                 const zone = gameState.zones[zoneId];
-                if (zone && typeof cardObject.cardId === 'string') zone.push(cardObject.cardId);
+                if (zone && typeof cardObject.cardId === 'string') {
+                    zone.push(cardObject.cardId);
+                    if (zoneId === 'volNoise') {
+                        shuffle(gameState.zones.volNoise); // VOLノイズ置き場に追加されたらシャッフル
+                    }
+                }
             }
         }
 
@@ -471,6 +524,12 @@
             if (element.classList.contains('pile-zone')) {
                 if (zoneId === 'deck' && gameState.zones.deck.length > 0) {
                     gameState.zones.hand.push(gameState.zones.deck.pop());
+                } else if (zoneId === 'volNoise' && gameState.zones.volNoise && gameState.zones.volNoise.length > 0) {
+                    // VOLノイズゾーンがタップされた場合
+                    const topCard = gameState.zones.volNoise.pop();
+                    if (topCard) { // stringのはずだが念のため確認
+                        gameState.zones.hand.push(topCard);
+                    }
                 }
                 lastTapTime = 0;
                 lastTapTargetCardId = null;
@@ -533,6 +592,11 @@
             deckZoneEl.addEventListener('mousedown', e => handlePressStart(e, deckZoneEl, 'deck'));
             deckZoneEl.addEventListener('touchstart', e => handlePressStart(e, deckZoneEl, 'deck'), { passive: false });
             deckZoneEl.addEventListener('click', e => handleTap(deckZoneEl, { zoneId: 'deck' }));
+
+            const volNoiseZoneEl = document.getElementById('volNoise-zone'); // IDを 'vol-noise-zone' から 'volNoise-zone' に修正
+            volNoiseZoneEl.addEventListener('mousedown', e => handlePressStart(e, volNoiseZoneEl, 'volNoise'));
+            volNoiseZoneEl.addEventListener('touchstart', e => handlePressStart(e, volNoiseZoneEl, 'volNoise'), { passive: false });
+            volNoiseZoneEl.addEventListener('click', e => handleTap(volNoiseZoneEl, { zoneId: 'volNoise' }));
 
             document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => {
                 const counter = btn.dataset.counter;
