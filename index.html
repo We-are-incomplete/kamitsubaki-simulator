@@ -64,14 +64,7 @@
         #card-zoom-overlay { z-index: 4000; pointer-events: none; }
         #card-zoom-view { width: calc(var(--card-width) * 4); height: calc(var(--card-height) * 4); background-size: contain; background-position: center; background-repeat: no-repeat; border-radius: 16px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         
-        .overlay-zone-container {
-            position: fixed;
-            top: 50%; left: 50%; transform: translate(-50%, -50%); /* Centered */
-            width: 80%; max-width: 800px; z-index: 500;
-            background-color: rgba(40, 40, 40, 0.95); border: 1px solid #c90063;
-            border-radius: 10px; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            display: none;
-        }
+        .overlay-zone-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 800px; z-index: 500; background-color: rgba(40, 40, 40, 0.95); border: 1px solid #c90063; border-radius: 10px; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: none; }
         .overlay-zone-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .overlay-zone-controls button { margin-left: 5px; font-size: 0.8rem; padding: 4px 8px; }
         .overlay-card-area { min-height: calc(var(--card-height) + 10px); display: flex; flex-wrap: wrap; gap: 5px; padding: 5px; }
@@ -128,12 +121,11 @@
                 counters: { turn: 1, vol: 0, manaAlpha: 0, manaBeta: 0, manaOmega: 0 },
                 zones: { deck: shuffle([...deckList]), hand: [], stage: [], field: [], trash: [], volNoise: [], temporary: [] }
             };
-            // Draw 7 initial cards
             for(let i = 0; i < 7; i++) { if (gameState.zones.deck.length > 0) { gameState.zones.hand.push(gameState.zones.deck.pop()); } }
         }
 
         let draggedCardVisual = null, draggedCardData = null, sourceZone = null;
-        let isDragging = false, longPressTimer = null, lastTap = 0, isPressing = false;
+        let isDragging = false, longPressTimer = null, lastTap = 0;
         const LONG_PRESS_DURATION = 300, DOUBLE_TAP_DELAY = 300;
         const CARD_IMAGE_PATH = 'cards/';
 
@@ -220,7 +212,7 @@
                 draggedCardData = (typeof cardDataInState === 'object') ? { ...cardDataInState } : { cardId: cardId, isStandby: false };
             }
             
-            longPressTimer = setTimeout(() => { isPressing = false; isDragging = false; longPressTimer = null; showCardZoom(draggedCardData.cardId); }, LONG_PRESS_DURATION);
+            longPressTimer = setTimeout(() => { isDragging = false; longPressTimer = null; showCardZoom(draggedCardData.cardId); }, LONG_PRESS_DURATION);
             const currentTime = new Date().getTime();
             if (!isPile && currentTime - lastTap < DOUBLE_TAP_DELAY) { clearTimeout(longPressTimer); handleDoubleClick(e); return; }
             lastTap = currentTime;
@@ -230,16 +222,16 @@
             let offsetX = touch.clientX - rect.left;
             let offsetY = touch.clientY - rect.top;
             if (isPile) { offsetX = rect.width / 2; offsetY = rect.height / 2; }
+            
             let startX = touch.clientX; let startY = touch.clientY;
-            isPressing = true;
 
             const onMove = (moveEvent) => {
-                if (!isPressing) return;
                 const moveX = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientX;
                 const moveY = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientY;
                 if (!isDragging && (Math.abs(moveX - startX) > 5 || Math.abs(moveY - startY) > 5)) {
                     isDragging = true; clearTimeout(longPressTimer); hideCardZoom();
                     removeCardFromState(draggedCardData, sourceZone);
+                    
                     draggedCardVisual = document.createElement('div');
                     draggedCardVisual.className = 'card dragging';
                     if (draggedCardData.isStandby) draggedCardVisual.classList.add('standby');
@@ -250,18 +242,25 @@
                 if (isDragging) { draggedCardVisual.style.left = `${moveX - offsetX}px`; draggedCardVisual.style.top = `${moveY - offsetY}px`; }
             };
             const onEnd = (endEvent) => {
-                clearTimeout(longPressTimer); isPressing = false;
+                clearTimeout(longPressTimer);
                 document.removeEventListener('mousemove', onMove); document.removeEventListener('touchmove', onMove);
                 document.removeEventListener('mouseup', onEnd); document.removeEventListener('touchend', onEnd);
+
                 if (isDragging) {
-                    draggedCardVisual.style.pointerEvents = 'none';
+                    draggedCardVisual.style.display = 'none'; // Temporarily hide to find element underneath
                     const endX = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientX;
                     const endY = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientY;
                     const targetEl = document.elementFromPoint(endX, endY);
                     const targetZoneEl = targetEl ? targetEl.closest('.drop-zone') : null;
+                    
                     if (targetZoneEl) { addCardToState(draggedCardData, targetZoneEl.dataset.zoneId); } 
                     else { addCardToState(draggedCardData, sourceZone); }
+                } else { // This block handles tap
+                    if (sourceZone === 'deck' && gameState.zones.deck.length > 0) {
+                        gameState.zones.hand.push(gameState.zones.deck.pop());
+                    }
                 }
+
                 if (draggedCardVisual) draggedCardVisual.remove();
                 draggedCardVisual = null; draggedCardData = null; sourceZone = null; isDragging = false;
                 renderAll();
@@ -290,14 +289,11 @@
             document.getElementById('shuffle-btn').addEventListener('click', () => { shuffle(gameState.zones.deck); renderAll(); alert('山札をシャッフルしました。'); });
             
             document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => { const counter = btn.dataset.counter; gameState.counters[counter] += parseInt(btn.dataset.amount, 10); if (gameState.counters[counter] < 0) gameState.counters[counter] = 0; renderAll(); }));
+            
+            // Make deck draggable/tappable
+            document.getElementById('deck-zone').addEventListener('mousedown', handlePressStart);
+            document.getElementById('deck-zone').addEventListener('touchstart', handlePressStart, { passive: false });
 
-            // Deck drag/tap
-            const deckZone = document.getElementById('deck-zone');
-            deckZone.addEventListener('mousedown', handlePressStart);
-            deckZone.addEventListener('touchstart', handlePressStart, { passive: false });
-            deckZone.addEventListener('click', () => { if (!isDragging && gameState.zones.deck.length > 0) { gameState.zones.hand.push(gameState.zones.deck.pop()); renderAll(); } });
-
-            // Deck Search
             document.getElementById('deck-search-btn').addEventListener('click', () => {
                 const modalBody = document.getElementById('modal-body');
                 modalBody.innerHTML = '';
