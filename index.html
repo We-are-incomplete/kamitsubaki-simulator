@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KAMITSUBAKI CARD GAME 一人回し用シミュレーター</title>
     <style>
-        /* --- Reset & Base Styles --- */
         :root {
             --card-width: 65px;
             --card-height: 91px;
@@ -18,8 +17,6 @@
             font-family: 'Yu Gothic', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
             overflow: hidden; user-select: none; -webkit-user-select: none;
         }
-
-        /* --- Game Container & Screens --- */
         #game-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
         .screen { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
         #deck-input-screen { background-color: #2c2f33; }
@@ -27,14 +24,12 @@
         #deck-string { width: 90%; max-width: 500px; height: 150px; font-size: 1rem; padding: 10px; margin-bottom: 15px; background-color: #40444b; border: 1px solid var(--border-color); color: #fff; }
         #start-game-btn { padding: 12px 25px; font-size: 1.1rem; cursor: pointer; background-color: #c90063; border: none; color: white; border-radius: 5px; }
 
-        /* --- Game Board Layout --- */
         #game-board { display: none; width: 100%; height: 100%; flex-direction: column; }
         #main-area { display: flex; flex-grow: 1; height: calc(100% - var(--card-height) - 10px); }
         #left-column { display: flex; flex-direction: column; justify-content: space-between; padding: 5px; gap: 10px; }
         #center-column { flex-grow: 1; display: flex; flex-direction: column; padding: 5px; gap: 5px; }
         #right-column { display: flex; flex-direction: column; align-items: center; padding: 10px; gap: 8px; }
 
-        /* --- Zones --- */
         .zone { border: 1px solid var(--border-color); border-radius: 5px; background-color: var(--zone-bg); position: relative; }
         .zone-title { position: absolute; top: -10px; left: 5px; background: #1a1a1d; padding: 0 5px; font-size: 0.8em; color: #ccc; z-index: 10; }
         .pile-zone { width: calc(var(--card-width) + 10px); height: calc(var(--card-height) + 10px); cursor: pointer; }
@@ -44,29 +39,13 @@
         .pile-zone .card:nth-child(2) { transform: translate(1px, 1px); }
         .pile-zone .card:nth-child(3) { transform: translate(2px, 2px); }
         .pile-zone .card:nth-child(4) { transform: translate(3px, 3px); }
-        .zone-count {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 2rem; font-weight: bold; color: white;
-            text-shadow: 0 0 5px black, 0 0 5px black; pointer-events: none;
-        }
+        .zone-count { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2rem; font-weight: bold; color: white; text-shadow: 0 0 5px black, 0 0 5px black; pointer-events: none; }
 
-        /* --- Cards --- */
-        .card {
-            width: var(--card-width); height: var(--card-height);
-            background-size: cover; background-position: center; background-repeat: no-repeat;
-            border-radius: 4px; transition: transform 0.2s ease, box-shadow 0.2s ease;
-            cursor: grab; touch-action: none;
-        }
-        .card.dragging {
-            position: fixed; z-index: 3000; cursor: grabbing;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-            pointer-events: none;
-            transition: none; /* No transition while dragging */
-        }
+        .card { width: var(--card-width); height: var(--card-height); background-size: cover; background-position: center; background-repeat: no-repeat; border-radius: 4px; transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: grab; touch-action: none; }
+        .card.dragging { position: fixed; z-index: 3000; cursor: grabbing; box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); pointer-events: none; transition: none; }
         .card.standby { transform: rotate(90deg); }
         .zone .card.standby { margin: 13px -13px; }
 
-        /* --- Counters & Buttons --- */
         .counter { background-color: var(--zone-bg); padding: 5px 10px; border-radius: 5px; text-align: center; width: 120px; }
         .counter-label { font-size: 0.9rem; }
         .counter-value { font-size: 1.5rem; font-weight: bold; margin: 0 10px; }
@@ -75,12 +54,7 @@
         .action-btn { padding: 8px 10px; font-size: 0.9rem; cursor: pointer; background-color: #3a3f44; border: 1px solid var(--border-color); color: white; border-radius: 5px; width: 120px; margin-top: auto; }
         #reset-btn { margin-top: 5px; }
 
-        /* --- Modals & Overlays --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.8); z-index: 2000;
-            display: none; justify-content: center; align-items: center;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 2000; display: none; justify-content: center; align-items: center; }
         .modal-content { background-color: #2c2f33; padding: 15px; border-radius: 10px; max-width: 95%; max-height: 90%; display: flex; flex-direction: column; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .modal-title { font-size: 1.2rem; }
@@ -91,7 +65,8 @@
         #card-zoom-view { width: calc(var(--card-width) * 4); height: calc(var(--card-height) * 4); background-size: contain; background-position: center; background-repeat: no-repeat; border-radius: 16px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         
         .overlay-zone-container {
-            position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+            position: fixed;
+            top: 50%; left: 50%; transform: translate(-50%, -50%); /* Centered */
             width: 80%; max-width: 800px; z-index: 500;
             background-color: rgba(40, 40, 40, 0.95); border: 1px solid #c90063;
             border-radius: 10px; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
@@ -136,32 +111,29 @@
             <div id="hand-zone" class="zone drop-zone" data-zone-id="hand"></div>
         </div>
     </div>
+
     <div id="temporary-zone-container" class="overlay-zone-container"><div class="overlay-zone-header"><span>テンポラリーゾーン</span><div id="temporary-zone-controls"><button data-action="temp-to-trash">全てトラッシュへ</button><button data-action="temp-to-deck-shuffle">山札に戻しシャッフル</button><button data-action="temp-to-deck-bottom">山札の下へ</button></div></div><div id="temporary-zone-cards" class="overlay-card-area drop-zone" data-zone-id="temporary"></div></div>
     <div id="trash-view-container" class="overlay-zone-container"><div class="overlay-zone-header"><span>トラッシュ</span></div><div id="trash-view-cards" class="overlay-card-area drop-zone" data-zone-id="trash"></div></div>
+    <div id="vol-noise-view-container" class="overlay-zone-container"><div class="overlay-zone-header"><span>VOLノイズ</span></div><div id="vol-noise-view-cards" class="overlay-card-area drop-zone" data-zone-id="volNoise"></div></div>
+
     <div id="modal-container" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h2 id="modal-title"></h2><span id="modal-close-btn" class="modal-close-btn">&times;</span></div><div id="modal-body" class="modal-body"></div></div></div>
     <div id="card-zoom-overlay" class="modal-overlay"><div id="card-zoom-view"></div></div>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const counters = {
-            vol: document.getElementById('vol-value'), manaAlpha: document.getElementById('mana-alpha-value'),
-            manaBeta: document.getElementById('mana-beta-value'), manaOmega: document.getElementById('mana-omega-value'),
-            turn: document.getElementById('turn-value'),
-        };
-
+        const counters = { vol: document.getElementById('vol-value'), manaAlpha: document.getElementById('mana-alpha-value'), manaBeta: document.getElementById('mana-beta-value'), manaOmega: document.getElementById('mana-omega-value'), turn: document.getElementById('turn-value'), };
         let gameState = {};
         function initGameState(deckList = []) {
             gameState = {
                 counters: { turn: 1, vol: 0, manaAlpha: 0, manaBeta: 0, manaOmega: 0 },
-                zones: {
-                    deck: shuffle([...deckList]), hand: [], stage: [], field: [], 
-                    trash: [], volNoise: [], temporary: []
-                }
+                zones: { deck: shuffle([...deckList]), hand: [], stage: [], field: [], trash: [], volNoise: [], temporary: [] }
             };
+            // Draw 7 initial cards
+            for(let i = 0; i < 7; i++) { if (gameState.zones.deck.length > 0) { gameState.zones.hand.push(gameState.zones.deck.pop()); } }
         }
 
         let draggedCardVisual = null, draggedCardData = null, sourceZone = null;
-        let isDragging = false, longPressTimer = null, lastTap = 0;
+        let isDragging = false, longPressTimer = null, lastTap = 0, isPressing = false;
         const LONG_PRESS_DURATION = 300, DOUBLE_TAP_DELAY = 300;
         const CARD_IMAGE_PATH = 'cards/';
 
@@ -173,18 +145,18 @@
         function renderAll() {
             renderBoard();
             if (document.getElementById('trash-view-container').style.display === 'block') renderTrashView();
+            if (document.getElementById('vol-noise-view-container').style.display === 'block') renderVolNoiseView();
             if (document.getElementById('temporary-zone-container').style.display === 'block') renderTempZone();
         }
 
         function renderBoard() {
-            document.querySelectorAll('#game-board .drop-zone').forEach(el => el.innerHTML = '');
+            document.querySelectorAll('#game-board .card, #game-board .zone-count').forEach(el => el.remove());
             ['deck', 'trash', 'volNoise'].forEach(zoneId => {
                 const zoneEl = document.getElementById(`${zoneId}-zone`);
                 const zoneData = gameState.zones[zoneId];
-                zoneEl.innerHTML = `<div class="zone-title">${zoneEl.querySelector('.zone-title').textContent}</div>`;
                 if (zoneData.length > 0) {
                     const topCards = zoneData.slice(-3);
-                    topCards.forEach(cardId => zoneEl.appendChild(createCardElement(cardId, false, zoneId, false)));
+                    topCards.forEach(cardId => zoneEl.appendChild(createCardElement(cardId, false, zoneId, 'none')));
                     const countEl = document.createElement('span');
                     countEl.className = 'zone-count';
                     countEl.textContent = zoneData.length;
@@ -196,23 +168,37 @@
                 gameState.zones[zoneId].forEach(card => {
                     const cardId = (typeof card === 'object') ? card.cardId : card;
                     const isStandby = (typeof card === 'object') ? card.isStandby : false;
-                    zoneEl.appendChild(createCardElement(cardId, isStandby, zoneId, true));
+                    zoneEl.appendChild(createCardElement(cardId, isStandby, zoneId, 'drag'));
                 });
             });
             for (const counterId in counters) { counters[counterId].textContent = gameState.counters[counterId]; }
         }
         
-        function createCardElement(cardId, isStandby, zoneId, isInteractive) {
+        function createCardElement(cardId, isStandby, zoneId, interactiveType) {
             const cardEl = document.createElement('div');
             cardEl.className = 'card';
             cardEl.dataset.cardId = cardId;
             if (isStandby) cardEl.classList.add('standby');
-            if(zoneId === 'deck' && isInteractive === false) { cardEl.style.backgroundColor = '#555'; }
-            else { cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardId}.png')`; }
-            if (isInteractive) {
+
+            if(zoneId === 'deck' && interactiveType === 'none') {
+                cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`;
+            } else {
+                cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardId}.png')`;
+            }
+
+            if (interactiveType === 'drag') {
                 cardEl.addEventListener('mousedown', handlePressStart);
                 cardEl.addEventListener('touchstart', handlePressStart, { passive: false });
                 cardEl.addEventListener('dblclick', handleDoubleClick);
+            } else if (interactiveType === 'click') {
+                cardEl.addEventListener('click', (e) => {
+                    const searchCardId = e.currentTarget.dataset.cardId;
+                    const index = gameState.zones.deck.indexOf(searchCardId);
+                    if (index > -1) gameState.zones.deck.splice(index, 1);
+                    gameState.zones.hand.push(searchCardId);
+                    document.getElementById('modal-container').style.display = 'none';
+                    shuffle(gameState.zones.deck); renderAll();
+                });
             }
             return cardEl;
         }
@@ -222,7 +208,6 @@
             const element = e.currentTarget;
             sourceZone = element.closest('.drop-zone').dataset.zoneId;
 
-            // Determine card data
             let cardId;
             const isPile = element.classList.contains('pile-zone');
             if (isPile) {
@@ -235,7 +220,7 @@
                 draggedCardData = (typeof cardDataInState === 'object') ? { ...cardDataInState } : { cardId: cardId, isStandby: false };
             }
             
-            longPressTimer = setTimeout(() => { isDragging = false; longPressTimer = null; showCardZoom(draggedCardData.cardId); }, LONG_PRESS_DURATION);
+            longPressTimer = setTimeout(() => { isPressing = false; isDragging = false; longPressTimer = null; showCardZoom(draggedCardData.cardId); }, LONG_PRESS_DURATION);
             const currentTime = new Date().getTime();
             if (!isPile && currentTime - lastTap < DOUBLE_TAP_DELAY) { clearTimeout(longPressTimer); handleDoubleClick(e); return; }
             lastTap = currentTime;
@@ -245,16 +230,16 @@
             let offsetX = touch.clientX - rect.left;
             let offsetY = touch.clientY - rect.top;
             if (isPile) { offsetX = rect.width / 2; offsetY = rect.height / 2; }
-            
             let startX = touch.clientX; let startY = touch.clientY;
+            isPressing = true;
 
             const onMove = (moveEvent) => {
+                if (!isPressing) return;
                 const moveX = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientX;
                 const moveY = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientY;
                 if (!isDragging && (Math.abs(moveX - startX) > 5 || Math.abs(moveY - startY) > 5)) {
                     isDragging = true; clearTimeout(longPressTimer); hideCardZoom();
                     removeCardFromState(draggedCardData, sourceZone);
-                    
                     draggedCardVisual = document.createElement('div');
                     draggedCardVisual.className = 'card dragging';
                     if (draggedCardData.isStandby) draggedCardVisual.classList.add('standby');
@@ -262,23 +247,18 @@
                     document.body.appendChild(draggedCardVisual);
                     renderAll();
                 }
-                if (isDragging) {
-                    draggedCardVisual.style.left = `${moveX - offsetX}px`;
-                    draggedCardVisual.style.top = `${moveY - offsetY}px`;
-                }
+                if (isDragging) { draggedCardVisual.style.left = `${moveX - offsetX}px`; draggedCardVisual.style.top = `${moveY - offsetY}px`; }
             };
             const onEnd = (endEvent) => {
-                clearTimeout(longPressTimer);
+                clearTimeout(longPressTimer); isPressing = false;
                 document.removeEventListener('mousemove', onMove); document.removeEventListener('touchmove', onMove);
                 document.removeEventListener('mouseup', onEnd); document.removeEventListener('touchend', onEnd);
-
                 if (isDragging) {
-                    draggedCardVisual.style.display = 'none';
+                    draggedCardVisual.style.pointerEvents = 'none';
                     const endX = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientX;
                     const endY = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientY;
                     const targetEl = document.elementFromPoint(endX, endY);
                     const targetZoneEl = targetEl ? targetEl.closest('.drop-zone') : null;
-                    
                     if (targetZoneEl) { addCardToState(draggedCardData, targetZoneEl.dataset.zoneId); } 
                     else { addCardToState(draggedCardData, sourceZone); }
                 }
@@ -290,19 +270,12 @@
             document.addEventListener('mouseup', onEnd); document.addEventListener('touchend', onEnd);
         }
 
-        function handleDoubleClick(e) {
-            e.preventDefault();
-            const cardEl = e.currentTarget;
-            const zoneId = cardEl.closest('.drop-zone')?.dataset.zoneId;
-            if (!['stage', 'field'].includes(zoneId)) return;
-            const card = findCardFromState(cardEl.dataset.cardId, zoneId);
-            if (card) { card.isStandby = !card.isStandby; renderAll(); }
-        }
-        
+        function handleDoubleClick(e) { e.preventDefault(); const cardEl = e.currentTarget; const zoneId = cardEl.closest('.drop-zone')?.dataset.zoneId; if (!['stage', 'field'].includes(zoneId)) return; const card = findCardFromState(cardEl.dataset.cardId, zoneId); if (card) { card.isStandby = !card.isStandby; renderAll(); } }
         function showCardZoom(cardId) { document.getElementById('card-zoom-view').style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardId}.png')`; document.getElementById('card-zoom-overlay').style.display = 'flex'; }
         function hideCardZoom() { document.getElementById('card-zoom-overlay').style.display = 'none'; }
-        function renderTrashView() { const container = document.getElementById('trash-view-cards'); container.innerHTML = ''; gameState.zones.trash.forEach(cardId => container.appendChild(createCardElement(cardId, false, 'trash', true))); }
-        function renderTempZone() { const container = document.getElementById('temporary-zone-cards'); container.innerHTML = ''; gameState.zones.temporary.forEach(cardId => container.appendChild(createCardElement(cardId, false, 'temporary', true))); }
+        function renderTrashView() { const container = document.getElementById('trash-view-cards'); container.innerHTML = ''; gameState.zones.trash.forEach(cardId => container.appendChild(createCardElement(cardId, false, 'trash', 'drag'))); }
+        function renderVolNoiseView() { const container = document.getElementById('vol-noise-view-cards'); container.innerHTML = ''; gameState.zones.volNoise.forEach(cardId => container.appendChild(createCardElement(cardId, false, 'volNoise', 'drag'))); }
+        function renderTempZone() { const container = document.getElementById('temporary-zone-cards'); container.innerHTML = ''; gameState.zones.temporary.forEach(cardId => container.appendChild(createCardElement(cardId, false, 'temporary', 'drag'))); }
 
         function setupEventListeners() {
             document.getElementById('start-game-btn').addEventListener('click', () => {
@@ -316,72 +289,37 @@
             document.getElementById('reset-btn').addEventListener('click', () => { if (confirm('ゲームをリセットしますか？')) window.location.reload(); });
             document.getElementById('shuffle-btn').addEventListener('click', () => { shuffle(gameState.zones.deck); renderAll(); alert('山札をシャッフルしました。'); });
             
-            document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => {
-                const counter = btn.dataset.counter;
-                gameState.counters[counter] += parseInt(btn.dataset.amount, 10);
-                if (gameState.counters[counter] < 0) gameState.counters[counter] = 0;
-                renderAll();
-            }));
+            document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => { const counter = btn.dataset.counter; gameState.counters[counter] += parseInt(btn.dataset.amount, 10); if (gameState.counters[counter] < 0) gameState.counters[counter] = 0; renderAll(); }));
 
-            // Make pile zones clickable/draggable
-            ['deck-zone', 'trash-zone', 'vol-noise-zone'].forEach(id => {
-                 const zoneEl = document.getElementById(id);
-                 zoneEl.addEventListener('mousedown', handlePressStart);
-                 zoneEl.addEventListener('touchstart', handlePressStart, { passive: false });
-            });
-            
+            // Deck drag/tap
+            const deckZone = document.getElementById('deck-zone');
+            deckZone.addEventListener('mousedown', handlePressStart);
+            deckZone.addEventListener('touchstart', handlePressStart, { passive: false });
+            deckZone.addEventListener('click', () => { if (!isDragging && gameState.zones.deck.length > 0) { gameState.zones.hand.push(gameState.zones.deck.pop()); renderAll(); } });
+
             // Deck Search
             document.getElementById('deck-search-btn').addEventListener('click', () => {
                 const modalBody = document.getElementById('modal-body');
                 modalBody.innerHTML = '';
-                [...gameState.zones.deck].reverse().forEach(cardId => {
-                    const cardEl = createCardElement(cardId, false, 'deck', true);
-                    cardEl.style.cursor = 'pointer';
-                    cardEl.addEventListener('click', () => {
-                        const index = gameState.zones.deck.indexOf(cardId);
-                        if (index > -1) gameState.zones.deck.splice(index, 1);
-                        gameState.zones.hand.push(cardId);
-                        document.getElementById('modal-container').style.display = 'none';
-                        shuffle(gameState.zones.deck); renderAll();
-                    });
-                    modalBody.appendChild(cardEl);
-                });
+                [...gameState.zones.deck].reverse().forEach(cardId => modalBody.appendChild(createCardElement(cardId, false, 'deck', 'click')));
                 document.getElementById('modal-title').textContent = '山札サーチ';
                 document.getElementById('modal-container').style.display = 'flex';
             });
             document.getElementById('modal-close-btn').addEventListener('click', () => { document.getElementById('modal-container').style.display = 'none'; });
 
-            // Trash View Toggle (Only open if not dragging from it)
-            document.getElementById('trash-zone').addEventListener('mouseup', (e) => {
-                if (isDragging) return;
-                const container = document.getElementById('trash-view-container');
-                const isHidden = container.style.display === 'none' || !container.style.display;
-                if(isHidden) renderTrashView();
-                container.style.display = isHidden ? 'block' : 'none';
-            });
+            // Overlay View Toggles
+            document.getElementById('trash-zone').addEventListener('click', () => { if(isDragging) return; const container = document.getElementById('trash-view-container'); const isHidden = container.style.display === 'none' || !container.style.display; if(isHidden) renderTrashView(); container.style.display = isHidden ? 'block' : 'none'; });
+            document.getElementById('vol-noise-zone').addEventListener('click', () => { if(isDragging) return; const container = document.getElementById('vol-noise-view-container'); const isHidden = container.style.display === 'none' || !container.style.display; if(isHidden) renderVolNoiseView(); container.style.display = isHidden ? 'block' : 'none'; });
             
             const tempZoneContainer = document.getElementById('temporary-zone-container');
-            document.getElementById('temp-zone-toggle-btn').addEventListener('click', () => {
-                const isHidden = tempZoneContainer.style.display === 'none' || !tempZoneContainer.style.display;
-                if(isHidden) renderTempZone();
-                tempZoneContainer.style.display = isHidden ? 'block' : 'none';
-                document.getElementById('temp-zone-toggle-btn').textContent = isHidden ? 'テンポラリ非表示' : 'テンポラリ表示';
-            });
-            document.getElementById('temporary-zone-controls').addEventListener('click', (e) => {
-                const action = e.target.dataset.action;
-                const tempCards = [...gameState.zones.temporary];
-                if (tempCards.length === 0) return;
-                if (action === 'temp-to-trash') gameState.zones.trash.push(...tempCards);
-                if (action === 'temp-to-deck-shuffle') { gameState.zones.deck.push(...tempCards); shuffle(gameState.zones.deck); }
-                if (action === 'temp-to-deck-bottom') gameState.zones.deck.unshift(...shuffle(tempCards));
-                gameState.zones.temporary = []; renderAll();
-            });
+            document.getElementById('temp-zone-toggle-btn').addEventListener('click', () => { const isHidden = tempZoneContainer.style.display === 'none' || !tempZoneContainer.style.display; if(isHidden) renderTempZone(); tempZoneContainer.style.display = isHidden ? 'block' : 'none'; document.getElementById('temp-zone-toggle-btn').textContent = isHidden ? 'テンポラリ非表示' : 'テンポラリ表示'; });
+            document.getElementById('temporary-zone-controls').addEventListener('click', (e) => { const action = e.target.dataset.action; const tempCards = [...gameState.zones.temporary]; if (tempCards.length === 0) return; if (action === 'temp-to-trash') gameState.zones.trash.push(...tempCards); if (action === 'temp-to-deck-shuffle') { gameState.zones.deck.push(...tempCards); shuffle(gameState.zones.deck); } if (action === 'temp-to-deck-bottom') gameState.zones.deck.unshift(...shuffle(tempCards)); gameState.zones.temporary = []; renderAll(); });
+            
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.overlay-zone-container') && !e.target.closest('#trash-zone')) { document.getElementById('trash-view-container').style.display = 'none'; }
+                if (!e.target.closest('.overlay-zone-container') && !e.target.closest('#vol-noise-zone')) { document.getElementById('vol-noise-view-container').style.display = 'none'; }
                 const tempBtn = document.getElementById('temp-zone-toggle-btn');
-                if (!e.target.closest('.overlay-zone-container') && e.target !== tempBtn) {
-                    if(tempZoneContainer.style.display === 'block') { tempZoneContainer.style.display = 'none'; tempBtn.textContent = 'テンポラリ表示'; }
-                }
+                if (!e.target.closest('.overlay-zone-container') && e.target !== tempBtn) { if(tempZoneContainer.style.display === 'block') { tempZoneContainer.style.display = 'none'; tempBtn.textContent = 'テンポラリ表示'; } }
             });
         }
         
