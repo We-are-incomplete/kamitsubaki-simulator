@@ -870,7 +870,18 @@
 
             if (element.classList.contains('pile-zone')) {
                 if (zoneId === 'deck' && gameState.zones.deck.length > 0) {
-                    gameState.zones.hand.push(gameState.zones.deck.pop());
+                    // テンポラリーゾーンが開いているか確認
+                    const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone');
+                    if (temporaryExpandedZoneEl.style.display === 'flex') {
+                        // テンポラリーゾーンにカードを追加
+                        const topCard = gameState.zones.deck.pop();
+                        if (topCard) {
+                            gameState.zones.temporary.push(topCard);
+                        }
+                    } else {
+                        // 通常通り手札にカードを追加
+                        gameState.zones.hand.push(gameState.zones.deck.pop());
+                    }
                 } else if (zoneId === 'volNoise' && gameState.zones.volNoise && gameState.zones.volNoise.length > 0) {
                     // VOLノイズゾーンがタップされた場合
                     const topCard = gameState.zones.volNoise.pop();
