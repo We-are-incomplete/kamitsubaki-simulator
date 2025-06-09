@@ -162,17 +162,26 @@
 
         function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[array[i], array[j]] = [array[j], array[i]]; } return array; }
         
-        function removeCardFromState(cardData, fromInfo) {
-            if (!cardData || !fromInfo) return;
-            const zoneId = fromInfo.zoneId;
-            const cardIdToRemove = cardData.cardId;
-            if (zoneId === 'direction') { gameState.zones.direction[fromInfo.slotIndex] = null; }
-            else if (zoneId === 'stage') {
-                const slotArray = gameState.zones.stage[fromInfo.slotIndex][fromInfo.slotColor];
-                const cardIndex = slotArray.findIndex(card => card.cardId === cardIdToRemove);
-                if (cardIndex > -1) slotArray.splice(cardIndex, 1);
+        function addCardToState(cardData, toInfo) {
+            if (!cardData || !toInfo || !toInfo.zoneId) return;
+            const zoneId = toInfo.zoneId;
+            const zone = gameState.zones[zoneId];
+            if (!zone) return; // ゾーンが存在しない場合は処理を中断
+
+            // 常に正しいカードオブジェクトを生成
+            const cardObject = {
+                cardId: cardData.cardId,
+                isStandby: cardData.isStandby || false
+            };
+
+            if (zoneId === 'direction') {
+                if(toInfo.slotIndex !== undefined) gameState.zones.direction[toInfo.slotIndex] = cardObject;
+            } else if (zoneId === 'stage') {
+                if(toInfo.slotIndex !== undefined && toInfo.slotColor) gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor].push(cardObject);
+            } else {
+                // スロット以外のゾーンには、必ずカードID(文字列)のみを追加する
+                if(typeof cardObject.cardId === 'string') zone.push(cardObject.cardId);
             }
-            else { const zone = gameState.zones[zoneId]; if(!zone) return; const index = zone.indexOf(cardIdToRemove); if (index > -1) zone.splice(index, 1); }
         }
         function addCardToState(cardData, toInfo) {
             if (!cardData || !toInfo) return;
