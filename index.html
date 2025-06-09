@@ -89,6 +89,20 @@
             cursor: grab; /* ドラッグ可能を示すカーソルに変更 */
             margin: 0; /* 個別のマージンはgapで管理 */
         }
+
+        #reset-btn {
+            margin-bottom: 10px; /* リセットボタンの下にスペースを追加 */
+        }
+        #change-mat-btn {
+            padding: 10px 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #6c757d; /* Bootstrapのsecondaryカラー */
+            border: none;
+            color: white;
+            border-radius: 5px;
+            margin-bottom: 10px; /* 他のボタンとの間隔 */
+        }
     </style>
 </head>
 <body>
@@ -133,6 +147,7 @@
                     <button id="move-hand-to-trash-btn" class="action-btn">手札を全てトラッシュ</button>
                     <button id="mulligan-btn" class="action-btn">マリガン</button>
                     <button id="reset-btn" class="action-btn">リセット</button>
+                    <button id="change-mat-btn">プレイマット変更</button>
                 </div>
             </div>
             <div id="hand-zone" class="zone drop-zone" data-zone-id="hand"></div>
@@ -358,6 +373,8 @@
                     let dropped = false;
                     const targetSlot = targetEl ? targetEl.closest('.card-slot.drop-zone') : null;
                     const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#direction-zone)') : null;
+                    const targetExpandedTrash = targetEl ? targetEl.closest('#trash-expanded-zone') : null;
+
                     if (targetSlot) {
                         const targetInfo = {
                             zoneId: targetSlot.dataset.zoneId,
@@ -366,8 +383,12 @@
                         };
                         addCardToState(draggedCardData, targetInfo);
                         dropped = true;
-                    } else if (targetNonSlotZone) {
+                    } else if (targetNonSlotZone) { // ハンド、山札、トラッシュ（パイル）へのドロップ
                         addCardToState(draggedCardData, { zoneId: targetNonSlotZone.dataset.zoneId });
+                        dropped = true;
+                    } else if (targetExpandedTrash && targetExpandedTrash.style.display === 'flex') {
+                        // 表示されている展開トラッシュゾーンへのドロップ
+                        addCardToState(draggedCardData, { zoneId: 'trash' });
                         dropped = true;
                     }
                     if (!dropped) addCardToState(draggedCardData, sourceInfo);
@@ -527,6 +548,39 @@
             document.getElementById('reset-btn').addEventListener('click', () => {
                 if (confirm('ゲームをリセットしますか？')) window.location.reload();
             });
+            document.getElementById('change-mat-btn').addEventListener('click', changeBackground);
+
+            // ドキュメント全体のクリックで展開トラッシュゾーンを閉じる処理
+            document.addEventListener('click', (event) => {
+                const trashExpandedZoneEl = document.getElementById('trash-expanded-zone');
+                const trashZoneEl = document.getElementById('trash-zone'); // トラッシュパイルの要素
+
+                // 展開トラッシュゾーンが表示されているか確認
+                if (trashExpandedZoneEl.style.display === 'flex') {
+                    // クリックがトラッシュパイルアイコン（トグルボタンとして機能）で発生したか確認
+                    if (trashZoneEl.contains(event.target)) {
+                        // トラッシュパイルアイコンがクリックされた場合は、既存のhandleTapに任せる
+                        return;
+                    }
+                    // クリックが展開トラッシュゾーン内部で発生したか確認
+                    if (trashExpandedZoneEl.contains(event.target)) {
+                        // 展開トラッシュゾーン内部のクリックは無視（カード操作のため）
+                        return;
+                    }
+
+                    // 上記以外（つまり「何もない場所」）がクリックされた場合、展開トラッシュゾーンを閉じる
+                    trashExpandedZoneEl.style.display = 'none';
+                    // renderAll(); // 必要に応じて呼び出すが、ここでは表示を切り替えるだけなので不要な場合が多い
+                }
+            });
+        }
+
+        function changeBackground() {
+            if (document.body.style.backgroundImage.includes('wall.png')) {
+                document.body.style.backgroundImage = "url('cards/wall1.png')";
+            } else {
+                document.body.style.backgroundImage = "url('cards/wall.png')";
+            }
         }
 
         document.getElementById('start-game-btn').addEventListener('click', () => {
