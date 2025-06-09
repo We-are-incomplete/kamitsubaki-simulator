@@ -6,10 +6,8 @@
     <title>KAMITSUBAKI CARD GAME 一人回し用シミュレーター</title>
     <style>
         :root {
-            /* ### MODIFIED SECTION START ### */
             --card-height: 19vh;
             --card-width: calc(var(--card-height) * 0.7);
-            /* ### MODIFIED SECTION END ### */
             --zone-bg: rgba(0, 0, 0, 0.2);
             --border-color: rgba(255, 255, 255, 0.3);
         }
@@ -38,7 +36,18 @@
         
         #stage-zone, #direction-zone { display: flex; justify-content: space-around; align-items: center; flex-grow: 1; }
         .stage-column { position: relative; width: var(--card-width); height: calc(var(--card-height) * 2); }
-        .card-slot { width: var(--card-width); height: var(--card-height); border: 1px dashed var(--border-color); border-radius: 4px; box-sizing: border-box; }
+        
+        /* ### MODIFIED SECTION START ### */
+        .card-slot {
+            position: relative; /* この一行を追加しました */
+            width: var(--card-width);
+            height: var(--card-height);
+            border: 1px dashed var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        /* ### MODIFIED SECTION END ### */
+
         .stage-column .card-slot { position: absolute; left: 0; }
         .card-slot[data-slot-color="green"]  { top: 0; border-color: #28a745; z-index: 1; }
         .card-slot[data-slot-color="blue"]   { top: calc(var(--card-height) * 0.5); border-color: #007bff; z-index: 2; }
@@ -54,19 +63,6 @@
 
         .card { width: var(--card-width); height: var(--card-height); background-size: cover; background-position: center; background-repeat: no-repeat; border-radius: 4px; transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease; cursor: grab; touch-action: none; transform-origin: center; }
         .card.dragging { position: fixed; z-index: 3000; cursor: grabbing; box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); pointer-events: none; transition: none; }
-        
-        #card-zoom-overlay { z-index: 4000; cursor: pointer; }
-        #card-zoom-view { width: calc(var(--card-width) * 4); height: calc(var(--card-height) * 4); background-size: contain; background-position: center; background-repeat: no-repeat; border-radius: 16px; box-shadow: 0 0 20px rgba(0,0,0,0.5); pointer-events: none; }
-        
-        /* ### MODIFIED SECTION START ### */
-        .counter { background-color: var(--zone-bg); padding: 0.5vh 1vw; border-radius: 5px; text-align: center; width: 18vw; max-width: 120px; }
-        .counter-label { font-size: 1.8vh; }
-        .counter-value { font-size: 3vh; font-weight: bold; margin: 0 1vw; }
-        .counter-controls { display: flex; justify-content: center; align-items: center; }
-        .counter-btn { font-size: 2.5vh; width: 4vh; height: 4vh; line-height: 4vh; background: none; border: 1px solid var(--border-color); color: #fff; cursor: pointer; border-radius: 50%; }
-        .action-btn { padding: 1.2vh 1vw; font-size: 1.8vh; cursor: pointer; background-color: #3a3f44; border: 1px solid var(--border-color); color: white; border-radius: 5px; width: 18vw; max-width: 120px; margin-top: auto; white-space: nowrap; }
-        #reset-btn { margin-top: 1vh; }
-        /* ### MODIFIED SECTION END ### */
     </style>
 </head>
 <body>
@@ -116,8 +112,6 @@
     </div>
     
     <script>
-    // The JavaScript code is identical to the "Stable Baseline" version.
-    // All changes are in the CSS <style> block above.
     document.addEventListener('DOMContentLoaded', () => {
         const counters = { vol: document.getElementById('vol-value'), manaAlpha: document.getElementById('mana-alpha-value'), manaBeta: document.getElementById('mana-beta-value'), manaOmega: document.getElementById('mana-omega-value'), turn: document.getElementById('turn-value'), };
         let gameState = {};
