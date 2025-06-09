@@ -26,7 +26,7 @@
 
         #game-board { display: none; width: 100%; height: 100%; flex-direction: column; }
         #main-area { display: flex; flex-grow: 1; height: calc(100% - var(--card-height) - 10px); }
-        #left-column { display: flex; flex-direction: column; justify-content: space-between; padding: 5px; gap: 10px; }
+        #left-column { display: flex; flex-direction: column; justify-content: space-around; padding: 5px; gap: 10px; }
         #center-column { flex-grow: 1; display: flex; flex-direction: column; padding: 5px; gap: 5px; }
         #right-column { display: flex; flex-direction: column; align-items: center; padding: 10px; gap: 8px; }
 
@@ -59,6 +59,9 @@
         #card-zoom-view { width: calc(var(--card-width) * 4); height: calc(var(--card-height) * 4); background-size: contain; background-position: center; background-repeat: no-repeat; border-radius: 16px; box-shadow: 0 0 20px rgba(0,0,0,0.5); pointer-events: none; }
         
         .overlay-zone-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 800px; z-index: 500; background-color: rgba(40, 40, 40, 0.95); border: 1px solid #c90063; border-radius: 10px; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: none; }
+        .overlay-zone-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .overlay-zone-controls button { margin-left: 5px; font-size: 0.8rem; padding: 4px 8px; }
+        .overlay-card-area { min-height: calc(var(--card-height) + 10px); display: flex; flex-wrap: wrap; gap: 5px; padding: 5px; border: 1px dotted rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
@@ -74,7 +77,6 @@
                 <div id="left-column">
                     <div id="deck-zone" class="zone pile-zone drop-zone" data-zone-id="deck"><div class="zone-title">山札</div></div>
                     <div id="trash-zone" class="zone pile-zone drop-zone" data-zone-id="trash"><div class="zone-title">トラッシュ</div></div>
-                    <div id="vol-noise-zone" class="zone pile-zone drop-zone" data-zone-id="volNoise"><div class="zone-title">VOLノイズ</div></div>
                 </div>
                 <div id="center-column">
                     <div id="stage-zone" class="zone">
@@ -111,7 +113,6 @@
     </div>
     <div id="temporary-zone-container" class="overlay-zone-container"><div class="overlay-zone-header"><span>テンポラリーゾーン</span><div id="temporary-zone-controls"><button data-action="temp-to-trash">全てトラッシュへ</button><button data-action="temp-to-deck-shuffle">山札に戻しシャッフル</button><button data-action="temp-to-deck-bottom">山札の下へ</button></div></div><div id="temporary-zone-cards" class="overlay-card-area drop-zone" data-zone-id="temporary"></div></div>
     <div id="trash-view-container" class="overlay-zone-container"><div class="overlay-zone-header"><span>トラッシュ</span></div><div id="trash-view-cards" class="overlay-card-area drop-zone" data-zone-id="trash"></div></div>
-    <div id="vol-noise-view-container" class="overlay-zone-container"><div class="overlay-zone-header"><span>VOLノイズ</span></div><div id="vol-noise-view-cards" class="overlay-card-area drop-zone" data-zone-id="volNoise"></div></div>
     <div id="modal-container" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h2 id="modal-title"></h2><span id="modal-close-btn" class="modal-close-btn">&times;</span></div><div id="modal-body" class="modal-body"></div></div></div>
     <div id="card-zoom-overlay" class="modal-overlay"><div id="card-zoom-view"></div></div>
 
@@ -127,7 +128,7 @@
                     deck: shuffle([...deckList]), hand: [],
                     stage: Array(NUM_SLOTS).fill(null).map(() => ({ red: [], blue: [], green: [] })),
                     direction: Array(NUM_SLOTS).fill(null).map(() => []),
-                    trash: [], volNoise: [], temporary: []
+                    trash: [], temporary: []
                 }
             };
             for(let i = 0; i < 7; i++) { if (gameState.zones.deck.length > 0) { gameState.zones.hand.push(gameState.zones.deck.pop()); } }
@@ -181,13 +182,12 @@
         function renderAll() {
             renderBoard();
             if (document.getElementById('trash-view-container').style.display === 'block') renderView('trash', 'trash-view-cards');
-            if (document.getElementById('vol-noise-view-container').style.display === 'block') renderView('volNoise', 'vol-noise-view-cards');
             if (document.getElementById('temporary-zone-container').style.display === 'block') renderView('temporary', 'temporary-zone-cards');
         }
 
         function renderBoard() {
             document.querySelectorAll('.card, .zone-count').forEach(el => el.remove());
-            ['deck', 'trash', 'volNoise'].forEach(zoneId => {
+            ['deck', 'trash'].forEach(zoneId => {
                 const zoneEl = document.getElementById(`${zoneId}-zone`);
                 const zoneData = gameState.zones[zoneId];
                 if (zoneData.length > 0) {
@@ -247,14 +247,6 @@
             if (interactiveType === 'drag') {
                 cardEl.addEventListener('mousedown', handlePressStart);
                 cardEl.addEventListener('touchstart', handlePressStart, { passive: false });
-            } else if (interactiveType === 'click') {
-                cardEl.addEventListener('click', (e) => {
-                    const searchCardId = e.currentTarget.dataset.cardId;
-                    const index = gameState.zones.deck.indexOf(searchCardId);
-                    if (index > -1) { gameState.zones.deck.splice(index, 1); gameState.zones.hand.push(searchCardId); }
-                    document.getElementById('modal-container').style.display = 'none';
-                    shuffle(gameState.zones.deck); renderAll();
-                });
             }
             return cardEl;
         }
@@ -279,7 +271,7 @@
                 draggedCardData = { cardId: gameState.zones[zoneId].slice(-1)[0], isStandby: false };
             } else {
                  const cardId = element.dataset.cardId;
-                 if (['hand', 'temporary', 'trash', 'volNoise'].includes(zoneId)) {
+                 if (['hand', 'temporary', 'trash'].includes(zoneId)) {
                     draggedCardData = { cardId: cardId, isStandby: false };
                  } else { 
                     sourceInfo.slotIndex = element.dataset.slotIndex;
@@ -344,7 +336,7 @@
                     }
                     if(!dropped) { addCardToState(draggedCardData, sourceInfo); }
                 } else {
-                    handleTap(sourceInfo);
+                    handleTap(element, sourceInfo);
                 }
 
                 if (draggedCardVisual) draggedCardVisual.remove();
@@ -355,35 +347,28 @@
             document.addEventListener('mouseup', onEnd); document.addEventListener('touchend', onEnd);
         }
 
-        function handleTap(tapInfo) {
-            const zoneId = tapInfo.zoneId;
+        function handleTap(element, tapInfo) {
+            const { zoneId, slotIndex, slotColor } = tapInfo;
             if (zoneId === 'deck') {
                 if(gameState.zones.deck.length > 0) gameState.zones.hand.push(gameState.zones.deck.pop());
             } else if (zoneId === 'direction' || zoneId === 'stage') {
-                handleCardRotation(tapInfo);
-            }
-        }
-
-        function handleCardRotation(tapInfo) {
-            const { zoneId, slotIndex, slotColor } = tapInfo;
-            let card = null;
-            if (zoneId === 'direction' || zoneId === 'stage') {
                 let slotArray;
                 if (zoneId === 'direction') { slotArray = gameState.zones.direction[slotIndex]; }
                 else if (zoneId === 'stage') { slotArray = gameState.zones.stage[slotIndex][slotColor]; }
 
                 if (slotArray && slotArray.length > 0) {
-                    card = slotArray[slotArray.length - 1];
+                    const topCard = slotArray[slotArray.length - 1];
+                    if (element.dataset.cardId === topCard.cardId) {
+                       topCard.isStandby = !topCard.isStandby;
+                    }
                 }
             }
-            if (card) { card.isStandby = !card.isStandby; }
         }
         
         function showCardZoom(cardId) { document.getElementById('card-zoom-view').style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardId}.png')`; document.getElementById('card-zoom-overlay').style.display = 'flex'; }
         function hideCardZoom() { document.getElementById('card-zoom-overlay').style.display = 'none'; }
         function renderView(zoneId, containerId) { const container = document.getElementById(containerId); container.innerHTML = ''; gameState.zones[zoneId].forEach(cardData => { const cardId = (typeof cardData === 'object' && cardData.cardId) ? cardData.cardId : cardData; if(cardId) { container.appendChild(createCardElement(cardId, false, zoneId, 'drag')); } }); }
         function renderTrashView() { renderView('trash', 'trash-view-cards'); }
-        function renderVolNoiseView() { renderView('volNoise', 'vol-noise-view-cards'); }
         function renderTempZone() { renderView('temporary', 'temporary-zone-cards'); }
 
         function setupEventListeners() {
@@ -402,14 +387,35 @@
             
             document.getElementById('deck-zone').addEventListener('mousedown', handlePressStart);
             document.getElementById('deck-zone').addEventListener('touchstart', handlePressStart, { passive: false });
+            document.getElementById('trash-zone').addEventListener('click', () => { if(isDragging) return; const container = document.getElementById('trash-view-container'); const isHidden = container.style.display === 'none' || !container.style.display; if(isHidden) renderTrashView(); container.style.display = isHidden ? 'block' : 'none'; });
 
-            document.getElementById('deck-search-btn').addEventListener('click', () => { const modalBody = document.getElementById('modal-body'); modalBody.innerHTML = ''; [...gameState.zones.deck].reverse().forEach(cardId => modalBody.appendChild(createCardElement(cardId, false, 'deck', 'click'))); document.getElementById('modal-title').textContent = '山札サーチ'; document.getElementById('modal-container').style.display = 'flex'; });
+            document.getElementById('deck-search-btn').addEventListener('click', () => {
+                const modalBody = document.getElementById('modal-body');
+                modalBody.innerHTML = '';
+                document.getElementById('modal-title').textContent = '山札サーチ';
+                const pileCards = [...gameState.zones.deck];
+                pileCards.reverse();
+
+                pileCards.forEach(cardId => {
+                    const cardEl = createCardElement(cardId, false, 'deck', 'none');
+                    cardEl.style.cursor = 'pointer';
+                    cardEl.addEventListener('click', () => {
+                        const index = gameState.zones.deck.indexOf(cardId);
+                        if (index > -1) {
+                            gameState.zones.deck.splice(index, 1);
+                            gameState.zones.hand.push(cardId);
+                        }
+                        document.getElementById('modal-container').style.display = 'none';
+                        shuffle(gameState.zones.deck);
+                        renderAll();
+                    });
+                    modalBody.appendChild(cardEl);
+                });
+                document.getElementById('modal-container').style.display = 'flex';
+            });
             document.getElementById('modal-close-btn').addEventListener('click', () => { document.getElementById('modal-container').style.display = 'none'; });
             
             document.getElementById('card-zoom-overlay').addEventListener('click', hideCardZoom);
-
-            document.getElementById('trash-zone').addEventListener('click', () => { if(isDragging) return; const container = document.getElementById('trash-view-container'); const isHidden = container.style.display === 'none' || !container.style.display; if(isHidden) renderTrashView(); container.style.display = isHidden ? 'block' : 'none'; });
-            document.getElementById('vol-noise-zone').addEventListener('click', () => { if(isDragging) return; const container = document.getElementById('vol-noise-view-container'); const isHidden = container.style.display === 'none' || !container.style.display; if(isHidden) renderVolNoiseView(); container.style.display = isHidden ? 'block' : 'none'; });
             
             const tempZoneContainer = document.getElementById('temporary-zone-container');
             document.getElementById('temp-zone-toggle-btn').addEventListener('click', () => { const isHidden = tempZoneContainer.style.display === 'none' || !tempZoneContainer.style.display; if(isHidden) renderTempZone(); tempZoneContainer.style.display = isHidden ? 'block' : 'none'; document.getElementById('temp-zone-toggle-btn').textContent = isHidden ? 'テンポラリ非表示' : 'テンポラリ表示'; });
@@ -417,7 +423,6 @@
             
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.overlay-zone-container') && !e.target.closest('#trash-zone')) { document.getElementById('trash-view-container').style.display = 'none'; }
-                if (!e.target.closest('.overlay-zone-container') && !e.target.closest('#vol-noise-zone')) { document.getElementById('vol-noise-view-container').style.display = 'none'; }
                 const tempBtn = document.getElementById('temp-zone-toggle-btn');
                 if (!e.target.closest('.overlay-zone-container') && e.target !== tempBtn) { if(tempZoneContainer.style.display === 'block') { tempZoneContainer.style.display = 'none'; tempBtn.textContent = 'テンポラリ表示'; } }
             });
