@@ -16,6 +16,9 @@
             background-color: #1a1a1d; color: #fff;
             font-family: 'Yu Gothic', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
             overflow: hidden; user-select: none; -webkit-user-select: none;
+            background-image: url('cards/wall.png'); /* 背景画像を指定 */
+            background-size: cover; /* 画面全体に画像を拡大縮小 */
+            background-repeat: no-repeat; /* 画像を繰り返さない */
         }
         #game-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
         .screen { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 1vh 2vw; box-sizing: border-box; }
@@ -48,10 +51,44 @@
         .pile-zone .card { position: absolute; top: 5px; left: 5px; pointer-events: none; }
         .pile-zone .card:nth-child(2) { transform: translate(1px, 1px); }
         .pile-zone .card:nth-child(3) { transform: translate(2px, 2px); }
-        .zone-count { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 4vh; font-weight: bold; color: white; text-shadow: 0 0 5px black, 0 0 5px black; pointer-events: none; }
+        .zone-count { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); font-size: 4vh; font-weight: bold; color: white; text-shadow: 0 0 5px black, 0 0 5px black; pointer-events: none; }
 
         .card { width: var(--card-width); height: var(--card-height); background-size: cover; background-position: center; background-repeat: no-repeat; border-radius: 4px; transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease; cursor: grab; touch-action: none; transform-origin: center; }
         .card.dragging { position: fixed; z-index: 3000; cursor: grabbing; box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); pointer-events: none; transition: none; }
+
+        #trash-expanded-zone {
+            display: none; /* 初期状態は非表示 */
+            position: absolute; /* ゲームボードに対する絶対位置 */
+            top: 50%; /* 盤面中央に配置 */
+            left: 50%;
+            transform: translate(-50%, -50%); /* 中央揃えのための調整 */
+            width: 70vw; /* 盤面の幅に合わせて調整 */
+            height: 60vh; /* 盤面の高さに合わせて調整 */
+            max-width: 800px; /* 最大幅 */
+            max-height: 500px; /* 最大高さ */
+            background-color: rgba(40, 20, 60, 0.95); /* 少し濃い紫色の背景 */
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            box-sizing: border-box;
+            z-index: 2500; /* 他の要素より手前、ドラッグ中のカードよりは奥 */
+            overflow-y: auto; /* 縦スクロール可能 */
+            /* display: flex; はJSで制御するため、ここでは指定しないか、初期値のnoneを優先させる */
+            flex-wrap: wrap; /* カードを折り返して表示 */
+            align-items: flex-start; /* 上から配置 */
+            justify-content: flex-start; /* 左から配置 */
+            gap: 10px; /* カード間の隙間 */
+        }
+
+        #trash-expanded-zone .card {
+            /* 展開ゾーン内のカードは元のサイズで表示 */
+            width: calc(var(--card-width) * 0.8); /* 少し小さめに表示 */
+            height: calc(var(--card-height) * 0.8);
+            position: relative; 
+            display: inline-block; 
+            cursor: grab; /* ドラッグ可能を示すカーソルに変更 */
+            margin: 0; /* 個別のマージンはgapで管理 */
+        }
     </style>
 </head>
 <body>
@@ -93,287 +130,421 @@
                     <div class="counter"><div class="counter-label">魔力 Ω</div><div class="counter-controls"><button class="counter-btn" data-counter="manaOmega" data-amount="-1">-</button><span id="mana-omega-value" class="counter-value">0</span><button class="counter-btn" data-counter="manaOmega" data-amount="1">+</button></div></div>
                     <div class="counter"><div class="counter-label">ターン</div><div class="counter-controls"><button class="counter-btn" data-counter="turn" data-amount="-1">-</button><span id="turn-value" class="counter-value">1</span><button class="counter-btn" data-counter="turn" data-amount="1">+</button></div></div>
                     <button id="shuffle-btn" class="action-btn">山札シャッフル</button>
+                    <button id="move-hand-to-trash-btn" class="action-btn">手札を全てトラッシュ</button>
+                    <button id="mulligan-btn" class="action-btn">マリガン</button>
                     <button id="reset-btn" class="action-btn">リセット</button>
                 </div>
             </div>
             <div id="hand-zone" class="zone drop-zone" data-zone-id="hand"></div>
         </div>
     </div>
+    <div id="trash-expanded-zone"></div> {/* 展開用トラッシュゾーン */}
     
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const counters = { vol: document.getElementById('vol-value'), manaAlpha: document.getElementById('mana-alpha-value'), manaBeta: document.getElementById('mana-beta-value'), manaOmega: document.getElementById('mana-omega-value'), turn: document.getElementById('turn-value'), };
+        const counters = {
+            vol: document.getElementById('vol-value'),
+            manaAlpha: document.getElementById('mana-alpha-value'),
+            manaBeta: document.getElementById('mana-beta-value'),
+            manaOmega: document.getElementById('mana-omega-value'),
+            turn: document.getElementById('turn-value'),
+        };
         let gameState = {};
+        const CARD_IMAGE_PATH = 'cards/';
+        const DOUBLE_TAP_THRESHOLD = 300;
+        let lastTapTime = 0;
+        let lastTapTargetCardId = null;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
         function initGameState(deckList = []) {
             const NUM_SLOTS = 5;
             gameState = {
                 counters: { turn: 1, vol: 0, manaAlpha: 0, manaBeta: 0, manaOmega: 0 },
                 zones: {
-                    deck: shuffle([...deckList]), hand: [],
+                    deck: shuffle([...deckList]),
+                    hand: [],
                     stage: Array(NUM_SLOTS).fill(null).map(() => ({ red: [], blue: [], green: [] })),
                     direction: Array(NUM_SLOTS).fill(null).map(() => []),
                     trash: [],
                 }
             };
-            for(let i = 0; i < 7; i++) { if (gameState.zones.deck.length > 0) { gameState.zones.hand.push(gameState.zones.deck.pop()); } }
-        }
-
-        let draggedCardVisual = null, draggedCardData = null, sourceInfo = null;
-        const CARD_IMAGE_PATH = 'cards/';
-
-        function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[array[i], array[j]] = [array[j], array[i]]; } return array; }
-        
-        function removeCardFromState(cardData, fromInfo) {
-            if (!cardData || !fromInfo) return;
-            const zoneId = fromInfo.zoneId;
-            const cardIdToRemove = cardData.cardId;
-            let slotArray;
-            if (zoneId === 'direction') { slotArray = gameState.zones.direction[fromInfo.slotIndex]; }
-            else if (zoneId === 'stage') { slotArray = gameState.zones.stage[fromInfo.slotIndex][fromInfo.slotColor]; }
-            
-            if (slotArray && slotArray.length > 0) {
-                const topCard = slotArray[slotArray.length - 1];
-                if (topCard.cardId === cardIdToRemove) {
-                    slotArray.pop();
+            for (let i = 0; i < 7; i++) {
+                if (gameState.zones.deck.length > 0) {
+                    gameState.zones.hand.push(gameState.zones.deck.pop());
                 }
-            } else if (zoneId !== 'direction' && zoneId !== 'stage') { 
-                const zone = gameState.zones[zoneId]; 
-                if(!zone) return; 
-                const index = zone.indexOf(cardIdToRemove); 
-                if (index > -1) zone.splice(index, 1); 
-            }
-        }
-        function addCardToState(cardData, toInfo) {
-            if (!cardData || !toInfo || !toInfo.zoneId) return;
-            const zoneId = toInfo.zoneId;
-            const cardObject = { cardId: cardData.cardId, isStandby: false };
-            
-            if (zoneId === 'direction') {
-                if(toInfo.slotIndex !== undefined) gameState.zones.direction[toInfo.slotIndex].push(cardObject);
-            } else if (zoneId === 'stage') {
-                if(toInfo.slotIndex !== undefined && toInfo.slotColor) {
-                    if (toInfo.slotColor === 'blue') cardObject.isStandby = true;
-                    gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor].push(cardObject);
-                }
-            } else {
-                const zone = gameState.zones[zoneId];
-                if(zone && typeof cardObject.cardId === 'string') zone.push(cardObject.cardId);
             }
         }
 
         function renderAll() {
-            renderBoard();
-        }
-
-        function renderBoard() {
+            // Remove all cards and zone counts
             document.querySelectorAll('.card, .zone-count').forEach(el => el.remove());
+
+            // Render deck and trash pile
             ['deck', 'trash'].forEach(zoneId => {
                 const zoneEl = document.getElementById(`${zoneId}-zone`);
                 const zoneData = gameState.zones[zoneId];
                 if (zoneData.length > 0) {
                     zoneEl.appendChild(createCardElement(zoneData.slice(-1)[0], false, zoneId, 'none'));
-                    const countEl = document.createElement('span'); countEl.className = 'zone-count';
-                    countEl.textContent = zoneData.length; zoneEl.appendChild(countEl);
+                    const countEl = document.createElement('span');
+                    countEl.className = 'zone-count';
+                    countEl.textContent = zoneData.length;
+                    zoneEl.appendChild(countEl);
                 }
             });
 
-            document.getElementById('hand-zone').innerHTML = '';
-            gameState.zones.hand.forEach(cardId => { document.getElementById('hand-zone').appendChild(createCardElement(cardId, false, 'hand', 'drag')); });
-            
+            // Render hand
+            const handZone = document.getElementById('hand-zone');
+            handZone.innerHTML = '';
+            gameState.zones.hand.forEach(cardId => {
+                handZone.appendChild(createCardElement(cardId, false, 'hand', 'drag'));
+            });
+
+            // Render direction
             gameState.zones.direction.forEach((cardArray, index) => {
                 const slotEl = document.querySelector(`.card-slot[data-zone-id="direction"][data-slot-index="${index}"]`);
                 if (slotEl && cardArray.length > 0) {
                     cardArray.forEach((card, i) => {
                         const cardElement = createCardElement(card.cardId, card.isStandby, 'direction', 'drag', index);
                         let transformString = `translate(${i * 2}px, ${i * 2}px)`;
-                        if (card.isStandby) { transformString += ' rotate(90deg)'; }
+                        if (card.isStandby) transformString += ' rotate(90deg)';
                         cardElement.style.transform = transformString;
                         cardElement.style.zIndex = i;
                         slotEl.appendChild(cardElement);
                     });
                 }
             });
+
+            // Render stage
             gameState.zones.stage.forEach((column, index) => {
                 ['green', 'blue', 'red'].forEach(color => {
                     const cardArray = column[color];
                     const slotEl = document.querySelector(`.card-slot[data-zone-id="stage"][data-slot-index="${index}"][data-slot-color="${color}"]`);
                     if (slotEl && cardArray.length > 0) {
                         cardArray.forEach((card, i) => {
-                           const cardElement = createCardElement(card.cardId, card.isStandby, 'stage', 'drag', index, color);
-                           let transformString = `translate(${i * 2}px, ${i * 2}px)`;
-                           if (card.isStandby) { transformString += ' rotate(90deg)'; }
-                           cardElement.style.transform = transformString;
-                           cardElement.style.zIndex = i;
-                           slotEl.appendChild(cardElement);
+                            const cardElement = createCardElement(card.cardId, card.isStandby, 'stage', 'drag', index, color);
+                            let transformString = `translate(${i * 2}px, ${i * 2}px)`;
+                            if (card.isStandby) transformString += ' rotate(90deg)';
+                            cardElement.style.transform = transformString;
+                            cardElement.style.zIndex = i;
+                            slotEl.appendChild(cardElement);
                         });
                     }
                 });
             });
-            for (const counterId in counters) { counters[counterId].textContent = gameState.counters[counterId]; }
+
+            // Update counters
+            for (const counterId in counters) {
+                counters[counterId].textContent = gameState.counters[counterId];
+            }
+
+            // Render expanded trash zone if it's active
+            const trashExpandedZoneEl = document.getElementById('trash-expanded-zone');
+            trashExpandedZoneEl.innerHTML = ''; // Clear previous cards
+            if (trashExpandedZoneEl.style.display === 'flex') { 
+                gameState.zones.trash.forEach(cardId => {
+                    // 展開ゾーンのカードはドラッグ可能にする
+                    const cardElement = createCardElement(cardId, false, 'trash-expanded', 'drag'); 
+                    trashExpandedZoneEl.appendChild(cardElement);
+                });
+            }
         }
-        
+
         function createCardElement(cardId, isStandby, zoneId, interactiveType, slotIndex, slotColor) {
             const cardEl = document.createElement('div');
             cardEl.className = 'card';
-            if(!cardId) return cardEl;
-            
-            cardEl.dataset.cardId = cardId;
-            if (slotIndex !== undefined) cardEl.dataset.slotIndex = slotIndex;
-            if (slotColor) cardEl.dataset.slotColor = slotColor;
-            
-            if(zoneId === 'deck') { cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`; }
-            else { cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardId}.png')`; }
+            // cardIdがオブジェクトの場合（stageやdirectionから）と文字列の場合（handやdeckから）を考慮
+            const actualCardId = (typeof cardId === 'object' && cardId !== null) ? cardId.cardId : cardId;
+            cardEl.dataset.cardId = actualCardId;
 
+            if (zoneId === 'deck' && interactiveType === 'none') { // 山札のパイル表示のみ裏面
+                 cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`;
+            } else {
+                 cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}${actualCardId}.png')`;
+            }
+
+            if (isStandby) cardEl.style.transform = 'rotate(90deg)';
+            
             if (interactiveType === 'drag') {
-                cardEl.addEventListener('mousedown', handlePressStart);
-                cardEl.addEventListener('touchstart', handlePressStart, { passive: false });
+                cardEl.addEventListener('mousedown', e => handlePressStart(e, cardEl, zoneId, slotIndex, slotColor));
+                cardEl.addEventListener('touchstart', e => handlePressStart(e, cardEl, zoneId, slotIndex, slotColor), { passive: false });
+            }
+            
+            // タップイベントは手札、ステージ、ディレクションのカードにのみ設定
+            if (zoneId === 'hand' || zoneId === 'stage' || zoneId === 'direction') {
+                 cardEl.addEventListener('click', e => handleTap(cardEl, { zoneId, slotIndex, slotColor, cardId: actualCardId }));
             }
             return cardEl;
         }
-        
-        function handlePressStart(e) {
-            e.preventDefault();
-            const element = e.currentTarget;
-            let zoneId, isPile = false;
-            let isDragging = false; // ### MODIFIED: Local flag for this gesture
 
-            if (element.classList.contains('pile-zone')) {
-                isPile = true;
-                zoneId = element.dataset.zoneId;
-            } else if (element.classList.contains('card')) {
-                const parentZone = element.closest('.drop-zone');
-                if(!parentZone) return;
-                zoneId = parentZone.dataset.zoneId;
-            } else { return; }
-            sourceInfo = { zoneId };
-            
+        function handlePressStart(e, element, zoneId, slotIndex, slotColor) {
+            e.preventDefault();
+            let isDragging = false;
+            let draggedCardVisual = null;
+            let draggedCardData = null;
+            let sourceInfo = { zoneId, slotIndex, slotColor };
+            let isPile = (element.classList.contains('pile-zone')); // pile-zoneクラスで判定
+
             if (isPile) {
+                zoneId = element.dataset.zoneId; // pile-zoneからzoneIdを取得
+                sourceInfo.zoneId = zoneId; // sourceInfoも更新
                 if (gameState.zones[zoneId].length === 0) return;
-                draggedCardData = { cardId: gameState.zones[zoneId].slice(-1)[0], isStandby: false };
-            } else {
-                 const cardId = element.dataset.cardId;
-                 if (['hand', 'trash'].includes(zoneId)) {
-                    draggedCardData = { cardId: cardId, isStandby: false };
-                 } else { 
-                    sourceInfo.slotIndex = element.dataset.slotIndex;
-                    let slotArray;
-                    if(zoneId === 'stage') {
-                        sourceInfo.slotColor = element.dataset.slotColor;
-                        slotArray = gameState.zones.stage[sourceInfo.slotIndex][sourceInfo.slotColor];
-                    } else if (zoneId === 'direction') {
-                        slotArray = gameState.zones.direction[sourceInfo.slotIndex];
-                    }
-                    if(!slotArray || slotArray.length === 0) return;
-                    draggedCardData = { ...slotArray[slotArray.length - 1] };
-                 }
+                // パイルからドラッグする場合は一番上のカード
+                const topCardId = gameState.zones[zoneId][gameState.zones[zoneId].length - 1];
+                draggedCardData = { cardId: (typeof topCardId === 'object' ? topCardId.cardId : topCardId), isStandby: false };
+            } else if (zoneId === 'hand') {
+                draggedCardData = { cardId: element.dataset.cardId, isStandby: false };
+            } else if (zoneId === 'direction') {
+                const arr = gameState.zones.direction[slotIndex];
+                if (!arr || arr.length === 0) return;
+                draggedCardData = { ...arr[arr.length - 1] };
+            } else if (zoneId === 'stage') {
+                const arr = gameState.zones.stage[slotIndex][slotColor];
+                if (!arr || arr.length === 0) return;
+                draggedCardData = { ...arr[arr.length - 1] };
+            } else if (zoneId === 'trash' || zoneId === 'trash-expanded') {
+                draggedCardData = { cardId: element.dataset.cardId, isStandby: false };
+                sourceInfo.zoneId = 'trash'; // gameStateでの削除元は'trash'として扱う
             }
-            if(!draggedCardData) return;
+            if (!draggedCardData) return;
 
             const touch = e.touches ? e.touches[0] : e;
             const rect = element.getBoundingClientRect();
-            let offsetX = touch.clientX - rect.left; let offsetY = touch.clientY - rect.top;
-            if (isPile) { offsetX = rect.width / 2; offsetY = rect.height / 2; }
-            let startX = touch.clientX; let startY = touch.clientY;
-            
+            let offsetX = touch.clientX - rect.left;
+            let offsetY = touch.clientY - rect.top;
+            if (isPile) {
+                offsetX = rect.width / 2;
+                offsetY = rect.height / 2;
+            }
+            let startX = touch.clientX;
+            let startY = touch.clientY;
+
             const onMove = (moveEvent) => {
                 const moveX = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientX;
                 const moveY = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientY;
                 if (!isDragging && (Math.abs(moveX - startX) > 5 || Math.abs(moveY - startY) > 5)) {
                     isDragging = true;
-                    if(!isPile) { element.style.opacity = '0.5'; }
+                    if (!isPile) element.style.opacity = '0.5';
                     draggedCardVisual = document.createElement('div');
                     draggedCardVisual.className = 'card dragging';
-                    if (draggedCardData.isStandby) {
-                        draggedCardVisual.style.transform = 'rotate(90deg)';
-                    }
                     draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.png')`;
+                    if (draggedCardData.isStandby) draggedCardVisual.style.transform = 'rotate(90deg)';
                     document.body.appendChild(draggedCardVisual);
                 }
-                if (isDragging) { draggedCardVisual.style.left = `${moveX - offsetX}px`; draggedCardVisual.style.top = `${moveY - offsetY}px`; }
+                if (isDragging && draggedCardVisual) {
+                    draggedCardVisual.style.left = `${moveX - offsetX}px`;
+                    draggedCardVisual.style.top = `${moveY - offsetY}px`;
+                }
             };
-            const onEnd = (endEvent) => {
-                document.removeEventListener('mousemove', onMove); document.removeEventListener('touchmove', onMove);
-                document.removeEventListener('mouseup', onEnd); document.removeEventListener('touchend', onEnd);
-                if (!isPile) element.style.opacity = '1';
 
-                // ### MODIFIED SECTION START ###
+            const onEnd = (endEvent) => {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('mouseup', onEnd);
+                document.removeEventListener('touchend', onEnd);
+                if (!isPile && element) element.style.opacity = '1'; // elementが存在する場合のみ
                 if (isDragging) {
                     removeCardFromState(draggedCardData, sourceInfo);
-                    draggedCardVisual.style.display = 'none';
+                    if (draggedCardVisual) draggedCardVisual.style.display = 'none';
                     const endX = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientX;
                     const endY = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientY;
                     const targetEl = document.elementFromPoint(endX, endY);
-                    
                     let dropped = false;
                     const targetSlot = targetEl ? targetEl.closest('.card-slot.drop-zone') : null;
                     const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#direction-zone)') : null;
-
-                    if(targetSlot) {
-                        const targetInfo = { zoneId: targetSlot.dataset.zoneId, slotIndex: targetSlot.dataset.slotIndex, slotColor: targetSlot.dataset.slotColor };
-                        addCardToState(draggedCardData, targetInfo); dropped = true;
+                    if (targetSlot) {
+                        const targetInfo = {
+                            zoneId: targetSlot.dataset.zoneId,
+                            slotIndex: targetSlot.dataset.slotIndex,
+                            slotColor: targetSlot.dataset.slotColor
+                        };
+                        addCardToState(draggedCardData, targetInfo);
+                        dropped = true;
                     } else if (targetNonSlotZone) {
-                        addCardToState(draggedCardData, { zoneId: targetNonSlotZone.dataset.zoneId }); dropped = true;
+                        addCardToState(draggedCardData, { zoneId: targetNonSlotZone.dataset.zoneId });
+                        dropped = true;
                     }
-                    if(!dropped) { addCardToState(draggedCardData, sourceInfo); }
+                    if (!dropped) addCardToState(draggedCardData, sourceInfo);
                 } else {
-                    // If not dragging, it's a tap.
-                    handleTap(element, sourceInfo);
+                    // ドラッグでなければタップとして処理
+                    // pile-zone自体がタップされた場合も考慮
+                    if (isPile) {
+                        handleTap(element, { zoneId }); // パイルゾーンのタップ
+                    } else {
+                        handleTap(element, sourceInfo); // カードのタップ
+                    }
                 }
-                // ### MODIFIED SECTION END ###
-
                 if (draggedCardVisual) draggedCardVisual.remove();
-                draggedCardVisual = null; draggedCardData = null; sourceInfo = null;
                 renderAll();
             };
+
             document.addEventListener('mousemove', onMove);
             document.addEventListener('touchmove', onMove, { passive: false });
             document.addEventListener('mouseup', onEnd);
             document.addEventListener('touchend', onEnd);
         }
 
-        // ### MODIFIED SECTION START ###
-        function handleTap(element, tapInfo) {
-            const { zoneId, slotIndex, slotColor } = tapInfo;
-            if (zoneId === 'deck' || zoneId === 'trash') {
-                if(gameState.zones[zoneId].length > 0) gameState.zones.hand.push(gameState.zones[zoneId].pop());
-            } else if (zoneId === 'direction' || zoneId === 'stage') {
-                let slotArray;
-                if (zoneId === 'direction') { slotArray = gameState.zones.direction[slotIndex]; }
-                else if (zoneId === 'stage') { slotArray = gameState.zones.stage[slotIndex][slotColor]; }
+        function removeCardFromState(cardData, fromInfo) {
+            if (!cardData || !fromInfo) return;
+            const zoneId = fromInfo.zoneId; // 'trash-expanded'からドラッグした場合、ここは'trash'になる
+            const cardIdToRemove = cardData.cardId;
+            let slotArray;
+            if (zoneId === 'direction') {
+                slotArray = gameState.zones.direction[fromInfo.slotIndex];
+            } else if (zoneId === 'stage') {
+                slotArray = gameState.zones.stage[fromInfo.slotIndex][fromInfo.slotColor];
+            }
+            if (slotArray && slotArray.length > 0) {
+                const topCard = slotArray[slotArray.length - 1];
+                if (topCard.cardId === cardIdToRemove) slotArray.pop();
+            } else if (zoneId !== 'direction' && zoneId !== 'stage') {
+                const zone = gameState.zones[zoneId];
+                if (!zone) return;
+                const index = zone.indexOf(cardIdToRemove);
+                if (index > -1) zone.splice(index, 1);
+            }
+        }
 
-                if (slotArray && slotArray.length > 0) {
-                    const topCard = slotArray[slotArray.length - 1];
-                    // Ensure the tapped element is the top card of the stack
-                    if (element.dataset.cardId === topCard.cardId) {
-                       topCard.isStandby = !topCard.isStandby;
+        function addCardToState(cardData, toInfo) {
+            if (!cardData || !toInfo || !toInfo.zoneId) return;
+            const zoneId = toInfo.zoneId;
+            const cardObject = { cardId: cardData.cardId, isStandby: false };
+            if (zoneId === 'direction') {
+                if (toInfo.slotIndex !== undefined) gameState.zones.direction[toInfo.slotIndex].push(cardObject);
+            } else if (zoneId === 'stage') {
+                if (toInfo.slotIndex !== undefined && toInfo.slotColor) {
+                    if (toInfo.slotColor === 'blue') cardObject.isStandby = true;
+                    gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor].push(cardObject);
+                }
+            } else {
+                const zone = gameState.zones[zoneId];
+                if (zone && typeof cardObject.cardId === 'string') zone.push(cardObject.cardId);
+            }
+        }
+
+        function handleTap(element, tapInfo) {
+            const currentTime = new Date().getTime();
+            const { zoneId, slotIndex, slotColor } = tapInfo;
+            // elementがカードかゾーンかでcardIdの取得方法を変える
+            const cardId = element.classList.contains('card') ? element.dataset.cardId : null;
+
+            if (element.classList.contains('pile-zone') && zoneId === 'trash') {
+                // トラッシュパイルゾーンがタップされた場合
+                const trashExpandedZoneEl = document.getElementById('trash-expanded-zone');
+                if (trashExpandedZoneEl.style.display === 'flex') { // 表示判定を 'flex' に
+                    trashExpandedZoneEl.style.display = 'none';
+                } else {
+                    trashExpandedZoneEl.style.display = 'flex'; // 表示を 'flex' に
+                }
+                renderAll(); // 展開ゾーンのカードを再描画
+                return; // 他のタップ処理は行わない
+            }
+
+
+            if (element.classList.contains('pile-zone')) {
+                if (zoneId === 'deck' && gameState.zones.deck.length > 0) {
+                    gameState.zones.hand.push(gameState.zones.deck.pop());
+                }
+                lastTapTime = 0;
+                lastTapTargetCardId = null;
+            } else if (cardId) { // cardId が存在する場合のみ（カードのタップ）
+                if (currentTime - lastTapTime <= DOUBLE_TAP_THRESHOLD && lastTapTargetCardId === cardId) {
+                    // Double tap detected
+                    // console.log('Double tap on card:', cardId);
+                    // ここでカード拡大表示などの処理を将来的に追加可能
+                    lastTapTime = 0;
+                } else {
+                    lastTapTime = currentTime;
+                    lastTapTargetCardId = cardId;
+                    // シングルタップ時の処理 (スタンバイ切り替えなど)
+                    if (zoneId === 'direction' || zoneId === 'stage') {
+                        let slotArray;
+                        if (zoneId === 'direction') slotArray = gameState.zones.direction[slotIndex];
+                        else if (zoneId === 'stage') slotArray = gameState.zones.stage[slotIndex][slotColor];
+                        
+                        if (slotArray && slotArray.length > 0) {
+                            const topCard = slotArray[slotArray.length - 1];
+                            if (cardId === topCard.cardId) { // タップされたカードがスタックの一番上か確認
+                                topCard.isStandby = !topCard.isStandby;
+                            }
+                        }
                     }
                 }
             }
+            renderAll();
         }
-        // ### MODIFIED SECTION END ###
-        
+
+        function mulliganHand() {
+            if (gameState.zones.hand.length === 0) return;
+            gameState.zones.deck = shuffle(gameState.zones.deck.concat(gameState.zones.hand));
+            gameState.zones.hand = [];
+            for (let i = 0; i < 7; i++) {
+                if (gameState.zones.deck.length > 0) {
+                    gameState.zones.hand.push(gameState.zones.deck.pop());
+                }
+            }
+            renderAll();
+        }
+
+        function moveHandToTrash() {
+            gameState.zones.trash = gameState.zones.trash.concat(gameState.zones.hand);
+            gameState.zones.hand = [];
+            renderAll();
+        }
+
         function setupEventListeners() {
-            document.getElementById('start-game-btn').addEventListener('click', () => {
-                const deckList = document.getElementById('deck-string').value.trim().split('/').filter(id => id);
-                if (deckList.length === 0) { alert('有効なデッキリストを入力してください。'); return; }
-                initGameState(deckList);
-                document.getElementById('deck-input-screen').style.display = 'none';
-                document.getElementById('game-board').style.display = 'flex';
+            document.getElementById('mulligan-btn').addEventListener('click', mulliganHand);
+            document.getElementById('move-hand-to-trash-btn').addEventListener('click', moveHandToTrash);
+            
+            // パイルゾーンのイベントリスナー
+            const trashZoneEl = document.getElementById('trash-zone');
+            trashZoneEl.addEventListener('mousedown', e => handlePressStart(e, trashZoneEl, 'trash'));
+            trashZoneEl.addEventListener('touchstart', e => handlePressStart(e, trashZoneEl, 'trash'), { passive: false });
+            trashZoneEl.addEventListener('click', e => handleTap(trashZoneEl, { zoneId: 'trash' }));
+
+            const deckZoneEl = document.getElementById('deck-zone');
+            deckZoneEl.addEventListener('mousedown', e => handlePressStart(e, deckZoneEl, 'deck'));
+            deckZoneEl.addEventListener('touchstart', e => handlePressStart(e, deckZoneEl, 'deck'), { passive: false });
+            deckZoneEl.addEventListener('click', e => handleTap(deckZoneEl, { zoneId: 'deck' }));
+
+            document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => {
+                const counter = btn.dataset.counter;
+                gameState.counters[counter] += parseInt(btn.dataset.amount, 10);
+                if (gameState.counters[counter] < 0) gameState.counters[counter] = 0;
                 renderAll();
+            }));
+            document.getElementById('shuffle-btn').addEventListener('click', () => {
+                shuffle(gameState.zones.deck);
+                renderAll();
+                alert('山札をシャッフルしました。');
             });
-            document.getElementById('reset-btn').addEventListener('click', () => { if (confirm('ゲームをリセットしますか？')) window.location.reload(); });
-            document.getElementById('shuffle-btn').addEventListener('click', () => { shuffle(gameState.zones.deck); renderAll(); alert('山札をシャッフルしました。'); });
-            
-            document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => { const counter = btn.dataset.counter; gameState.counters[counter] += parseInt(btn.dataset.amount, 10); if (gameState.counters[counter] < 0) gameState.counters[counter] = 0; renderAll(); }));
-            
-            document.getElementById('deck-zone').addEventListener('mousedown', handlePressStart);
-            document.getElementById('deck-zone').addEventListener('touchstart', handlePressStart, { passive: false });
-            document.getElementById('trash-zone').addEventListener('mousedown', handlePressStart);
-            document.getElementById('trash-zone').addEventListener('touchstart', handlePressStart, { passive: false });
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                if (confirm('ゲームをリセットしますか？')) window.location.reload();
+            });
         }
-        
-        initGameState();
-        setupEventListeners();
+
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            const deckList = document.getElementById('deck-string').value.trim().split('/').filter(id => id);
+            if (deckList.length === 0) {
+                alert('有効なデッキリストを入力してください。');
+                return;
+            }
+            initGameState(deckList);
+            document.getElementById('deck-input-screen').style.display = 'none';
+            document.getElementById('game-board').style.display = 'flex';
+            setupEventListeners();
+            renderAll();
+        });
+
+        // Initialize with default deck
+        initGameState(document.getElementById('deck-string').value.trim().split('/').filter(id => id));
+        renderAll();
     });
     </script>
 </body>
