@@ -16,7 +16,7 @@
             background-color: #1a1a1d; color: #fff;
             font-family: 'Yu Gothic', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
             overflow: hidden; user-select: none; -webkit-user-select: none;
-            background-image: url('cards/wall.png'); /* 背景画像を指定 */
+            background-image: url('item/wall.png'); /* 背景画像を指定 */
             background-size: cover; /* 画面全体に画像を拡大縮小 */
             background-repeat: no-repeat; /* 画像を繰り返さない */
         }
@@ -255,6 +255,24 @@
             box-sizing: border-box;
         }
 
+        .action-btn { /* 既存のaction-btnスタイルを汎用的に */
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            width: calc(var(--card-width) + 10px);
+            box-sizing: border-box;
+            margin-bottom: 5px; /* ボタン間のマージン調整 */
+        }
+        #turn-end-btn { /* ターンエンドボタン特有のスタイルがあればここに */
+            background-color: #ffc107; /* 例: 警告色っぽい黄色 */
+            color: black;
+        }
+
+
         #reset-btn {
             margin-bottom: 10px; /* リセットボタンの下にスペースを追加 */
         }
@@ -267,6 +285,63 @@
             color: white;
             border-radius: 5px;
             margin-bottom: 10px; /* 他のボタンとの間隔 */
+        }
+
+        /* 山札とカウンターを横並びにする */
+        .deck-counters-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .counters-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        /* 右カラム内の新しいラッパー */
+        .right-inner {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            width: 100%; /* 幅を100%に設定 */
+        }
+
+        /* ダイス結果表示エリアのスタイル */
+        .dice-result {
+            /* position: absolute; */ /* 絶対配置を削除 */
+            /* top: 50%; */
+            /* left: 50%; */
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            color: white;
+            z-index: 2000;
+            pointer-events: none;
+            background-image: url('item/dice1.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: background-image 0.1s ease-in-out, opacity 0.1s ease-in-out;
+        }
+
+        /* 複数のダイスを横に並べるためのコンテナ */
+        #dice-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            /* gap: 10px;  ダイス間のスペース */
+            justify-content: center; /* 中央寄せ */
+            z-index: 2000;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -304,22 +379,37 @@
                     </div>
                 </div>
                 <div id="right-column">
-                    <div class="counter"><div class="counter-label">VOL</div><div class="counter-controls"><button class="counter-btn" data-counter="vol" data-amount="-1">-</button><span id="vol-value" class="counter-value">0</span><button class="counter-btn" data-counter="vol" data-amount="1">+</button></div></div>
-                    <div class="counter"><div class="counter-label">魔力 α</div><div class="counter-controls"><button class="counter-btn" data-counter="manaAlpha" data-amount="-1">-</button><span id="mana-alpha-value" class="counter-value">0</span><button class="counter-btn" data-counter="manaAlpha" data-amount="1">+</button></div></div>
-                    <div class="counter"><div class="counter-label">魔力 β</div><div class="counter-controls"><button class="counter-btn" data-counter="manaBeta" data-amount="-1">-</button><span id="mana-beta-value" class="counter-value">0</span><button class="counter-btn" data-counter="manaBeta" data-amount="1">+</button></div></div>
-                    <div class="counter"><div class="counter-label">魔力 Ω</div><div class="counter-controls"><button class="counter-btn" data-counter="manaOmega" data-amount="-1">-</button><span id="mana-omega-value" class="counter-value">0</span><button class="counter-btn" data-counter="manaOmega" data-amount="1">+</button></div></div>
-                    <div class="counter"><div class="counter-label">ターン</div><div class="counter-controls"><button class="counter-btn" data-counter="turn" data-amount="-1">-</button><span id="turn-value" class="counter-value">1</span><button class="counter-btn" data-counter="turn" data-amount="1">+</button></div></div>
-                    <button id="shuffle-btn" class="action-btn">山札シャッフル</button>
-                    <button id="search-deck-btn" class="action-btn">山札からサーチ</button>
-                    <button id="search-volnoise-btn" class="action-btn">VOLノイズからサーチ</button>
-                    <button id="move-hand-to-trash-btn" class="action-btn">手札を全てトラッシュ</button>
-                    <button id="mulligan-btn" class="action-btn">マリガン</button>
-                    <button id="reset-btn" class="action-btn">リセット</button>
-                    <button id="change-mat-btn">プレイマット変更</button>
-                    <div id="deck-zone" class="zone pile-zone drop-zone" data-zone-id="deck"><div class="zone-title">山札</div></div>
+                    <!-- 横並びラップ -->
+                    <div class="right-inner" style="display:flex; align-items:flex-start; gap:10px;">
+                        <!-- ボタン＋山札 -->
+                        <div class="buttons-deck-wrapper" style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+                            <!-- アクションボタン群 -->
+                            <button id="turn-end-btn" class="action-btn">ターンエンド</button>
+                            <button id="shuffle-btn" class="action-btn">山札シャッフル</button>
+                            <button id="search-deck-btn" class="action-btn">山札からサーチ</button>
+                            <button id="search-volnoise-btn" class="action-btn">VOLノイズからサーチ</button>
+                            <button id="move-hand-to-trash-btn" class="action-btn">手札を全てトラッシュ</button>
+                            <button id="mulligan-btn" class="action-btn">マリガン</button>
+                            <button id="reset-btn" class="action-btn">リセット</button>
+                            <button id="change-mat-btn">プレイマット変更</button>
+                            <button id="roll-dice-btn" class="action-btn">ダイスを振る</button>
+
+                            <!-- 山札ゾーン -->
+                            <div id="deck-zone" class="zone pile-zone drop-zone" data-zone-id="deck"><div class="zone-title">山札</div></div>
+                        </div>
+                        <!-- カウンター群 -->
+                        <div class="counters-group" style="display:flex; flex-direction:column; gap:5px;">
+                            <div class="counter"><div class="counter-label">VOL</div><div class="counter-controls"><button class="counter-btn" data-counter="vol" data-amount="-1">-</button><span id="vol-value" class="counter-value">0</span><button class="counter-btn" data-counter="vol" data-amount="1">+</button></div></div>
+                            <div class="counter"><div class="counter-label">魔力 α</div><div class="counter-controls"><button class="counter-btn" data-counter="manaAlpha" data-amount="-1">-</button><span id="mana-alpha-value" class="counter-value">0</span><button class="counter-btn" data-counter="manaAlpha" data-amount="1">+</button></div></div>
+                            <div class="counter"><div class="counter-label">魔力 β</div><div class="counter-controls"><button class="counter-btn" data-counter="manaBeta" data-amount="-1">-</button><span id="mana-beta-value" class="counter-value">0</span><button class="counter-btn" data-counter="manaBeta" data-amount="1">+</button></div></div>
+                            <div class="counter"><div class="counter-label">魔力 Ω</div><div class="counter-controls"><button class="counter-btn" data-counter="manaOmega" data-amount="-1">-</button><span id="mana-omega-value" class="counter-value">0</span><button class="counter-btn" data-counter="manaOmega" data-amount="1">+</button></div></div>
+                            <div class="counter"><div class="counter-label">ターン</div><div class="counter-controls"><button class="counter-btn" data-counter="turn" data-amount="-1">-</button><span id="turn-value" class="counter-value">1</span><button class="counter-btn" data-counter="turn" data-amount="1">+</button></div></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div id="hand-zone" class="zone drop-zone" data-zone-id="hand"></div>
+            <div id="dice-container"></div> {/* ダイス表示コンテナ */}
         </div>
     </div>
     <div id="trash-expanded-zone"></div> {/* 展開用トラッシュゾーン */}
@@ -546,7 +636,7 @@
             }
 
             if ((zoneId === 'deck' || zoneId === 'volNoise') && interactiveType === 'none') { // 山札またはVOLノイズのパイル表示のみ裏面
-                 cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`;
+                 cardEl.style.backgroundImage = `url('item/back.png')`;
                  // if (zoneId === 'volNoise') console.log('[CreateCardElement] volNoise: Set back.png (condition: deck/volNoise pile)');
             } else if (actualCardId && typeof actualCardId === 'string' && actualCardId.trim() !== '') { // actualCardId が null でなく、空でない有効な文字列の場合のみ表面画像を設定
                  cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}${actualCardId}.png')`;
@@ -556,7 +646,7 @@
                  if (interactiveType === 'none' && zoneId === 'trash') { // トラッシュのパイル表示でactualCardIdが無効だった場合
                     // console.warn(`[CreateCardElement] Trash pile: actualCardId "${actualCardId}" was invalid or empty. Displaying back.png.`);
                  }
-                 cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`;
+                 cardEl.style.backgroundImage = `url('item/back.png')`;
             }
 
 
@@ -923,10 +1013,79 @@
                     renderAll();
                 }
             });
+            document.getElementById('turn-end-btn').addEventListener('click', () => {
+                // ステージ上のカードのスタンバイ状態を解除
+                gameState.zones.stage.forEach(column => {
+                    ['green', 'blue', 'red'].forEach(color => {
+                        if (column[color]) {
+                            column[color].forEach(card => {
+                                if (card.isStandby) {
+                                    card.isStandby = false;
+                                }
+                            });
+                        }
+                    });
+                });
+                // ディレクションゾーンのカードのスタンバイ状態を解除
+                gameState.zones.direction.forEach(slotArray => {
+                    if (slotArray) {
+                        slotArray.forEach(card => {
+                            if (card.isStandby) {
+                                card.isStandby = false;
+                            }
+                        });
+                    }
+                });
+                // ターンカウンターを進める
+                gameState.counters.turn++;
+                renderAll();
+            });
             document.getElementById('reset-btn').addEventListener('click', () => {
                 if (confirm('ゲームをリセットしますか？')) window.location.reload();
             });
             document.getElementById('change-mat-btn').addEventListener('click', changeBackground);
+
+            let isRolling = false; // ローリング中フラグ
+            // let diceTimer; // タイマーIDを保持
+
+            // ダイスロールボタンのイベントリスナー
+            document.getElementById('roll-dice-btn').addEventListener('click', () => {
+                const diceContainerEl = document.getElementById('dice-container');
+                const diceResultEl = document.createElement('div'); // 新しいダイス要素を作成
+                diceResultEl.className = 'dice-result';
+
+                const roll = Math.floor(Math.random() * 6) + 1; // 1～6の乱数
+                diceResultEl.style.backgroundImage = `url('item/dice${roll}.png')`; // 画像変更
+                diceResultEl.style.display = 'flex';
+                diceContainerEl.appendChild(diceResultEl); // コンテナに追加
+
+                setTimeout(() => {
+                    diceResultEl.style.opacity = '0'; // 透明にする
+                    setTimeout(() => {
+                        diceResultEl.remove(); // DOMから削除
+                    }, 1000); // フェードアウト時間
+                }, 1500);
+
+                // if (isRolling) {
+                //     // 既にローリング中の場合は、少し暗くする
+                //     diceResultEl.style.filter = 'brightness(50%)';
+                //     clearTimeout(diceTimer); // タイマーをリセット
+                //     setTimeout(() => {
+                //         diceResultEl.style.filter = 'brightness(100%)'; // 元に戻す
+                //     }, 200);
+                // }
+
+                // isRolling = true;
+                // diceResultEl.style.display = 'flex'; // 表示
+
+                // const roll = Math.floor(Math.random() * 6) + 1; // 1～6の乱数
+                // diceResultEl.style.backgroundImage = `url('item/dice${roll}.png')`; // 画像変更
+
+                // diceTimer = setTimeout(() => {
+                //     diceResultEl.style.display = 'none'; // 1.5秒後に非表示
+                //     isRolling = false;
+                // }, 1500);
+            });
 
             // ドキュメント全体のクリックで展開トラッシュゾーンを閉じる処理
             document.addEventListener('click', (event) => {
@@ -995,9 +1154,9 @@
 
         function changeBackground() {
             if (document.body.style.backgroundImage.includes('wall.png')) {
-                document.body.style.backgroundImage = "url('cards/wall1.png')";
+                document.body.style.backgroundImage = "url('item/wall1.png')";
             } else {
-                document.body.style.backgroundImage = "url('cards/wall.png')";
+                document.body.style.backgroundImage = "url('item/wall.png')";
             }
         }
 
