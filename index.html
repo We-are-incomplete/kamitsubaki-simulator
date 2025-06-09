@@ -71,8 +71,8 @@
         .modal-close-btn { font-size: 1.5rem; cursor: pointer; }
         .modal-body { overflow-y: auto; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 10px; }
 
-        #card-zoom-overlay { z-index: 4000; pointer-events: none; }
-        #card-zoom-view { width: calc(var(--card-width) * 4); height: calc(var(--card-height) * 4); background-size: contain; background-position: center; background-repeat: no-repeat; border-radius: 16px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #card-zoom-overlay { z-index: 4000; cursor: pointer; }
+        #card-zoom-view { width: calc(var(--card-width) * 4); height: calc(var(--card-height) * 4); background-size: contain; background-position: center; background-repeat: no-repeat; border-radius: 16px; box-shadow: 0 0 20px rgba(0,0,0,0.5); pointer-events: none; }
         
         .overlay-zone-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 800px; z-index: 500; background-color: rgba(40, 40, 40, 0.95); border: 1px solid #c90063; border-radius: 10px; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: none; }
         .overlay-zone-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -83,7 +83,7 @@
 <body>
     <div id="game-container">
         <div id="deck-input-screen" class="screen">
-             <h1>KAMITSUBAKI CARD GAME</h1>
+            <h1>KAMITSUBAKI CARD GAME</h1>
             <p>デッキリストを / 区切りで入力してください</p>
             <textarea id="deck-string" placeholder="例: AA-01/AA-01/AA-02/..."></textarea>
             <button id="start-game-btn">ゲーム開始</button>
@@ -165,14 +165,14 @@
             const cardIdToRemove = cardData.cardId;
             if (zoneId === 'field') { gameState.zones.field[fromInfo.slotIndex] = null; }
             else if (zoneId === 'stage') { gameState.zones.stage[fromInfo.slotIndex][fromInfo.slotColor] = null; }
-            else { const zone = gameState.zones[zoneId]; const index = zone.indexOf(cardIdToRemove); if (index > -1) zone.splice(index, 1); }
+            else { const zone = gameState.zones[zoneId]; if(!zone) return; const index = zone.indexOf(cardIdToRemove); if (index > -1) zone.splice(index, 1); }
         }
         function addCardToState(cardData, toInfo) {
             if (!cardData || !toInfo) return;
             const zoneId = toInfo.zoneId;
             if (zoneId === 'field') { gameState.zones.field[toInfo.slotIndex] = cardData; }
             else if (zoneId === 'stage') { gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor] = cardData; }
-            else { const zone = gameState.zones[zoneId]; zone.push(cardData.cardId); }
+            else { const zone = gameState.zones[zoneId]; if(zone) zone.push(cardData.cardId); }
         }
         function isSlotOccupied(toInfo) {
             if (toInfo.zoneId === 'field') { return gameState.zones.field[toInfo.slotIndex] !== null; }
@@ -189,7 +189,6 @@
 
         function renderBoard() {
             document.querySelectorAll('.card, .zone-count').forEach(el => el.remove());
-            
             ['deck', 'trash', 'volNoise'].forEach(zoneId => {
                 const zoneEl = document.getElementById(`${zoneId}-zone`);
                 const zoneData = gameState.zones[zoneId];
@@ -200,34 +199,27 @@
                 }
             });
 
-            document.getElementById('hand-zone').innerHTML = ''; // Clear hand zone before re-rendering
+            document.getElementById('hand-zone').innerHTML = '';
             gameState.zones.hand.forEach(cardId => {
                 document.getElementById('hand-zone').appendChild(createCardElement(cardId, false, 'hand', 'drag'));
             });
             
             gameState.zones.field.forEach((card, index) => {
-                if (card) {
-                    const slotEl = document.querySelector(`.card-slot[data-zone-id="field"][data-slot-index="${index}"]`);
-                    if(slotEl) slotEl.appendChild(createCardElement(card.cardId, card.isStandby, 'field', 'drag', index));
-                }
+                if (card) { const slotEl = document.querySelector(`.card-slot[data-zone-id="field"][data-slot-index="${index}"]`); if(slotEl) slotEl.appendChild(createCardElement(card.cardId, card.isStandby, 'field', 'drag', index)); }
             });
             gameState.zones.stage.forEach((column, index) => {
                 ['green', 'blue', 'red'].forEach(color => {
                     const card = column[color];
-                    if (card) {
-                        const slotEl = document.querySelector(`.card-slot[data-zone-id="stage"][data-slot-index="${index}"][data-slot-color="${color}"]`);
-                        if(slotEl) slotEl.appendChild(createCardElement(card.cardId, card.isStandby, 'stage', 'drag', index, color));
-                    }
+                    if (card) { const slotEl = document.querySelector(`.card-slot[data-zone-id="stage"][data-slot-index="${index}"][data-slot-color="${color}"]`); if(slotEl) slotEl.appendChild(createCardElement(card.cardId, card.isStandby, 'stage', 'drag', index, color)); }
                 });
             });
-
             for (const counterId in counters) { counters[counterId].textContent = gameState.counters[counterId]; }
         }
         
         function createCardElement(cardId, isStandby, zoneId, interactiveType, slotIndex, slotColor) {
             const cardEl = document.createElement('div');
             cardEl.className = 'card';
-            if(!cardId) return cardEl; // Return empty div if cardId is invalid, to prevent crash
+            if(!cardId) return cardEl;
             
             cardEl.dataset.cardId = cardId;
             if (slotIndex !== undefined) cardEl.dataset.slotIndex = slotIndex;
@@ -259,18 +251,19 @@
             const element = e.currentTarget;
             let zoneId, isPile = false;
 
+            // Determine source zone and type
             if (element.classList.contains('pile-zone')) {
                 isPile = true;
                 zoneId = element.dataset.zoneId;
             } else if (element.classList.contains('card')) {
-                const parentZone = element.closest('.drop-zone, .zone');
+                const parentZone = element.closest('.drop-zone, .overlay-card-area');
                 zoneId = parentZone.dataset.zoneId;
             } else {
                 return;
             }
-
             sourceInfo = { zoneId };
             
+            // Get card data based on source
             if (isPile) {
                 if (gameState.zones[zoneId].length === 0) return;
                 const cardId = gameState.zones[zoneId].slice(-1)[0];
@@ -279,7 +272,7 @@
                  const cardId = element.dataset.cardId;
                  if (['hand', 'temporary', 'trash', 'volNoise'].includes(zoneId)) {
                     draggedCardData = { cardId: cardId, isStandby: false };
-                 } else { // Slotted zones
+                 } else { // Slotted zones (field, stage)
                     sourceInfo.slotIndex = element.dataset.slotIndex;
                     if(zoneId === 'stage') {
                         sourceInfo.slotColor = element.dataset.slotColor;
@@ -302,19 +295,24 @@
             let offsetX = touch.clientX - rect.left; let offsetY = touch.clientY - rect.top;
             if (isPile) { offsetX = rect.width / 2; offsetY = rect.height / 2; }
             let startX = touch.clientX; let startY = touch.clientY;
+            let originalElementVisibility = '';
 
             const onMove = (moveEvent) => {
                 const moveX = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientX;
                 const moveY = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientY;
                 if (!isDragging && (Math.abs(moveX - startX) > 5 || Math.abs(moveY - startY) > 5)) {
                     isDragging = true; clearTimeout(longPressTimer); hideCardZoom();
-                    removeCardFromState(draggedCardData, sourceInfo);
+                    
+                    if(!isPile) {
+                        originalElementVisibility = element.style.visibility;
+                        element.style.visibility = 'hidden';
+                    }
+
                     draggedCardVisual = document.createElement('div');
                     draggedCardVisual.className = 'card dragging';
                     if (draggedCardData.isStandby) draggedCardVisual.classList.add('standby');
                     draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.png')`;
                     document.body.appendChild(draggedCardVisual);
-                    renderAll();
                 }
                 if (isDragging) { draggedCardVisual.style.left = `${moveX - offsetX}px`; draggedCardVisual.style.top = `${moveY - offsetY}px`; }
             };
@@ -322,8 +320,11 @@
                 clearTimeout(longPressTimer);
                 document.removeEventListener('mousemove', onMove); document.removeEventListener('touchmove', onMove);
                 document.removeEventListener('mouseup', onEnd); document.removeEventListener('touchend', onEnd);
+                
+                if (!isPile) element.style.visibility = originalElementVisibility;
 
                 if (isDragging) {
+                    removeCardFromState(draggedCardData, sourceInfo);
                     draggedCardVisual.style.display = 'none';
                     const endX = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientX;
                     const endY = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientY;
@@ -331,16 +332,13 @@
                     
                     let dropped = false;
                     const targetSlot = targetEl ? targetEl.closest('.card-slot.drop-zone') : null;
-                    const targetPileZone = targetEl ? (targetEl.matches('.pile-zone.drop-zone') ? targetEl : targetEl.closest('.pile-zone.drop-zone')) : null;
-                    const targetHandZone = targetEl ? targetEl.closest('#hand-zone.drop-zone') : null;
+                    const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#field-zone), .overlay-card-area.drop-zone') : null;
 
                     if(targetSlot) {
                         const targetInfo = { zoneId: targetSlot.dataset.zoneId, slotIndex: targetSlot.dataset.slotIndex, slotColor: targetSlot.dataset.slotColor };
                         if(!isSlotOccupied(targetInfo)) { addCardToState(draggedCardData, targetInfo); dropped = true; }
-                    } else if (targetPileZone) {
-                        addCardToState(draggedCardData, { zoneId: targetPileZone.dataset.zoneId }); dropped = true;
-                    } else if (targetHandZone) {
-                        addCardToState(draggedCardData, { zoneId: 'hand' }); dropped = true;
+                    } else if (targetNonSlotZone) {
+                        addCardToState(draggedCardData, { zoneId: targetNonSlotZone.dataset.zoneId }); dropped = true;
                     }
                     
                     if(!dropped) { addCardToState(draggedCardData, sourceInfo); }
@@ -355,9 +353,8 @@
             document.addEventListener('mousemove', onMove); document.addEventListener('touchmove', onMove, { passive: false });
             document.addEventListener('mouseup', onEnd); document.addEventListener('touchend', onEnd);
         }
-        // ### MODIFIED SECTION END ###
 
-        function handleDoubleClick(e) { e.preventDefault(); const cardEl = e.currentTarget; const zoneId = cardEl.closest('.drop-zone')?.dataset.zoneId || cardEl.closest('.zone')?.dataset.zoneId; const slotIndex = cardEl.dataset.slotIndex; const slotColor = cardEl.dataset.slotColor; let card = null; if(zoneId === 'field') card = gameState.zones.field[slotIndex]; if(zoneId === 'stage') card = gameState.zones.stage[slotIndex][slotColor]; if (card) { card.isStandby = !card.isStandby; renderAll(); } }
+        function handleDoubleClick(e) { e.preventDefault(); const cardEl = e.currentTarget; const parentZone = cardEl.closest('.drop-zone') || cardEl.closest('.overlay-card-area'); if (!parentZone) return; const zoneId = parentZone.dataset.zoneId; const slotIndex = cardEl.dataset.slotIndex; const slotColor = cardEl.dataset.slotColor; let card = null; if(zoneId === 'field') card = gameState.zones.field[slotIndex]; if(zoneId === 'stage') card = gameState.zones.stage[slotIndex][slotColor]; if (card) { card.isStandby = !card.isStandby; renderAll(); } }
         function showCardZoom(cardId) { document.getElementById('card-zoom-view').style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardId}.png')`; document.getElementById('card-zoom-overlay').style.display = 'flex'; }
         function hideCardZoom() { document.getElementById('card-zoom-overlay').style.display = 'none'; }
         function renderView(zoneId, containerId) { const container = document.getElementById(containerId); container.innerHTML = ''; gameState.zones[zoneId].forEach(cardData => { const cardId = (typeof cardData === 'object' && cardData.cardId) ? cardData.cardId : cardData; if(cardId) { container.appendChild(createCardElement(cardId, false, zoneId, 'drag')); } }); }
@@ -384,6 +381,8 @@
 
             document.getElementById('deck-search-btn').addEventListener('click', () => { const modalBody = document.getElementById('modal-body'); modalBody.innerHTML = ''; [...gameState.zones.deck].reverse().forEach(cardId => modalBody.appendChild(createCardElement(cardId, false, 'deck', 'click'))); document.getElementById('modal-title').textContent = '山札サーチ'; document.getElementById('modal-container').style.display = 'flex'; });
             document.getElementById('modal-close-btn').addEventListener('click', () => { document.getElementById('modal-container').style.display = 'none'; });
+            
+            document.getElementById('card-zoom-overlay').addEventListener('click', hideCardZoom);
 
             document.getElementById('trash-zone').addEventListener('click', () => { if(isDragging) return; const container = document.getElementById('trash-view-container'); const isHidden = container.style.display === 'none' || !container.style.display; if(isHidden) renderTrashView(); container.style.display = isHidden ? 'block' : 'none'; });
             document.getElementById('vol-noise-zone').addEventListener('click', () => { if(isDragging) return; const container = document.getElementById('vol-noise-view-container'); const isHidden = container.style.display === 'none' || !container.style.display; if(isHidden) renderVolNoiseView(); container.style.display = isHidden ? 'block' : 'none'; });
