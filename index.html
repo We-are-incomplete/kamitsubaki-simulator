@@ -154,6 +154,107 @@
             margin: 0;
         }
 
+        #temporary-expanded-zone { /* テンポラリー展開ゾーンのスタイルを追加 */
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 75vw; /* 他より少し広めに */
+            height: 70vh;
+            max-width: 900px;
+            max-height: 600px;
+            background-color: rgba(30, 50, 30, 0.95); /* 緑系の背景 */
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            box-sizing: border-box;
+            z-index: 2500;
+            overflow: hidden; /* スクロールはカードエリアで */
+            flex-direction: column; /* コントロールとカードエリアを縦に並べる */
+            gap: 10px;
+        }
+
+        .temporary-zone-controls {
+            display: flex;
+            justify-content: space-around;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .temporary-zone-controls button {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 4px;
+        }
+        
+        .temporary-zone-card-area { /* カード表示エリア */
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 10px;
+            padding: 5px;
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+
+        #trash-expanded-zone .card {
+            /* 展開ゾーン内のカードは元のサイズで表示 */
+            width: calc(var(--card-width) * 0.8); /* 少し小さめに表示 */
+            height: calc(var(--card-height) * 0.8);
+            position: relative; 
+            display: inline-block; 
+            cursor: grab; /* ドラッグ可能を示すカーソルに変更 */
+            margin: 0; /* 個別のマージンはgapで管理 */
+        }
+
+        #deck-expanded-zone .card { /* 山札展開ゾーン内のカードスタイルを追加 */
+            width: calc(var(--card-width) * 0.8);
+            height: calc(var(--card-height) * 0.8);
+            position: relative; 
+            display: inline-block; 
+            cursor: grab;
+            margin: 0;
+        }
+
+        #volnoise-expanded-zone .card { /* VOLノイズ展開ゾーン内のカードスタイルを追加 */
+            width: calc(var(--card-width) * 0.8);
+            height: calc(var(--card-height) * 0.8);
+            position: relative; 
+            display: inline-block; 
+            cursor: grab;
+            margin: 0;
+        }
+
+        #temporary-expanded-zone .card { /* テンポラリー展開ゾーン内のカードスタイル */
+            width: calc(var(--card-width) * 0.8);
+            height: calc(var(--card-height) * 0.8);
+            position: relative; 
+            display: inline-block; 
+            cursor: grab;
+            margin: 0;
+        }
+
+        #open-temporary-zone-btn { /* 左カラムのボタンのスタイル */
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            background-color: #28a745; /* 緑色 */
+            border: none;
+            color: white;
+            border-radius: 5px;
+            text-align: center;
+            width: calc(var(--card-width) + 10px); /* pile-zone と同じ幅 */
+            box-sizing: border-box;
+        }
+
         #reset-btn {
             margin-bottom: 10px; /* リセットボタンの下にスペースを追加 */
         }
@@ -181,6 +282,7 @@
             <div id="main-area">
                 <div id="left-column">
                     <div id="volNoise-zone" class="zone pile-zone drop-zone" data-zone-id="volNoise"><div class="zone-title">VOLノイズ</div></div>
+                    <button id="open-temporary-zone-btn">テンポラリー</button>
                     <div id="trash-zone" class="zone pile-zone drop-zone" data-zone-id="trash"><div class="zone-title">トラッシュ</div></div>
                 </div>
                 <div id="center-column">
@@ -222,7 +324,18 @@
     </div>
     <div id="trash-expanded-zone"></div> {/* 展開用トラッシュゾーン */}
     <div id="deck-expanded-zone"></div> {/* 展開用山札ゾーン */}
-    <div id="volnoise-expanded-zone"></div> {/* 展開用VOLノイズゾーンを追加 */}
+    <div id="volnoise-expanded-zone"></div> {/* 展開用VOLノイズゾーン */}
+    <div id="temporary-expanded-zone" class="drop-zone" data-zone-id="temporary">
+        <div class="temporary-zone-controls">
+            <button id="temp-to-trash-btn">全てトラッシュへ</button>
+            <button id="temp-to-deck-shuffle-btn">山札に戻しシャッフル</button>
+            <button id="temp-to-deck-bottom-btn">山札の下へ</button>
+            <button id="temp-hand-to-temporary-btn">手札を全てここへ</button>
+        </div>
+        <div class="temporary-zone-card-area drop-zone" data-zone-id="temporary">
+            {/* カードはここにレンダリングされる */}
+        </div>
+    </div>
     
     <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -258,6 +371,7 @@
                     direction: Array(NUM_SLOTS).fill(null).map(() => []),
                     trash: [],
                     volNoise: [], // VOLノイズ置き場を初期化
+                    temporary: [], // テンポラリーゾーンを初期化
                 }
             };
             for (let i = 0; i < 7; i++) {
@@ -392,6 +506,28 @@
                     volNoiseExpandedZoneEl.appendChild(cardElement);
                 });
             }
+
+            // Render expanded temporary zone if it's active
+            const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone');
+            const temporaryCardAreaEl = temporaryExpandedZoneEl.querySelector('.temporary-zone-card-area');
+            temporaryCardAreaEl.innerHTML = ''; // Clear previous cards
+            if (temporaryExpandedZoneEl.style.display === 'flex') {
+                gameState.zones.temporary.forEach(cardId => {
+                    const cardElement = createCardElement(cardId, false, 'temporary-expanded', 'drag');
+                    temporaryCardAreaEl.appendChild(cardElement);
+                });
+            }
+
+            // Update temporary zone button text with card count
+            const openTemporaryZoneBtn = document.getElementById('open-temporary-zone-btn');
+            if (openTemporaryZoneBtn) {
+                const tempCount = gameState.zones.temporary.length;
+                if (tempCount > 0) {
+                    openTemporaryZoneBtn.textContent = `テンポラリー (${tempCount})`;
+                } else {
+                    openTemporaryZoneBtn.textContent = 'テンポラリー';
+                }
+            }
         }
 
         function createCardElement(cardId, isStandby, zoneId, interactiveType, slotIndex, slotColor) {
@@ -472,6 +608,9 @@
             } else if (zoneId === 'volnoise-expanded') { // VOLノイズ展開ゾーンからのドラッグ
                 draggedCardData = { cardId: element.dataset.cardId, isStandby: false };
                 sourceInfo.zoneId = 'volNoise'; // gameStateでの削除元は'volNoise'として扱う
+            } else if (zoneId === 'temporary-expanded') { // テンポラリー展開ゾーンからのドラッグ
+                draggedCardData = { cardId: element.dataset.cardId, isStandby: false };
+                sourceInfo.zoneId = 'temporary'; 
             }
             if (!draggedCardData) return;
 
@@ -518,10 +657,12 @@
                     const targetEl = document.elementFromPoint(endX, endY);
                     let dropped = false;
                     const targetSlot = targetEl ? targetEl.closest('.card-slot.drop-zone') : null;
-                    const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#direction-zone)') : null;
+                    const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#direction-zone):not(#temporary-expanded-zone), .temporary-zone-card-area.drop-zone') : null;
                     const targetExpandedTrash = targetEl ? targetEl.closest('#trash-expanded-zone') : null;
                     const targetExpandedDeck = targetEl ? targetEl.closest('#deck-expanded-zone') : null; // 山札展開ゾーンへのドロップも考慮
                     const targetExpandedVolNoise = targetEl ? targetEl.closest('#volnoise-expanded-zone') : null; // VOLノイズ展開ゾーンへのドロップも考慮
+                    const targetTemporaryZone = targetEl ? (targetEl.closest('#temporary-expanded-zone') || targetEl.closest('.temporary-zone-card-area')) : null;
+
 
                     if (targetSlot) {
                         const targetInfo = {
@@ -547,6 +688,10 @@
                     //     addCardToState(draggedCardData, { zoneId: 'volNoise' });
                     //     dropped = true;
                     // }
+                     else if (targetTemporaryZone && document.getElementById('temporary-expanded-zone').style.display === 'flex') {
+                        addCardToState(draggedCardData, { zoneId: 'temporary' });
+                        dropped = true;
+                    }
                     if (!dropped) addCardToState(draggedCardData, sourceInfo);
                 } else {
                     // ドラッグでなければタップとして処理
@@ -630,6 +775,7 @@
             // 山札パイルゾーンがタップされた場合の処理は既存のまま (カードを引く)
             // 「山札からサーチ」ボタンの処理は setupEventListeners で個別に行う
             // 「VOLノイズからサーチ」ボタンの処理は setupEventListeners で個別に行う
+            // 「テンポラリーゾーンを開く」ボタンの処理は setupEventListeners で個別に行う
 
 
             if (element.classList.contains('pile-zone')) {
@@ -738,6 +884,45 @@
                 }
                 renderAll(); // 展開ゾーンのカードを再描画
             });
+            document.getElementById('open-temporary-zone-btn').addEventListener('click', () => {
+                const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone');
+                if (temporaryExpandedZoneEl.style.display === 'flex') {
+                    temporaryExpandedZoneEl.style.display = 'none';
+                } else {
+                    temporaryExpandedZoneEl.style.display = 'flex';
+                }
+                renderAll();
+            });
+            document.getElementById('temp-to-trash-btn').addEventListener('click', () => {
+                if (gameState.zones.temporary.length > 0) {
+                    gameState.zones.trash.push(...gameState.zones.temporary);
+                    gameState.zones.temporary = [];
+                    renderAll();
+                }
+            });
+            document.getElementById('temp-to-deck-shuffle-btn').addEventListener('click', () => {
+                if (gameState.zones.temporary.length > 0) {
+                    gameState.zones.deck.push(...gameState.zones.temporary);
+                    gameState.zones.temporary = [];
+                    shuffle(gameState.zones.deck);
+                    renderAll();
+                }
+            });
+            document.getElementById('temp-to-deck-bottom-btn').addEventListener('click', () => {
+                if (gameState.zones.temporary.length > 0) {
+                    shuffle(gameState.zones.temporary); // まずテンポラリーゾーンのカードをシャッフル
+                    gameState.zones.deck.unshift(...gameState.zones.temporary); // 山札の先頭（底）に追加
+                    gameState.zones.temporary = [];
+                    renderAll();
+                }
+            });
+            document.getElementById('temp-hand-to-temporary-btn').addEventListener('click', () => { // 手札を全てテンポラリーゾーンへ送るボタン
+                if (gameState.zones.hand.length > 0) {
+                    gameState.zones.temporary.push(...gameState.zones.hand);
+                    gameState.zones.hand = [];
+                    renderAll();
+                }
+            });
             document.getElementById('reset-btn').addEventListener('click', () => {
                 if (confirm('ゲームをリセットしますか？')) window.location.reload();
             });
@@ -751,6 +936,8 @@
                 const searchDeckBtnEl = document.getElementById('search-deck-btn'); // 山札サーチボタンの要素
                 const volNoiseExpandedZoneEl = document.getElementById('volnoise-expanded-zone'); // VOLノイズ展開ゾーンの要素
                 const searchVolNoiseBtnEl = document.getElementById('search-volnoise-btn'); // VOLノイズサーチボタンの要素
+                const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone'); // テンポラリー展開ゾーンの要素
+                const openTemporaryBtnEl = document.getElementById('open-temporary-zone-btn'); // テンポラリーゾーンを開くボタンの要素
 
                 // 展開トラッシュゾーンが表示されているか確認
                 if (trashExpandedZoneEl.style.display === 'flex') {
@@ -793,6 +980,15 @@
                         return;
                     }
                     volNoiseExpandedZoneEl.style.display = 'none';
+                }
+
+                // 展開テンポラリーゾーンが表示されているか確認
+                if (temporaryExpandedZoneEl.style.display === 'flex') {
+                    if (openTemporaryBtnEl.contains(event.target) || temporaryExpandedZoneEl.contains(event.target)) {
+                        // 開くボタン自身、またはゾーン内部（ボタンやカードエリア含む）のクリックは無視
+                        return;
+                    }
+                    temporaryExpandedZoneEl.style.display = 'none';
                 }
             });
         }
