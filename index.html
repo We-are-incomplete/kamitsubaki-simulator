@@ -34,15 +34,18 @@
         .zone-title { position: absolute; top: -10px; left: 5px; background: #1a1a1d; padding: 0 5px; font-size: 0.8em; color: #ccc; z-index: 10; }
         .pile-zone { width: calc(var(--card-width) + 10px); height: calc(var(--card-height) + 10px); cursor: pointer; }
         
-        #stage-zone, #field-zone { display: flex; justify-content: space-around; align-items: center; flex-grow: 1; }
+        #stage-zone, #direction-zone { display: flex; justify-content: space-around; align-items: center; flex-grow: 1; }
         .stage-column { position: relative; width: var(--card-width); height: calc(var(--card-height) * 2); }
         .card-slot { width: var(--card-width); height: var(--card-height); border: 1px dashed var(--border-color); border-radius: 4px; box-sizing: border-box; }
         .stage-column .card-slot { position: absolute; left: 0; }
         .card-slot[data-slot-color="green"]  { top: 0; border-color: #28a745; z-index: 1; }
         .card-slot[data-slot-color="blue"]   { top: calc(var(--card-height) * 0.5); border-color: #007bff; z-index: 2; }
         .card-slot[data-slot-color="red"]    { top: calc(var(--card-height) * 1.0); border-color: #dc3545; z-index: 3; }
-        #field-zone .card-slot { border-color: #e83e8c; }
+        #direction-zone .card-slot { border-color: #e83e8c; }
         .card-slot .card { position: absolute; top: 0; left: 0; }
+        .card-slot .card:nth-child(2) { transform: translate(1px, 1px); }
+        .card-slot .card:nth-child(3) { transform: translate(2px, 2px); }
+
 
         #hand-zone { width: 100%; height: calc(var(--card-height) + 10px); border-top: 1px solid var(--border-color); display: flex; justify-content: center; align-items: center; gap: 2px; padding: 5px 0; }
         .pile-zone .card { position: absolute; top: 5px; left: 5px; pointer-events: none; }
@@ -104,13 +107,13 @@
                         <div class="stage-column"><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="red"></div></div>
                         <div class="stage-column"><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="red"></div></div>
                     </div>
-                    <div id="field-zone" class="zone">
-                        <div class="zone-title">場</div>
-                        <div class="card-slot drop-zone" data-zone-id="field" data-slot-index="0"></div>
-                        <div class="card-slot drop-zone" data-zone-id="field" data-slot-index="1"></div>
-                        <div class="card-slot drop-zone" data-zone-id="field" data-slot-index="2"></div>
-                        <div class="card-slot drop-zone" data-zone-id="field" data-slot-index="3"></div>
-                        <div class="card-slot drop-zone" data-zone-id="field" data-slot-index="4"></div>
+                    <div id="direction-zone" class="zone">
+                        <div class="zone-title">Direction</div>
+                        <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="0"></div>
+                        <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="1"></div>
+                        <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="2"></div>
+                        <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="3"></div>
+                        <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="4"></div>
                     </div>
                 </div>
                 <div id="right-column">
@@ -144,8 +147,8 @@
                 counters: { turn: 1, vol: 0, manaAlpha: 0, manaBeta: 0, manaOmega: 0 },
                 zones: {
                     deck: shuffle([...deckList]), hand: [],
-                    stage: Array(NUM_SLOTS).fill(null).map(() => ({ red: null, blue: null, green: null })),
-                    field: Array(NUM_SLOTS).fill(null),
+                    stage: Array(NUM_SLOTS).fill(null).map(() => ({ red: [], blue: [], green: [] })),
+                    direction: Array(NUM_SLOTS).fill(null),
                     trash: [], volNoise: [], temporary: []
                 }
             };
@@ -163,20 +166,24 @@
             if (!cardData || !fromInfo) return;
             const zoneId = fromInfo.zoneId;
             const cardIdToRemove = cardData.cardId;
-            if (zoneId === 'field') { gameState.zones.field[fromInfo.slotIndex] = null; }
-            else if (zoneId === 'stage') { gameState.zones.stage[fromInfo.slotIndex][fromInfo.slotColor] = null; }
+            if (zoneId === 'direction') { gameState.zones.direction[fromInfo.slotIndex] = null; }
+            else if (zoneId === 'stage') {
+                const slotArray = gameState.zones.stage[fromInfo.slotIndex][fromInfo.slotColor];
+                const cardIndex = slotArray.findIndex(card => card.cardId === cardIdToRemove);
+                if (cardIndex > -1) slotArray.splice(cardIndex, 1);
+            }
             else { const zone = gameState.zones[zoneId]; if(!zone) return; const index = zone.indexOf(cardIdToRemove); if (index > -1) zone.splice(index, 1); }
         }
         function addCardToState(cardData, toInfo) {
             if (!cardData || !toInfo) return;
             const zoneId = toInfo.zoneId;
-            if (zoneId === 'field') { gameState.zones.field[toInfo.slotIndex] = cardData; }
-            else if (zoneId === 'stage') { gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor] = cardData; }
+            if (zoneId === 'direction') { gameState.zones.direction[toInfo.slotIndex] = cardData; }
+            else if (zoneId === 'stage') { gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor].push(cardData); }
             else { const zone = gameState.zones[zoneId]; if(zone) zone.push(cardData.cardId); }
         }
         function isSlotOccupied(toInfo) {
-            if (toInfo.zoneId === 'field') { return gameState.zones.field[toInfo.slotIndex] !== null; }
-            if (toInfo.zoneId === 'stage') { return gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor] !== null; }
+            if (toInfo.zoneId === 'direction') { return gameState.zones.direction[toInfo.slotIndex] !== null; }
+            if (toInfo.zoneId === 'stage') { return false; }
             return false;
         }
 
@@ -200,19 +207,23 @@
             });
 
             document.getElementById('hand-zone').innerHTML = '';
-            gameState.zones.hand.forEach(cardId => {
-                document.getElementById('hand-zone').appendChild(createCardElement(cardId, false, 'hand', 'drag'));
-            });
+            gameState.zones.hand.forEach(cardId => { document.getElementById('hand-zone').appendChild(createCardElement(cardId, false, 'hand', 'drag')); });
             
-            gameState.zones.field.forEach((card, index) => {
-                if (card) { const slotEl = document.querySelector(`.card-slot[data-zone-id="field"][data-slot-index="${index}"]`); if(slotEl) slotEl.appendChild(createCardElement(card.cardId, card.isStandby, 'field', 'drag', index)); }
+            gameState.zones.direction.forEach((card, index) => {
+                if (card) { const slotEl = document.querySelector(`.card-slot[data-zone-id="direction"][data-slot-index="${index}"]`); if(slotEl) slotEl.appendChild(createCardElement(card.cardId, card.isStandby, 'direction', 'drag', index)); }
             });
             gameState.zones.stage.forEach((column, index) => {
                 ['green', 'blue', 'red'].forEach(color => {
-                    const card = column[color];
-                    if (card) { const slotEl = document.querySelector(`.card-slot[data-zone-id="stage"][data-slot-index="${index}"][data-slot-color="${color}"]`); if(slotEl) slotEl.appendChild(createCardElement(card.cardId, card.isStandby, 'stage', 'drag', index, color)); }
+                    const cardArray = column[color];
+                    const slotEl = document.querySelector(`.card-slot[data-zone-id="stage"][data-slot-index="${index}"][data-slot-color="${color}"]`);
+                    if (slotEl && cardArray.length > 0) {
+                        cardArray.forEach(card => {
+                           slotEl.appendChild(createCardElement(card.cardId, card.isStandby, 'stage', 'drag', index, color));
+                        });
+                    }
                 });
             });
+
             for (const counterId in counters) { counters[counterId].textContent = gameState.counters[counterId]; }
         }
         
@@ -245,25 +256,20 @@
             return cardEl;
         }
         
-        // ### MODIFIED SECTION START ###
         function handlePressStart(e) {
             e.preventDefault();
             const element = e.currentTarget;
             let zoneId, isPile = false;
 
-            // Determine source zone and type
             if (element.classList.contains('pile-zone')) {
                 isPile = true;
                 zoneId = element.dataset.zoneId;
             } else if (element.classList.contains('card')) {
                 const parentZone = element.closest('.drop-zone, .overlay-card-area');
                 zoneId = parentZone.dataset.zoneId;
-            } else {
-                return;
-            }
+            } else { return; }
             sourceInfo = { zoneId };
             
-            // Get card data based on source
             if (isPile) {
                 if (gameState.zones[zoneId].length === 0) return;
                 const cardId = gameState.zones[zoneId].slice(-1)[0];
@@ -272,17 +278,18 @@
                  const cardId = element.dataset.cardId;
                  if (['hand', 'temporary', 'trash', 'volNoise'].includes(zoneId)) {
                     draggedCardData = { cardId: cardId, isStandby: false };
-                 } else { // Slotted zones (field, stage)
+                 } else {
                     sourceInfo.slotIndex = element.dataset.slotIndex;
                     if(zoneId === 'stage') {
                         sourceInfo.slotColor = element.dataset.slotColor;
-                        draggedCardData = { ...gameState.zones.stage[sourceInfo.slotIndex][sourceInfo.slotColor] };
-                    } else if (zoneId === 'field') {
-                        draggedCardData = { ...gameState.zones.field[sourceInfo.slotIndex] };
+                        const slotArray = gameState.zones.stage[sourceInfo.slotIndex][sourceInfo.slotColor];
+                        if(slotArray.length === 0) return;
+                        draggedCardData = { ...slotArray[slotArray.length - 1] };
+                    } else if (zoneId === 'direction') {
+                        draggedCardData = { ...gameState.zones.direction[sourceInfo.slotIndex] };
                     }
                  }
             }
-            
             if(!draggedCardData) return;
 
             longPressTimer = setTimeout(() => { isDragging = false; longPressTimer = null; showCardZoom(draggedCardData.cardId); }, LONG_PRESS_DURATION);
@@ -302,12 +309,7 @@
                 const moveY = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientY;
                 if (!isDragging && (Math.abs(moveX - startX) > 5 || Math.abs(moveY - startY) > 5)) {
                     isDragging = true; clearTimeout(longPressTimer); hideCardZoom();
-                    
-                    if(!isPile) {
-                        originalElementVisibility = element.style.visibility;
-                        element.style.visibility = 'hidden';
-                    }
-
+                    if(!isPile) { originalElementVisibility = element.style.visibility; element.style.visibility = 'hidden'; }
                     draggedCardVisual = document.createElement('div');
                     draggedCardVisual.className = 'card dragging';
                     if (draggedCardData.isStandby) draggedCardVisual.classList.add('standby');
@@ -320,7 +322,6 @@
                 clearTimeout(longPressTimer);
                 document.removeEventListener('mousemove', onMove); document.removeEventListener('touchmove', onMove);
                 document.removeEventListener('mouseup', onEnd); document.removeEventListener('touchend', onEnd);
-                
                 if (!isPile) element.style.visibility = originalElementVisibility;
 
                 if (isDragging) {
@@ -332,7 +333,7 @@
                     
                     let dropped = false;
                     const targetSlot = targetEl ? targetEl.closest('.card-slot.drop-zone') : null;
-                    const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#field-zone), .overlay-card-area.drop-zone') : null;
+                    const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#direction-zone), .overlay-card-area.drop-zone') : null;
 
                     if(targetSlot) {
                         const targetInfo = { zoneId: targetSlot.dataset.zoneId, slotIndex: targetSlot.dataset.slotIndex, slotColor: targetSlot.dataset.slotColor };
@@ -340,7 +341,6 @@
                     } else if (targetNonSlotZone) {
                         addCardToState(draggedCardData, { zoneId: targetNonSlotZone.dataset.zoneId }); dropped = true;
                     }
-                    
                     if(!dropped) { addCardToState(draggedCardData, sourceInfo); }
                 } else {
                     if (sourceInfo.zoneId === 'deck') { if(gameState.zones.deck.length > 0) gameState.zones.hand.push(gameState.zones.deck.pop()); }
@@ -354,7 +354,26 @@
             document.addEventListener('mouseup', onEnd); document.addEventListener('touchend', onEnd);
         }
 
-        function handleDoubleClick(e) { e.preventDefault(); const cardEl = e.currentTarget; const parentZone = cardEl.closest('.drop-zone') || cardEl.closest('.overlay-card-area'); if (!parentZone) return; const zoneId = parentZone.dataset.zoneId; const slotIndex = cardEl.dataset.slotIndex; const slotColor = cardEl.dataset.slotColor; let card = null; if(zoneId === 'field') card = gameState.zones.field[slotIndex]; if(zoneId === 'stage') card = gameState.zones.stage[slotIndex][slotColor]; if (card) { card.isStandby = !card.isStandby; renderAll(); } }
+        function handleDoubleClick(e) {
+            e.preventDefault();
+            const cardEl = e.currentTarget;
+            const parentZone = cardEl.closest('.drop-zone') || cardEl.closest('.overlay-card-area');
+            if (!parentZone) return;
+            const zoneId = parentZone.dataset.zoneId;
+            const slotIndex = cardEl.dataset.slotIndex;
+            const slotColor = cardEl.dataset.slotColor;
+            let card = null;
+            if(zoneId === 'direction') card = gameState.zones.direction[slotIndex];
+            if(zoneId === 'stage') {
+                const slotArray = gameState.zones.stage[slotIndex][slotColor];
+                if (slotArray.length > 0) {
+                    const topCard = slotArray.find(c => c.cardId === cardEl.dataset.cardId);
+                    if(topCard) card = topCard;
+                }
+            }
+            if (card) { card.isStandby = !card.isStandby; renderAll(); }
+        }
+        
         function showCardZoom(cardId) { document.getElementById('card-zoom-view').style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardId}.png')`; document.getElementById('card-zoom-overlay').style.display = 'flex'; }
         function hideCardZoom() { document.getElementById('card-zoom-overlay').style.display = 'none'; }
         function renderView(zoneId, containerId) { const container = document.getElementById(containerId); container.innerHTML = ''; gameState.zones[zoneId].forEach(cardData => { const cardId = (typeof cardData === 'object' && cardData.cardId) ? cardData.cardId : cardData; if(cardId) { container.appendChild(createCardElement(cardId, false, zoneId, 'drag')); } }); }
