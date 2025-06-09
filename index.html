@@ -43,8 +43,6 @@
         .card-slot[data-slot-color="red"]    { top: calc(var(--card-height) * 1.0); border-color: #dc3545; z-index: 3; }
         #direction-zone .card-slot { border-color: #e83e8c; }
         .card-slot .card { position: absolute; top: 0; left: 0; }
-        .card-slot .card:nth-child(2) { transform: translate(1px, 1px); }
-        .card-slot .card:nth-child(3) { transform: translate(2px, 2px); }
 
         #hand-zone { width: 100%; height: calc(var(--card-height) + 10px); border-top: 1px solid var(--border-color); display: flex; justify-content: center; align-items: center; gap: 2px; padding: 5px 0; }
         .pile-zone .card { position: absolute; top: 5px; left: 5px; pointer-events: none; }
@@ -178,9 +176,7 @@
             const zoneId = toInfo.zoneId;
             const zone = gameState.zones[zoneId];
             if (!zone) return;
-
             const cardObject = { cardId: cardData.cardId, isStandby: cardData.isStandby || false };
-            
             if (zoneId === 'direction') {
                 if(toInfo.slotIndex !== undefined) gameState.zones.direction[toInfo.slotIndex] = cardObject;
             } else if (zoneId === 'stage') {
@@ -225,8 +221,11 @@
                     const cardArray = column[color];
                     const slotEl = document.querySelector(`.card-slot[data-zone-id="stage"][data-slot-index="${index}"][data-slot-color="${color}"]`);
                     if (slotEl && cardArray.length > 0) {
-                        cardArray.forEach(card => {
-                           slotEl.appendChild(createCardElement(card.cardId, card.isStandby, 'stage', 'drag', index, color));
+                        cardArray.forEach((card, i) => {
+                           const cardElement = createCardElement(card.cardId, card.isStandby, 'stage', 'drag', index, color);
+                           cardElement.style.transform = `translate(${i * 2}px, ${i * 2}px)`;
+                           cardElement.style.zIndex = i;
+                           slotEl.appendChild(cardElement);
                         });
                     }
                 });
@@ -293,7 +292,7 @@
                         sourceInfo.slotColor = element.dataset.slotColor;
                         const slotArray = gameState.zones.stage[sourceInfo.slotIndex][sourceInfo.slotColor];
                         if(slotArray.length === 0) return;
-                        draggedCardData = { ...slotArray.find(c => c.cardId === cardId) };
+                        draggedCardData = { ...slotArray[slotArray.length - 1] };
                     } else if (zoneId === 'direction') {
                         draggedCardData = { ...gameState.zones.direction[sourceInfo.slotIndex] };
                     }
@@ -371,8 +370,8 @@
             const slotIndex = cardEl.dataset.slotIndex;
             const slotColor = cardEl.dataset.slotColor;
             let card = null;
-            if(zoneId === 'direction') card = gameState.zones.direction[slotIndex];
-            if(zoneId === 'stage') {
+            if(zoneId === 'direction') { card = gameState.zones.direction[slotIndex]; }
+            else if(zoneId === 'stage') {
                 const slotArray = gameState.zones.stage[slotIndex][slotColor];
                 if (slotArray.length > 0) {
                     const topCard = slotArray[slotArray.length - 1];
