@@ -38,7 +38,12 @@
         .pile-zone { width: calc(var(--card-width) + 10px); height: calc(var(--card-height) + 10px); cursor: pointer; }
         
         #stage-zone, #direction-zone { display: flex; justify-content: space-around; align-items: center; flex-grow: 1; gap: 1.5vw; /* 間隔を調整 */ }
-        .stage-column { position: relative; width: var(--card-width); height: calc(var(--card-height) * 2); }
+        .stage-column { 
+            position: relative; 
+            width: var(--card-width); 
+            height: calc(var(--card-height) * 2); 
+            padding-top: 25px; /* チェンジボタン用のスペース */
+        }
         .card-slot { position: relative; width: var(--card-width); height: var(--card-height); border: 1px dashed var(--border-color); border-radius: 4px; box-sizing: border-box; }
         .stage-column .card-slot { position: absolute; left: 0; }
         .card-slot[data-slot-color="green"]  { top: 0; border-color: #28a745; z-index: 1; }
@@ -47,6 +52,25 @@
         #direction-zone .card-slot { border-color: #e83e8c; }
         .card-slot .card { position: absolute; top: 0; left: 0; }
         
+        .change-stage-btn {
+            position: absolute;
+            top: 2px; /* 上からの位置調整 */
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            background-color: #555;
+            color: white;
+            border: 1px solid #888;
+            border-radius: 3px;
+            cursor: pointer;
+            z-index: 5; /* スロットより手前 */
+        }
+        .change-stage-btn.selected {
+            background-color: #e83e8c; /* 選択時の色 */
+            border-color: #c71585;
+        }
+
         #hand-zone { 
             width: 100%; 
             height: calc(var(--card-height) + 2vh); 
@@ -426,11 +450,26 @@
                 <div id="center-column">
                     <div id="stage-zone" class="zone">
                         <div class="zone-title">ステージ</div>
-                        <div class="stage-column"><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="red"></div></div>
-                        <div class="stage-column"><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="red"></div></div>
-                        <div class="stage-column"><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="red"></div></div>
-                        <div class="stage-column"><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="red"></div></div>
-                        <div class="stage-column"><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="red"></div></div>
+                        <div class="stage-column">
+                            <button class="change-stage-btn" data-column-index="0">チェンジ</button>
+                            <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="red"></div>
+                        </div>
+                        <div class="stage-column">
+                            <button class="change-stage-btn" data-column-index="1">チェンジ</button>
+                            <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="red"></div>
+                        </div>
+                        <div class="stage-column">
+                            <button class="change-stage-btn" data-column-index="2">チェンジ</button>
+                            <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="red"></div>
+                        </div>
+                        <div class="stage-column">
+                            <button class="change-stage-btn" data-column-index="3">チェンジ</button>
+                            <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="red"></div>
+                        </div>
+                        <div class="stage-column">
+                            <button class="change-stage-btn" data-column-index="4">チェンジ</button>
+                            <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="red"></div>
+                        </div>
                     </div>
                     <div id="direction-zone" class="zone">
                         <div class="zone-title">Direction</div>
@@ -513,6 +552,7 @@
         let lastTapTime = 0;
         let lastTapTargetCardId = null;
         let longPressTimer = null; // 長押しタイマーのIDを保持
+        let selectedChangeColumns = []; // 選択されたステージ列のインデックスを保持
 
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -1167,6 +1207,15 @@
             renderAll();
         }
 
+        function swapStageColumns(index1, index2) {
+            if (index1 === index2) return; // 同じ列なら何もしない
+
+            // gameState.zones.stage の内容をディープコピーして入れ替え
+            const tempColumnData = JSON.parse(JSON.stringify(gameState.zones.stage[index1]));
+            gameState.zones.stage[index1] = JSON.parse(JSON.stringify(gameState.zones.stage[index2]));
+            gameState.zones.stage[index2] = tempColumnData;
+        }
+
         function setupEventListeners() {
             document.getElementById('mulligan-btn').addEventListener('click', mulliganHand);
             document.getElementById('move-hand-to-trash-btn').addEventListener('click', moveHandToTrash);
@@ -1222,7 +1271,7 @@
             });
             document.getElementById('open-temporary-zone-btn').addEventListener('click', () => {
                 const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone');
-                if (temporaryExpandedZoneEl.style.display === 'flex') {
+                if ( temporaryExpandedZoneEl.style.display === 'flex') {
                     temporaryExpandedZoneEl.style.display = 'none';
                 } else {
                     temporaryExpandedZoneEl.style.display = 'flex';
@@ -1314,9 +1363,6 @@
                 }
             });
 
-            let isRolling = false; // ローリング中フラグ
-            // let diceTimer; // タイマーIDを保持
-
             // ダイスロールボタンのイベントリスナー
             document.getElementById('roll-dice-btn').addEventListener('click', () => {
                 const diceContainerEl = document.getElementById('dice-container');
@@ -1334,26 +1380,35 @@
                         diceResultEl.remove(); // DOMから削除
                     }, 1000); // フェードアウト時間
                 }, 1500);
+            });
 
-                // if (isRolling) {
-                //     // 既にローリング中の場合は、少し暗くする
-                //     diceResultEl.style.filter = 'brightness(50%)';
-                //     clearTimeout(diceTimer); // タイマーをリセット
-                //     setTimeout(() => {
-                //         diceResultEl.style.filter = 'brightness(100%)'; // 元に戻す
-                //     }, 200);
-                // }
+            // ステージ列チェンジボタンのイベントリスナー
+            document.querySelectorAll('.change-stage-btn').forEach(btn => {
+                btn.addEventListener('click', (event) => {
+                    const button = event.target;
+                    const columnIndex = parseInt(button.dataset.columnIndex, 10);
 
-                // isRolling = true;
-                // diceResultEl.style.display = 'flex'; // 表示
+                    const indexInSelected = selectedChangeColumns.indexOf(columnIndex);
 
-                // const roll = Math.floor(Math.random() * 6) + 1; // 1～6の乱数
-                // diceResultEl.style.backgroundImage = `url('item/dice${roll}.png')`; // 画像変更
+                    if (indexInSelected > -1) { // すでに選択されている場合：選択解除
+                        selectedChangeColumns.splice(indexInSelected, 1);
+                        button.classList.remove('selected');
+                    } else { // 新規選択の場合
+                        if (selectedChangeColumns.length < 2) {
+                            selectedChangeColumns.push(columnIndex);
+                            button.classList.add('selected');
 
-                // diceTimer = setTimeout(() => {
-                //     diceResultEl.style.display = 'none'; // 1.5秒後に非表示
-                //     isRolling = false;
-                // }, 1500);
+                            if (selectedChangeColumns.length === 2) {
+                                swapStageColumns(selectedChangeColumns[0], selectedChangeColumns[1]);
+                                // 選択状態をリセット
+                                document.querySelectorAll('.change-stage-btn.selected').forEach(b => b.classList.remove('selected'));
+                                selectedChangeColumns = [];
+                                renderAll(); // gameStateが変更されたので再描画
+                            }
+                        }
+                        // 3つ目以降の選択は無視（既に2つ選択されていれば上記if内で処理・リセットされるため）
+                    }
+                });
             });
 
             // ドキュメント全体のクリックで展開トラッシュゾーンを閉じる処理
