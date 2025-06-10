@@ -961,19 +961,44 @@
             const zoneId = fromInfo.zoneId; // 'trash-expanded'からドラッグした場合、ここは'trash'になる
             const cardIdToRemove = cardData.cardId;
             let slotArray;
+
             if (zoneId === 'direction') {
                 slotArray = gameState.zones.direction[fromInfo.slotIndex];
             } else if (zoneId === 'stage') {
                 slotArray = gameState.zones.stage[fromInfo.slotIndex][fromInfo.slotColor];
             }
-            if (slotArray && slotArray.length > 0) {
-                const topCard = slotArray[slotArray.length - 1];
-                if (topCard.cardId === cardIdToRemove) slotArray.pop();
-            } else if (zoneId !== 'direction' && zoneId !== 'stage') {
+
+            if (slotArray && slotArray.length > 0) { // direction or stage (these are arrays of objects like {cardId: "...", isStandby: ...})
+                // For these zones, we assume the dragged card is the one visually on top,
+                // which corresponds to the last element in the array.
+                const topCardObject = slotArray[slotArray.length - 1];
+                if (topCardObject.cardId === cardIdToRemove) {
+                    slotArray.pop();
+                }
+            } else if (zoneId !== 'direction' && zoneId !== 'stage') { // hand, deck, trash, volNoise, temporary (these are arrays of cardId strings)
                 const zone = gameState.zones[zoneId];
                 if (!zone) return;
-                const index = zone.indexOf(cardIdToRemove);
-                if (index > -1) zone.splice(index, 1);
+
+                if (zoneId === 'deck' || zoneId === 'volNoise') { // Zones that should behave strictly as LIFO for drag operations
+                    if (zone.length > 0 && zone[zone.length - 1] === cardIdToRemove) {
+                        zone.pop();
+                    } else {
+                        // This case might occur if the card dragged was not the top one, or zone became empty.
+                        // Or if cardIdToRemove is somehow not matching the actual top card string.
+                        // Fallback to indexOf, though this was the source of the original issue with duplicates.
+                        // Proper logging helps understand if this path is taken unexpectedly.
+                        console.warn(`[removeCardFromState] ${zoneId} top card mismatch or zone empty. Card to remove: ${cardIdToRemove}. Actual top: ${zone.length > 0 ? zone[zone.length-1] : 'N/A'}. Falling back to indexOf search.`);
+                        const index = zone.indexOf(cardIdToRemove);
+                        if (index > -1) {
+                            zone.splice(index, 1);
+                        }
+                    }
+                } else { // For hand, trash, temporary: remove the specific card by ID using indexOf
+                    const index = zone.indexOf(cardIdToRemove);
+                    if (index > -1) {
+                        zone.splice(index, 1);
+                    }
+                }
             }
         }
 
