@@ -81,6 +81,8 @@
             gap: 0.5vw; 
             padding: 1vh 0; 
             position: relative; /* 子要素の絶対配置のため */
+            overflow-x: hidden; /* カード折り返し時は基本的に水平スクロール不要 */
+            flex-wrap: wrap; /* カードを折り返すように変更 */
         }
         .pile-zone .card { position: absolute; top: 5px; left: 5px; pointer-events: none; }
         .pile-zone .card:nth-child(2) { transform: translate(1px, 1px); }
@@ -318,24 +320,31 @@
             padding: 10px 15px;
             font-size: 0.9rem;
             cursor: pointer;
-            background-color: #007bff;
+            background-color: #007bff; /* 標準のボタン色 */
             border: none;
             color: white;
             border-radius: 5px;
-            width: calc(var(--card-width) + 10px);
+            width: calc(var(--card-width) + 10px); /* PC表示時のボタン幅 */
             box-sizing: border-box;
             margin-bottom: 5px; /* ボタン間のマージン調整 */
         }
-        #sort-hand-btn { /* 手札ゾーン内のソートボタンのスタイル */
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            background-color: #6c757d; /* 少し目立たない色に */
-            z-index: 100; /* カードより手前に表示 */
-            width: auto; /* 幅を自動に */
-            margin-bottom: 0; /* action-btn のマージンを上書き */
+        #sort-hand-btn { /* 手札ソートボタンのスタイル */
+            /* position: absolute; を削除 */
+            /* bottom: 8px; を削除 */
+            /* right: 8px; を削除 */
+            padding: 6px 12px; /* 元のpaddingを維持 */
+            font-size: 0.8rem; /* 元のfont-sizeを維持 */
+            background-color: #6c757d; /* 元の背景色を維持 */
+            /* z-index: 100; を削除 */
+            /* width: auto; を削除し、下のwidth指定で統一 */
+            /* margin-bottom: 0; を削除し、下のmargin-bottom指定で統一 */
+            cursor: pointer; 
+            border: none; 
+            color: white; 
+            border-radius: 5px; 
+            width: calc(var(--card-width) + 10px); /* PC表示時のボタン幅 (action-btnに合わせる) */
+            box-sizing: border-box; 
+            margin-bottom: 5px; /* ボタン間のマージン調整 (action-btnに合わせる) */
         }
         #turn-end-btn { /* ターンエンドボタン特有のスタイルがあればここに */
             background-color: #ffc107; /* 例: 警告色っぽい黄色 */
@@ -476,210 +485,689 @@
             text-align: center;
         }
 
+        /* 新しいボードコンテンツラッパー */
+        #board-content {
+            display: flex;
+            flex-direction: row;
+            flex-grow: 1;
+            width: 100%;
+            height: calc(100% - var(--card-height) - 2vh); /* 手札ゾーンの高さを除く */
+            gap: 1vw;
+        }
+
+        #main-area { /* 左・中央・右(山札/ボタン)カラムを含むエリア */
+            /* display: flex; は既存のまま */
+            flex-grow: 1; /* 可変幅 */
+            height: 100%;
+            /* gap: 1vw; は既存のまま */
+            min-width: 0; /* flexアイテムの縮小を許可 */
+        }
+
+        #counters-column-wrapper { /* 新しいカウンター専用カラム */
+            width: 180px; /* PC表示時のカウンターカラム幅 (適宜調整) */
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* カウンター群を中央寄せ */
+            align-items: center;
+            padding: 5px;
+            box-sizing: border-box;
+            gap: 1vh;
+        }
+
+        #right-column { /* 山札とボタンのみのエリア */
+            width: calc(var(--card-width) + 20px); /* 幅を縮小 */
+            /* display: flex; flex-direction: column; align-items: center; padding: 5px; gap: 1vh; は既存のまま */
+        }
+        .right-inner { /* #right-column の中のラッパー */
+            /* display: flex; align-items: flex-start; gap: 10px; width: 100%; は既存のまま */
+            flex-direction: column; /* ボタンと山札を縦に */
+        }
+        .buttons-deck-wrapper { /* PC表示時のボタンと山札のラッパー */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px; /* PC表示時のデフォルトギャップ */
+        }
+        .deck-group { /* 山札と山札下ドローボタンのグループ */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* gap: 5px; */ /* 子が1つになるためgapは不要に */
+        }
+        /* .buttons-deck-wrapper は既存のままで良いはず */
+
+        .counters-group { /* #counters-column-wrapper の中のカウンター群 */
+            display: flex;
+            flex-direction: column; /* カウンターを縦一列に並べる */
+            align-items: center; /* 中央揃え */
+            gap: 15px; /* カウンター間の縦の隙間 */
+            padding: 10px;
+            width: 100%; /* 親要素の幅一杯に */
+            box-sizing: border-box;
+            background-color: rgba(128, 128, 128, 0.2);
+            border-radius: 8px;
+            overflow-y: auto; /* カウンターが多い場合にスクロール */
+            max-height: 100%;
+        }
+        /* .counter, .counter-icon etc. の基本スタイルは既存のままで、メディアクエリで調整 */
+
+
+        /* スマートフォン向けスタイル (縦持ち・横持ち共通ベース) */
         @media (max-width: 768px) {
             :root {
-                --card-height: 17vh; /* カード高さを少し小さく */
+                --card-width-vw: 11vw; /* カード幅をビューポート幅の11%にさらに縮小 */
+                --card-height: calc(var(--card-width-vw) / 0.7);
+                --card-width: var(--card-width-vw);
             }
 
-            body, html {
-                -webkit-text-size-adjust: 100%; /* iOSでのフォントサイズ自動調整を防ぐ */
-            }
+            /* body, html, .screen は変更なし */
 
-            .screen {
-                padding: 1vh 1vw; /* 全体のパディングを少し減らす */
+            #board-content {
+                height: calc(100% - var(--card-height) - 1.6vmin - 15px); /* 手札ゾーンと下部マージン調整 */
+                gap: 0.6vw; /* メインエリアとカウンターカラム間のギャップ */
             }
 
             #main-area {
-                flex-direction: column; /* スマホ縦画面ではメインエリアを縦積みに変更も検討 */
-                height: calc(100% - var(--card-height) - 1vh); /* 手札ゾーンの高さを考慮 */
-                gap: 0.5vh;
+                gap: 0.6vw; /* left, center, right カラム間のギャップ */
             }
 
-            #left-column, #right-column {
-                flex-direction: row; /* カラム内の要素を横並びに */
-                justify-content: space-around;
-                align-items: center;
-                width: 100%;
-                padding: 5px 0;
-                gap: 1vw;
+            #counters-column-wrapper {
+                width: calc(var(--card-width) + 7vw); /* スマホ時のカウンターカラム幅 */
+                padding: 0.4vh 0.1vw;
+                gap: 0.5vh;
+                justify-content: space-around; /* スペースに応じて均等配置 */
+            }
+
+            #left-column {
+                width: calc(var(--card-width) + 1.5vw); /* 左カラム幅調整 */
+                padding: 0.3vh 0.3vw;
+                gap: 0.6vh;
             }
             #center-column {
-                order: -1; /* 中央カラムを一番上に持ってくる */
-                gap: 0.5vh;
+                /* flex-grow: 1; は維持 */
+                padding: 0.3vh 0;
+                gap: 0.6vh;
             }
-             #left-column {
-                height: auto;
-                order: 0; /* left-columnを中央の下に */
+            #right-column { /* 山札とボタンのみのエリア */
+                width: calc(var(--card-width) + 1.5vw); /* 右カラム幅調整 */
+                padding: 0.3vh 0.3vw;
+                gap: 0.6vh;
+                /* 山札が抜けるので、ボタン群が上に詰まるように調整 */
+                justify-content: flex-start; 
             }
-            #right-column {
-                height: auto;
-                order: 1; /* right-columnを一番下に */
-                flex-direction: column; /* 右カラム内の要素は縦積み */
-                align-items: center;
+            .right-inner {
+                gap: 0.6vh;
+                width: 100%; /* #right-column の幅に追従 */
+            }
+            .buttons-deck-wrapper {
+                width: 100%;
+                gap: 0.4vh; /* ボタン間のギャップを調整 */
+            }
+            .buttons-deck-wrapper > .action-btn,
+            .buttons-deck-wrapper > #change-mat-btn {
+                max-width: calc(var(--card-width) + 15px); /* ボタン最大幅調整 */
+                width: 100%; /* 親の幅に合わせる */
+            }
+            .deck-group { /* スマホ表示時、山札グループを右下に配置 */
+                position: absolute;
+                bottom: 0.5vh; /* 画面下からの位置 */
+                right: 0.5vw;  /* 画面右からの位置 */
+                z-index: 150; /* 手札ゾーンより手前、他のオーバーレイよりは奥 */
+                /* gap: 0.3vh; */ /* 子が1つになるためgapは不要に */
+                align-items: center; /* 中央揃え */
             }
 
 
             .pile-zone {
-                width: calc(var(--card-width) + 8px);
-                height: calc(var(--card-height) + 8px);
+                width: calc(var(--card-width) + 5px);
+                height: calc(var(--card-height) + 5px);
             }
             .zone-title {
-                font-size: 1.3vh;
-                top: -1.3vh;
+                font-size: clamp(0.5rem, 1.5vmin, 0.7rem);
+                top: -1.5vmin;
             }
             .zone-count {
-                font-size: 3vh;
+                font-size: clamp(0.8rem, 2.6vmin, 1.3rem);
             }
 
-            #stage-zone, #direction-zone {
-                gap: 1vw; /* ステージ、ディレクション内のスロット間隔を詰める */
-                flex-grow: 0; /* 中央カラムの高さに合わせて伸縮しないように */
-                min-height: calc(var(--card-height) * 2.2); /* ステージの最低高さを確保 */
+            #stage-zone {
+                 height: calc(var(--card-height) * 2.1 + 15px);
             }
-             #direction-zone {
-                min-height: calc(var(--card-height) * 1.1); /* ディレクションの最低高さを確保 */
+            #direction-zone {
+                 height: calc(var(--card-height) * 1.0);
             }
-
-
             .stage-column {
-                padding-top: 18px; /* チェンジボタン用スペース調整 */
+                padding-top: 15px;
             }
             .change-stage-btn {
-                font-size: 0.6rem;
-                padding: 3px 5px;
-                top: 1px;
+                font-size: clamp(0.4rem, 1.3vmin, 0.5rem);
+                padding: 1px 2px;
             }
 
             #hand-zone {
-                height: calc(var(--card-height) + 1vh); /* 手札ゾーンの高さを調整 */
+                height: calc(var(--card-height) + 1.6vmin + 6px);
                 gap: 0.3vw;
-                padding: 0.5vh 0;
+                padding: 0.6vmin 0;
+                /* 右下に配置する山札エリアのスペースを確保 */
+                padding-right: calc(var(--card-width) + 2vw + 10px); 
+                justify-content: flex-start; /* カードを左詰めにする */
+                box-sizing: border-box; /* パディングを幅計算に含める */
+                overflow-x: hidden; /* カード折り返し時は基本的に水平スクロール不要 */
+                flex-wrap: wrap; /* カードを折り返すように変更 */
             }
 
             .action-btn, #open-temporary-zone-btn {
-                font-size: 0.75rem;
-                padding: 6px 8px;
-                width: calc(var(--card-width) + 8px);
-                margin-bottom: 3px;
+                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
+                padding: 0.6vh 0.8vw;
+                width: calc(var(--card-width) + 5px); /* スマホ表示時のボタン幅 */
+                margin-bottom: 0.3vh;
             }
             #sort-hand-btn {
-                font-size: 0.65rem;
-                padding: 4px 8px;
-                bottom: 5px;
-                right: 5px;
+                /* スマホ表示では .action-btn と同様のスタイルを適用 */
+                font-size: clamp(0.5rem, 1.6vmin, 0.65rem); /* スマホのaction-btnに合わせる */
+                padding: 0.6vh 0.8vw; /* スマホのaction-btnに合わせる */
+                width: calc(var(--card-width) + 5px); /* スマホ表示時のボタン幅 */
+                margin-bottom: 0.3vh; /* 他のボタンとの間隔 */
+                /* background-color: #6c757d; はPCのスタイルから継承される */
             }
             #change-mat-btn {
-                font-size: 0.8rem;
-                padding: 6px 10px;
-                margin-bottom: 5px;
+                font-size: clamp(0.55rem, 1.8vmin, 0.7rem);
+                padding: 0.6vh 1vw;
             }
-             #draw-bottom-deck-btn { /* 山札下からドローボタンも調整 */
-                font-size: 0.7rem;
-                width: calc(var(--card-width) + 8px);
-            }
-
-
-            .right-inner {
-                flex-direction: column; /* ボタン群とカウンター群を縦積みに */
-                align-items: center; /* 中央揃え */
-                gap: 8px;
-            }
-            .buttons-deck-wrapper {
-                gap: 3px;
+            #draw-bottom-deck-btn {
+                font-size: clamp(0.45rem, 1.4vmin, 0.6rem);
+                width: calc(var(--card-width) + 5px);
             }
 
-            .counters-group {
-                gap: 10px;
-                padding: 8px;
-                flex-direction: row; /* カウンターを横並びに */
-                flex-wrap: wrap; /* 折り返し許可 */
-                justify-content: center;
+            .counters-group { /* #counters-column-wrapper の中のカウンター群 */
+                gap: 1vh; /* カウンター間の縦の隙間 */
+                padding: 0.5vmin;
+                background-color: rgba(128, 128, 128, 0.2);
             }
             .counter {
-                gap: 4px;
+                gap: 0.3vmin;
+                /* width: 100%; は維持 */
+                /* max-width は調整不要かも */
             }
             .counter-icon {
-                width: 35px;
-                height: 35px;
+                width: clamp(22px, 5vw, 30px);
+                height: clamp(22px, 5vw, 30px);
+            }
+            .counter-value-controls {
+                gap: 0.6vw;
             }
             .counter-value {
-                font-size: 1.5rem;
-                min-width: 28px;
+                font-size: clamp(0.8rem, 3vmin, 1.2rem);
+                min-width: clamp(18px, 4vw, 24px);
             }
             .counter-btn {
-                font-size: 1rem;
-                padding: 3px 6px;
+                font-size: clamp(0.65rem, 2.1vmin, 0.85rem);
+                padding: 0.3vmin 0.6vmin;
             }
             .counter-label {
-                font-size: 0.8rem;
-                margin-bottom: 1px;
-            }
-            .counter:last-child .counter-label { /* ターンカウンターのラベル */
-                font-size: 0.9rem;
+                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
+                margin-bottom: 0.1vh;
             }
 
-
-            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone {
-                width: 95vw;
-                height: 80vh;
-                max-width: none;
-                max-height: none;
-                padding: 10px;
-                gap: 8px;
+            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone, #temporary-expanded-zone {
+                width: 80vw;
+                height: 60vh;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                max-width: 95vw;
+                max-height: 70vh;
+                padding: 0.5em;
+                gap: 0.3em;
+                font-size: 0.9em;
             }
-            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card {
-                width: calc(var(--card-width) * 0.75);
-                height: calc(var(--card-height) * 0.75);
-            }
-
-            #temporary-expanded-zone {
-                width: 95vw;
-                height: 85vh;
-                max-width: none;
-                max-height: none;
-                padding: 10px;
-                gap: 8px;
-            }
-            .temporary-zone-controls {
-                padding-bottom: 8px;
-                gap: 5px; /* ボタン間の隙間 */
-                flex-wrap: wrap; /* ボタン折り返し */
-                justify-content: center;
+            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card, #temporary-expanded-zone .card {
+                width: 12vw;
+                height: calc(12vw / 0.7);
+                min-width: 48px;
+                min-height: 68px;
+                max-width: 18vw;
+                max-height: calc(18vw / 0.7);
             }
             .temporary-zone-controls button {
-                font-size: 0.7rem;
-                padding: 5px 8px;
-            }
-            #temporary-expanded-zone .card {
-                 width: calc(var(--card-width) * 0.75);
-                height: calc(var(--card-height) * 0.75);
-            }
-            .temporary-zone-card-area {
-                gap: 8px;
-                padding: 3px;
-            }
-
-
-            #deck-input-screen h1 { font-size: 1.1rem; margin-bottom: 10px; }
-            #deck-input-screen p { font-size: 0.85rem; margin-bottom: 10px; }
-            #deck-string { 
-                height: 100px; 
-                font-size: 0.85rem; 
-                margin-bottom: 10px;
-                width: 95%;
-            }
-            #start-game-btn { padding: 10px 18px; font-size: 0.95rem; }
-
-            #shuffle-message {
-                font-size: 1.6rem;
-                padding: 12px 25px;
-            }
-            
-            #zoomed-card-image {
-                width: calc(var(--card-width) * 2.5);
-                height: calc(var(--card-height) * 2.5);
+                font-size: clamp(0.4rem, 1.2vmin, 0.55rem);
+                padding: 0.4em 0.8em;
             }
         }
+
+        /* スマートフォン横持ち特化スタイル (高さが特に低い場合) */
+        @media (max-height: 450px) and (orientation: landscape) {
+            :root {
+                --card-width-vw: 9vw; /* カード幅をさらに小さく */
+            }
+            #board-content {
+                height: calc(100% - var(--card-height) - 0.6vmin - 6px);
+            }
+            #counters-column-wrapper {
+                width: calc(var(--card-width) + 6vw);
+            }
+            #left-column {
+                 width: calc(var(--card-width) + 1.2vw);
+            }
+            #right-column {
+                width: calc(var(--card-width) + 1.2vw);
+            }
+            .deck-group {
+                bottom: 0.3vh;
+                right: 0.3vw;
+            }
+             .zone-title {
+                font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
+                top: -1.3vmin;
+            }
+            .zone-count {
+                font-size: clamp(0.65rem, 2.1vmin, 1rem);
+            }
+            #stage-zone {
+                 height: calc(var(--card-height) * 2.0 + 10px);
+            }
+            #direction-zone {
+                 height: calc(var(--card-height) * 0.95);
+            }
+            .stage-column {
+                padding-top: 12px;
+            }
+
+            #hand-zone {
+                height: calc(var(--card-height) + 1vmin + 3px);
+                padding-right: calc(var(--card-width) + 1.5vw + 8px); 
+                overflow-x: auto; /* 横スクロールを可能にする (このメディアクエリでは nowrap が優先される) */
+                flex-wrap: nowrap; /* カードを折り返さない (このメディアクエリの主要な変更) */
+            }
+            .action-btn, #open-temporary-zone-btn {
+                font-size: clamp(0.4rem, 1.4vmin, 0.6rem);
+                padding: 0.4vh 0.6vw;
+            }
+            #change-mat-btn {
+                font-size: clamp(0.55rem, 1.8vmin, 0.7rem);
+                padding: 0.6vh 1vw;
+            }
+            #draw-bottom-deck-btn {
+                font-size: clamp(0.45rem, 1.4vmin, 0.6rem);
+                width: calc(var(--card-width) + 5px);
+            }
+
+            .counters-group { /* #counters-column-wrapper の中のカウンター群 */
+                gap: 1vh; /* カウンター間の縦の隙間 */
+                padding: 0.5vmin;
+                background-color: rgba(128, 128, 128, 0.2);
+            }
+            .counter {
+                gap: 0.3vmin;
+                /* width: 100%; は維持 */
+                /* max-width は調整不要かも */
+            }
+            .counter-icon {
+                width: clamp(20px, 4.5vw, 26px);
+                height: clamp(20px, 4.5vw, 26px);
+            }
+            .counter-value {
+                font-size: clamp(0.7rem, 2.6vmin, 1rem);
+            }
+            .counter-btn {
+                font-size: clamp(0.6rem, 2vmin, 0.8rem);
+            }
+            .counter-label {
+                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
+                margin-bottom: 0.1vh;
+            }
+
+            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone, #temporary-expanded-zone {
+                width: 70vw;
+                height: 50vh;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                max-width: 95vw;
+                max-height: 60vh;
+                padding: 0.4em;
+                gap: 0.2em;
+                font-size: 0.8em;
+            }
+            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card, #temporary-expanded-zone .card {
+                width: 9vw;
+                height: calc(9vw / 0.7);
+                min-width: 36px;
+                min-height: 52px;
+                max-width: 14vw;
+                max-height: calc(14vw / 0.7);
+            }
+            .temporary-zone-controls button {
+                font-size: clamp(0.35rem, 1vmin, 0.5rem);
+                padding: 0.3em 0.6em;
+            }
+        }
+
+        /* スマートフォン横持ち特化スタイル (高さが特に低い場合) */
+        @media (max-height: 450px) and (orientation: landscape) {
+            :root {
+                --card-width-vw: 9vw; /* カード幅をさらに小さく */
+            }
+            #board-content {
+                height: calc(100% - var(--card-height) - 0.6vmin - 6px);
+            }
+            #counters-column-wrapper {
+                width: calc(var(--card-width) + 6vw);
+            }
+            #left-column {
+                 width: calc(var(--card-width) + 1.2vw);
+            }
+            #right-column {
+                width: calc(var(--card-width) + 1.2vw);
+            }
+            .deck-group {
+                bottom: 0.3vh;
+                right: 0.3vw;
+            }
+             .zone-title {
+                font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
+                top: -1.3vmin;
+            }
+            .zone-count {
+                font-size: clamp(0.65rem, 2.1vmin, 1rem);
+            }
+            #stage-zone {
+                 height: calc(var(--card-height) * 2.0 + 10px);
+            }
+            #direction-zone {
+                 height: calc(var(--card-height) * 0.95);
+            }
+            .stage-column {
+                padding-top: 12px;
+            }
+
+            #hand-zone {
+                height: calc(var(--card-height) + 1vmin + 3px);
+                padding-right: calc(var(--card-width) + 1.5vw + 8px); 
+                overflow-x: auto; /* 横スクロールを可能にする (このメディアクエリでは nowrap が優先される) */
+                flex-wrap: nowrap; /* カードを折り返さない (このメディアクエリの主要な変更) */
+            }
+            .action-btn, #open-temporary-zone-btn {
+                font-size: clamp(0.4rem, 1.4vmin, 0.6rem);
+                padding: 0.4vh 0.6vw;
+            }
+            #change-mat-btn {
+                font-size: clamp(0.55rem, 1.8vmin, 0.7rem);
+                padding: 0.6vh 1vw;
+            }
+            #draw-bottom-deck-btn {
+                font-size: clamp(0.45rem, 1.4vmin, 0.6rem);
+                width: calc(var(--card-width) + 5px);
+            }
+
+            .counters-group { /* #counters-column-wrapper の中のカウンター群 */
+                gap: 1vh; /* カウンター間の縦の隙間 */
+                padding: 0.5vmin;
+                background-color: rgba(128, 128, 128, 0.2);
+            }
+            .counter {
+                gap: 0.3vmin;
+                /* width: 100%; は維持 */
+                /* max-width は調整不要かも */
+            }
+            .counter-icon {
+                width: clamp(20px, 4.5vw, 26px);
+                height: clamp(20px, 4.5vw, 26px);
+            }
+            .counter-value {
+                font-size: clamp(0.7rem, 2.6vmin, 1rem);
+            }
+            .counter-btn {
+                font-size: clamp(0.6rem, 2vmin, 0.8rem);
+            }
+            .counter-label {
+                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
+                margin-bottom: 0.1vh;
+            }
+
+            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone, #temporary-expanded-zone {
+                width: 70vw;
+                height: 50vh;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                max-width: 95vw;
+                max-height: 60vh;
+                padding: 0.4em;
+                gap: 0.2em;
+                font-size: 0.8em;
+            }
+            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card, #temporary-expanded-zone .card {
+                width: 9vw;
+                height: calc(9vw / 0.7);
+                min-width: 36px;
+                min-height: 52px;
+                max-width: 14vw;
+                max-height: calc(14vw / 0.7);
+            }
+            .temporary-zone-controls button {
+                font-size: clamp(0.35rem, 1vmin, 0.5rem);
+                padding: 0.3em 0.6em;
+            }
+        }
+
+        /* スマートフォン横持ち特化スタイル (高さが特に低い場合) */
+        @media (max-height: 450px) and (orientation: landscape) {
+            :root {
+                --card-width-vw: 9vw; /* カード幅をさらに小さく */
+            }
+            #board-content {
+                height: calc(100% - var(--card-height) - 0.6vmin - 6px);
+            }
+            #counters-column-wrapper {
+                width: calc(var(--card-width) + 6vw);
+            }
+            #left-column {
+                 width: calc(var(--card-width) + 1.2vw);
+            }
+            #right-column {
+                width: calc(var(--card-width) + 1.2vw);
+            }
+            .deck-group {
+                bottom: 0.3vh;
+                right: 0.3vw;
+            }
+             .zone-title {
+                font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
+                top: -1.3vmin;
+            }
+            .zone-count {
+                font-size: clamp(0.65rem, 2.1vmin, 1rem);
+            }
+            #stage-zone {
+                 height: calc(var(--card-height) * 2.0 + 10px);
+            }
+            #direction-zone {
+                 height: calc(var(--card-height) * 0.95);
+            }
+            .stage-column {
+                padding-top: 12px;
+            }
+
+            #hand-zone {
+                height: calc(var(--card-height) + 1vmin + 3px);
+                padding-right: calc(var(--card-width) + 1.5vw + 8px); 
+                overflow-x: auto; /* 横スクロールを可能にする (このメディアクエリでは nowrap が優先される) */
+                flex-wrap: nowrap; /* カードを折り返さない (このメディアクエリの主要な変更) */
+            }
+            .action-btn, #open-temporary-zone-btn {
+                font-size: clamp(0.4rem, 1.4vmin, 0.6rem);
+                padding: 0.4vh 0.6vw;
+            }
+            #change-mat-btn {
+                font-size: clamp(0.55rem, 1.8vmin, 0.7rem);
+                padding: 0.6vh 1vw;
+            }
+            #draw-bottom-deck-btn {
+                font-size: clamp(0.45rem, 1.4vmin, 0.6rem);
+                width: calc(var(--card-width) + 5px);
+            }
+
+            .counters-group { /* #counters-column-wrapper の中のカウンター群 */
+                gap: 1vh; /* カウンター間の縦の隙間 */
+                padding: 0.5vmin;
+                background-color: rgba(128, 128, 128, 0.2);
+            }
+            .counter {
+                gap: 0.3vmin;
+                /* width: 100%; は維持 */
+                /* max-width は調整不要かも */
+            }
+            .counter-icon {
+                width: clamp(20px, 4.5vw, 26px);
+                height: clamp(20px, 4.5vw, 26px);
+            }
+            .counter-value {
+                font-size: clamp(0.7rem, 2.6vmin, 1rem);
+            }
+            .counter-btn {
+                font-size: clamp(0.6rem, 2vmin, 0.8rem);
+            }
+            .counter-label {
+                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
+                margin-bottom: 0.1vh;
+            }
+
+            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone, #temporary-expanded-zone {
+                width: 70vw;
+                height: 50vh;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                max-width: 95vw;
+                max-height: 60vh;
+                padding: 0.4em;
+                gap: 0.2em;
+                font-size: 0.8em;
+            }
+            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card, #temporary-expanded-zone .card {
+                width: 9vw;
+                height: calc(9vw / 0.7);
+                min-width: 36px;
+                min-height: 52px;
+                max-width: 14vw;
+                max-height: calc(14vw / 0.7);
+            }
+            .temporary-zone-controls button {
+                font-size: clamp(0.35rem, 1vmin, 0.5rem);
+                padding: 0.3em 0.6em;
+            }
+        }
+
+        /* スマートフォン横持ち特化スタイル (高さが特に低い場合) */
+        @media (max-height: 450px) and (orientation: landscape) {
+            :root {
+                --card-width-vw: 9vw; /* カード幅をさらに小さく */
+            }
+            #board-content {
+                height: calc(100% - var(--card-height) - 0.6vmin - 6px);
+            }
+            #counters-column-wrapper {
+                width: calc(var(--card-width) + 6vw);
+            }
+            #left-column {
+                 width: calc(var(--card-width) + 1.2vw);
+            }
+            #right-column {
+                width: calc(var(--card-width) + 1.2vw);
+            }
+            .deck-group {
+                bottom: 0.3vh;
+                right: 0.3vw;
+            }
+             .zone-title {
+                font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
+                top: -1.3vmin;
+            }
+            .zone-count {
+                font-size: clamp(0.65rem, 2.1vmin, 1rem);
+            }
+            #stage-zone {
+                 height: calc(var(--card-height) * 2.0 + 10px);
+            }
+            #direction-zone {
+                 height: calc(var(--card-height) * 0.95);
+            }
+            .stage-column {
+                padding-top: 12px;
+            }
+
+            #hand-zone {
+                height: calc(var(--card-height) + 1vmin + 3px);
+                padding-right: calc(var(--card-width) + 1.5vw + 8px); 
+                overflow-x: auto; /* 横スクロールを可能にする (このメディアクエリでは nowrap が優先される) */
+                flex-wrap: nowrap; /* カードを折り返さない (このメディアクエリの主要な変更) */
+            }
+            .action-btn, #open-temporary-zone-btn {
+                font-size: clamp(0.4rem, 1.4vmin, 0.6rem);
+                padding: 0.4vh 0.6vw;
+            }
+            #change-mat-btn {
+                font-size: clamp(0.55rem, 1.8vmin, 0.7rem);
+                padding: 0.6vh 1vw;
+            }
+            #draw-bottom-deck-btn {
+                font-size: clamp(0.45rem, 1.4vmin, 0.6rem);
+                width: calc(var(--card-width) + 5px);
+            }
+
+            .counters-group { /* #counters-column-wrapper の中のカウンター群 */
+                gap: 1vh; /* カウンター間の縦の隙間 */
+                padding: 0.5vmin;
+                background-color: rgba(128, 128, 128, 0.2);
+            }
+            .counter {
+                gap: 0.3vmin;
+                /* width: 100%; は維持 */
+                /* max-width は調整不要かも */
+            }
+            .counter-icon {
+                width: clamp(20px, 4.5vw, 26px);
+                height: clamp(20px, 4.5vw, 26px);
+            }
+            .counter-value {
+                font-size: clamp(0.7rem, 2.6vmin, 1rem);
+            }
+            .counter-btn {
+                font-size: clamp(0.6rem, 2vmin, 0.8rem);
+            }
+            .counter-label {
+                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
+                margin-bottom: 0.1vh;
+            }
+
+            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone, #temporary-expanded-zone {
+                width: 70vw;
+                height: 50vh;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                max-width: 95vw;
+                max-height: 60vh;
+                padding: 0.4em;
+                gap: 0.2em;
+                font-size: 0.8em;
+            }
+            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card, #temporary-expanded-zone .card {
+                width: 9vw;
+                height: calc(9vw / 0.7);
+                min-width: 36px;
+                min-height: 52px;
+                max-width: 14vw;
+                max-height: calc(14vw / 0.7);
+            }
+            .temporary-zone-controls button {
+                font-size: clamp(0.35rem, 1vmin, 0.5rem);
+                padding: 0.3em 0.6em;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -691,114 +1179,117 @@
             <button id="start-game-btn">ゲーム開始</button>
         </div>
         <div id="game-board" class="screen">
-            <div id="main-area">
-                <div id="left-column">
-                    <div id="volNoise-zone" class="zone pile-zone drop-zone" data-zone-id="volNoise"><div class="zone-title">VOLノイズ</div></div>
-                    <button id="open-temporary-zone-btn">テンポラリー</button>
-                    <div id="trash-zone" class="zone pile-zone drop-zone" data-zone-id="trash"><div class="zone-title">トラッシュ</div></div>
-                </div>
-                <div id="center-column">
-                    <div id="stage-zone" class="zone">
-                        <div class="zone-title">ステージ</div>
-                        <div class="stage-column">
-                            <button class="change-stage-btn" data-column-index="0">チェンジ</button>
-                            <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="red"></div>
+            <div id="board-content"> <!-- New wrapper -->
+                <div id="main-area">
+                    <div id="left-column">
+                        <div id="volNoise-zone" class="zone pile-zone drop-zone" data-zone-id="volNoise"><div class="zone-title">VOLノイズ</div></div>
+                        <button id="open-temporary-zone-btn">テンポラリー</button>
+                        <div id="trash-zone" class="zone pile-zone drop-zone" data-zone-id="trash"><div class="zone-title">トラッシュ</div></div>
+                    </div>
+                    <div id="center-column">
+                        <div id="stage-zone" class="zone">
+                            <div class="zone-title">ステージ</div>
+                            <div class="stage-column">
+                                <button class="change-stage-btn" data-column-index="0">チェンジ</button>
+                                <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="0" data-slot-color="red"></div>
+                            </div>
+                            <div class="stage-column">
+                                <button class="change-stage-btn" data-column-index="1">チェンジ</button>
+                                <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="red"></div>
+                            </div>
+                            <div class="stage-column">
+                                <button class="change-stage-btn" data-column-index="2">チェンジ</button>
+                                <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="red"></div>
+                            </div>
+                            <div class="stage-column">
+                                <button class="change-stage-btn" data-column-index="3">チェンジ</button>
+                                <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="red"></div>
+                            </div>
+                            <div class="stage-column">
+                                <button class="change-stage-btn" data-column-index="4">チェンジ</button>
+                                <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="red"></div>
+                            </div>
                         </div>
-                        <div class="stage-column">
-                            <button class="change-stage-btn" data-column-index="1">チェンジ</button>
-                            <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="1" data-slot-color="red"></div>
-                        </div>
-                        <div class="stage-column">
-                            <button class="change-stage-btn" data-column-index="2">チェンジ</button>
-                            <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="2" data-slot-color="red"></div>
-                        </div>
-                        <div class="stage-column">
-                            <button class="change-stage-btn" data-column-index="3">チェンジ</button>
-                            <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="3" data-slot-color="red"></div>
-                        </div>
-                        <div class="stage-column">
-                            <button class="change-stage-btn" data-column-index="4">チェンジ</button>
-                            <div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="green"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="blue"></div><div class="card-slot drop-zone" data-zone-id="stage" data-slot-index="4" data-slot-color="red"></div>
+                        <div id="direction-zone" class="zone">
+                            <div class="zone-title">Direction</div>
+                            <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="0"></div>
+                            <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="1"></div>
+                            <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="2"></div>
+                            <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="3"></div>
+                            <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="4"></div>
                         </div>
                     </div>
-                    <div id="direction-zone" class="zone">
-                        <div class="zone-title">Direction</div>
-                        <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="0"></div>
-                        <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="1"></div>
-                        <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="2"></div>
-                        <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="3"></div>
-                        <div class="card-slot drop-zone" data-zone-id="direction" data-slot-index="4"></div>
+                    <div id="right-column">
+                        <div class="right-inner">
+                            <div class="buttons-deck-wrapper" style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+                                <button id="turn-end-btn" class="action-btn">ターンエンド</button>
+                                <button id="shuffle-btn" class="action-btn">山札シャッフル</button>
+                                <button id="search-deck-btn" class="action-btn">山札からサーチ</button>
+                                <button id="search-volnoise-btn" class="action-btn">VOLノイズからサーチ</button>
+                                <button id="move-hand-to-trash-btn" class="action-btn">手札を全てトラッシュ</button>
+                                <button id="mulligan-btn" class="action-btn">マリガン</button>
+                                <button id="reset-btn" class="action-btn">リセット</button>
+                                <button id="change-mat-btn">プレイマット変更</button>
+                                <button id="roll-dice-btn" class="action-btn">ダイスを振る</button>
+                                <button id="draw-bottom-deck-btn" class="action-btn">山札の下から1枚ドロー</button>
+                                <button id="sort-hand-btn" class="action-btn">ソート</button> <!-- Moved here -->
+                                <!-- 山札ゾーンとドローボタンを新しいdivでラップ -->
+                                <div class="deck-group">
+                                    <div id="deck-zone" class="zone pile-zone drop-zone" data-zone-id="deck"><div class="zone-title">山札</div></div>
+                                    <!-- 山札の下から1枚ドローボタンは上に移動 -->
+                                </div>
+                            </div>
+                            <!-- カウンター群はここから移動 -->
+                        </div>
                     </div>
                 </div>
-                <div id="right-column">
-                    <!-- 横並びラップ -->
-                    <div class="right-inner" style="display:flex; align-items:flex-start; gap:10px;">
-                        <!-- ボタン＋山札 -->
-                        <div class="buttons-deck-wrapper" style="display:flex; flex-direction:column; align-items:center; gap:5px;">
-                            <!-- アクションボタン群 -->
-                            <button id="turn-end-btn" class="action-btn">ターンエンド</button>
-                            <button id="shuffle-btn" class="action-btn">山札シャッフル</button>
-                            <button id="search-deck-btn" class="action-btn">山札からサーチ</button>
-                            <button id="search-volnoise-btn" class="action-btn">VOLノイズからサーチ</button>
-                            <button id="move-hand-to-trash-btn" class="action-btn">手札を全てトラッシュ</button>
-                            <!-- <button id="sort-hand-btn" class="action-btn">手札ソート</button> 手札ソートボタンをここから削除 -->
-                            <button id="mulligan-btn" class="action-btn">マリガン</button>
-                            <button id="reset-btn" class="action-btn">リセット</button>
-                            <button id="change-mat-btn">プレイマット変更</button>
-                            <button id="roll-dice-btn" class="action-btn">ダイスを振る</button>
-
-                            <!-- 山札ゾーン -->
-                            <div id="deck-zone" class="zone pile-zone drop-zone" data-zone-id="deck"><div class="zone-title">山札</div></div>
-                            <button id="draw-bottom-deck-btn" class="action-btn">山札の下から1枚ドロー</button>
+                <div id="counters-column-wrapper"> <!-- New column for counters -->
+                    <div class="counters-group">
+                        <div class="counter">
+                            <img src="item/vol.png" alt="VOL" class="counter-icon">
+                            <div class="counter-value-controls">
+                                <button class="counter-btn" data-counter="vol" data-amount="-1">-</button>
+                                <span id="vol-value" class="counter-value">0</span>
+                                <button class="counter-btn" data-counter="vol" data-amount="1">+</button>
+                            </div>
                         </div>
-                        <!-- カウンター群 -->
-                        <div class="counters-group">
-                            <div class="counter">
-                                <img src="item/vol.png" alt="VOL" class="counter-icon">
-                                <div class="counter-value-controls">
-                                    <button class="counter-btn" data-counter="vol" data-amount="-1">-</button>
-                                    <span id="vol-value" class="counter-value">0</span>
-                                    <button class="counter-btn" data-counter="vol" data-amount="1">+</button>
-                                </div>
+                        <div class="counter">
+                            <img src="item/alpha.png" alt="Alpha" class="counter-icon">
+                            <div class="counter-value-controls">
+                                <button class="counter-btn" data-counter="manaAlpha" data-amount="-1">-</button>
+                                <span id="mana-alpha-value" class="counter-value">0</span>
+                                <button class="counter-btn" data-counter="manaAlpha" data-amount="1">+</button>
                             </div>
-                            <div class="counter">
-                                <img src="item/alpha.png" alt="Alpha" class="counter-icon">
-                                <div class="counter-value-controls">
-                                    <button class="counter-btn" data-counter="manaAlpha" data-amount="-1">-</button>
-                                    <span id="mana-alpha-value" class="counter-value">0</span>
-                                    <button class="counter-btn" data-counter="manaAlpha" data-amount="1">+</button>
-                                </div>
+                        </div>
+                        <div class="counter">
+                            <img src="item/beta.png" alt="Beta" class="counter-icon">
+                            <div class="counter-value-controls">
+                                <button class="counter-btn" data-counter="manaBeta" data-amount="-1">-</button>
+                                <span id="mana-beta-value" class="counter-value">0</span>
+                                <button class="counter-btn" data-counter="manaBeta" data-amount="1">+</button>
                             </div>
-                            <div class="counter">
-                                <img src="item/beta.png" alt="Beta" class="counter-icon">
-                                <div class="counter-value-controls">
-                                    <button class="counter-btn" data-counter="manaBeta" data-amount="-1">-</button>
-                                    <span id="mana-beta-value" class="counter-value">0</span>
-                                    <button class="counter-btn" data-counter="manaBeta" data-amount="1">+</button>
-                                </div>
+                        </div>
+                        <div class="counter">
+                            <img src="item/omega.png" alt="Omega" class="counter-icon">
+                            <div class="counter-value-controls">
+                                <button class="counter-btn" data-counter="manaOmega" data-amount="-1">-</button>
+                                <span id="mana-omega-value" class="counter-value">0</span>
+                                <button class="counter-btn" data-counter="manaOmega" data-amount="1">+</button>
                             </div>
-                            <div class="counter">
-                                <img src="item/omega.png" alt="Omega" class="counter-icon">
-                                <div class="counter-value-controls">
-                                    <button class="counter-btn" data-counter="manaOmega" data-amount="-1">-</button>
-                                    <span id="mana-omega-value" class="counter-value">0</span>
-                                    <button class="counter-btn" data-counter="manaOmega" data-amount="1">+</button>
-                                </div>
-                            </div>
-                            <div class="counter">
-                                <div class="counter-label" style="font-size: 1.4rem; margin-bottom: 3px;">ターン</div>
-                                <div class="counter-value-controls">
-                                    <button class="counter-btn" data-counter="turn" data-amount="-1">-</button>
-                                    <span id="turn-value" class="counter-value">1</span>
-                                    <button class="counter-btn" data-counter="turn" data-amount="1">+</button>
-                                </div>
+                        </div>
+                        <div class="counter">
+                            <div class="counter-label" style="font-size: 1.4rem; margin-bottom: 3px;">ターン</div>
+                            <div class="counter-value-controls">
+                                <button class="counter-btn" data-counter="turn" data-amount="-1">-</button>
+                                <span id="turn-value" class="counter-value">1</span>
+                                <button class="counter-btn" data-counter="turn" data-amount="1">+</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div id="hand-zone" class="zone drop-zone" data-zone-id="hand">
-                <button id="sort-hand-btn" class="action-btn">ソート</button> <!-- 手札ソートボタンを手札ゾーン内に移動 -->
+                <!-- 手札ソートボタンは上記に移動 -->
             </div>
             <div id="dice-container"></div>
         </div>
@@ -834,6 +1325,7 @@
         const CARD_IMAGE_PATH = 'cards/';
         const DOUBLE_TAP_THRESHOLD = 300;
         const LONG_PRESS_DELAY = 500; // 長押しとみなすまでの時間（ミリ秒）
+// ここから下は変更なし
         let lastTapTime = 0;
         let lastTapTargetCardId = null;
         let longPressTimer = null; // 長押しタイマーのIDを保持
@@ -1131,7 +1623,7 @@
                  // console.log("No dragged card data for non-pile, exiting press start.");
                  return;
             }
-            // パイルの場合、draggedCardDataは上で設定されるか、空ならreturn済み
+            // パイルの場合、draggedCardDataは上で設定されているか、空ならreturn済み
 
             const touch = e.touches ? e.touches[0] : e;
             const rect = element.getBoundingClientRect();
@@ -1394,7 +1886,6 @@
                             return indexA - indexB;
                         });
                     }
-
                     trashExpandedZoneEl.style.display = 'flex'; // 表示を 'flex' に
                 }
                 renderAll(); // 展開ゾーンのカードを再描画
