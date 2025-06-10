@@ -8,6 +8,20 @@
 </head>
 <body>
     <div id="game-container">
+        <!-- パスワード認証画面 -->
+        <div id="password-screen" class="screen">
+            <h1>KAMITSUBAKI CARD GAME</h1>
+            <h2>アクセス認証</h2>
+            <p>パスワードを入力してください</p>
+            <div class="password-input-container">
+                <input type="password" id="password-input" placeholder="パスワードを入力">
+                <button id="password-submit-btn">認証</button>
+            </div>
+            <div id="password-error" class="error-message" style="display: none;">
+                パスワードが正しくありません
+            </div>
+        </div>
+        
         <div id="deck-input-screen" class="screen">
             <h1>KAMITSUBAKI CARD GAME</h1>
             <p>デッキリストを / 区切りで入力してください</p>

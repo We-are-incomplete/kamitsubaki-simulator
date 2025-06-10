@@ -34,7 +34,7 @@ body, html {
 .screen { 
     width: 100%; 
     height: 100%; 
-    display: flex; 
+    display: none; /* 初期状態では全ての画面を非表示 */
     flex-direction: column; 
     justify-content: center; 
     align-items: center; 
@@ -1159,21 +1159,118 @@ body, html {
     background-color: #545b62;
 }
 
-/* モバイル向けポップアップスタイル調整 */
+/* パスワード認証画面のスタイル */
+#password-screen {
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    color: #fff;
+    text-align: center;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+#password-screen h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    color: #c90063;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+#password-screen h2 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+#password-screen p {
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+    color: #ccc;
+}
+
+.password-input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+#password-input {
+    width: 300px;
+    padding: 12px 16px;
+    font-size: 1.1rem;
+    border: 2px solid #444;
+    border-radius: 8px;
+    background-color: #2d2d2d;
+    color: #fff;
+    text-align: center;
+    transition: border-color 0.3s ease;
+}
+
+#password-input:focus {
+    outline: none;
+    border-color: #c90063;
+    box-shadow: 0 0 10px rgba(201, 0, 99, 0.3);
+}
+
+#password-submit-btn {
+    padding: 12px 25px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    background-color: #c90063;
+    border: none;
+    color: white;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    min-width: 120px;
+}
+
+#password-submit-btn:hover {
+    background-color: #a50052;
+    transform: translateY(-1px);
+}
+
+#password-submit-btn:active {
+    transform: translateY(0);
+}
+
+.error-message {
+    color: #ff6b6b;
+    font-size: 1rem;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 5px;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* モバイル対応 */
 @media (max-width: 768px) {
-    .popup {
-        padding: 20px;
-        max-width: 90%;
+    #password-screen h1 {
+        font-size: 2rem;
     }
     
-    .popup h3 {
-        font-size: 1.2rem;
-        margin-bottom: 20px;
+    #password-screen h2 {
+        font-size: 1.5rem;
     }
     
-    .popup-btn {
-        padding: 14px 16px;
-        font-size: 0.9rem;
-        min-height: 52px;
+    #password-input {
+        width: 250px;
+        font-size: 1rem;
+    }
+    
+    .password-input-container {
+        gap: 12px;
     }
 }

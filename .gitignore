@@ -1,0 +1,12 @@
+# セキュリティ関連ファイル
+config.js
+password-hash-generator.html
+
+# 開発環境
+.vscode/
+.idea/
+*.log
+
+# OS生成ファイル
+Thumbs.db
+.DS_Store

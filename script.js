@@ -1070,10 +1070,115 @@ document.addEventListener('DOMContentLoaded', () => {
             // 画像が見つからない場合は未設定に戻す
             console.warn(`Background image not found: ${imagePath}`);
             document.body.style.backgroundImage = '';
-            setCookie('playmat-background', 'none');
-        };
+            setCookie('playmat-background', 'none');        };
         img.src = imagePath;
-    }document.getElementById('start-game-btn').addEventListener('click', () => {
+    }    // 認証設定
+    // パスワードのSHA-256ハッシュ値（元のパスワード: newpassword456）
+    const CORRECT_PASSWORD_HASH = '9d2a18cc82a3b5bf3d932c1f562f7043066b3fb777d4e00b4dec71de2b8bc5b5'; // SHA-256 hash of "newpassword456"
+    const AUTH_COOKIE_NAME = 'kamitsubaki-auth';
+    const AUTH_EXPIRY_DAYS = 30; // 認証の有効期限（日数）
+    
+    // パスワードをSHA-256でハッシュ化する関数
+    async function hashPassword(password) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hash = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hash));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return hashHex;
+    }
+    
+    // 認証チェック
+    function checkAuthentication() {
+        const authCookie = getCookie(AUTH_COOKIE_NAME);
+        const isAuthenticated = authCookie === 'authenticated';
+        
+        console.log('Authentication check:', { authCookie, isAuthenticated });
+        
+        if (isAuthenticated) {
+            showDeckInputScreen();
+        } else {
+            showPasswordScreen();
+        }
+    }
+    
+    // パスワード画面を表示
+    function showPasswordScreen() {
+        document.getElementById('password-screen').style.display = 'flex';
+        document.getElementById('deck-input-screen').style.display = 'none';
+        document.getElementById('game-board').style.display = 'none';
+        
+        // パスワード入力欄にフォーカス
+        setTimeout(() => {
+            const passwordInput = document.getElementById('password-input');
+            if (passwordInput) passwordInput.focus();
+        }, 100);
+    }
+    
+    // デッキ入力画面を表示
+    function showDeckInputScreen() {
+        document.getElementById('password-screen').style.display = 'none';
+        document.getElementById('deck-input-screen').style.display = 'flex';
+        document.getElementById('game-board').style.display = 'none';
+    }
+      // パスワード認証処理
+    async function authenticatePassword() {
+        const passwordInput = document.getElementById('password-input');
+        const errorMessage = document.getElementById('password-error');
+        const enteredPassword = passwordInput.value.trim();
+        
+        try {
+            // 入力されたパスワードをハッシュ化
+            const enteredPasswordHash = await hashPassword(enteredPassword);
+            
+            if (enteredPasswordHash === CORRECT_PASSWORD_HASH) {
+                // 認証成功
+                setCookie(AUTH_COOKIE_NAME, 'authenticated', AUTH_EXPIRY_DAYS);
+                console.log('Authentication successful');
+                
+                // エラーメッセージを隠す
+                errorMessage.style.display = 'none';
+                passwordInput.value = '';
+                
+                // デッキ入力画面へ移動
+                showDeckInputScreen();
+            } else {
+                // 認証失敗
+                console.log('Authentication failed');
+                errorMessage.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // エラーメッセージを数秒後に自動で隠す
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 3000);
+            }
+        } catch (error) {
+            console.error('Authentication error:', error);
+            errorMessage.style.display = 'block';
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+    }
+    
+    // パスワード認証のイベントリスナー設定
+    function setupPasswordAuthentication() {
+        const passwordInput = document.getElementById('password-input');
+        const passwordSubmitBtn = document.getElementById('password-submit-btn');
+        
+        // ボタンクリックで認証
+        passwordSubmitBtn.addEventListener('click', authenticatePassword);
+        
+        // Enterキーで認証
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                authenticatePassword();
+            }
+        });
+    }
+
+    document.getElementById('start-game-btn').addEventListener('click', () => {
         const deckList = document.getElementById('deck-string').value.trim().split('/').filter(id => id);
         if (deckList.length === 0) {
             alert('有効なデッキリストを入力してください。');
@@ -1171,16 +1276,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('msfullscreenchange', handleFullscreenChange);
     
     // ウィンドウサイズ変更時にも更新
-    window.addEventListener('resize', updateMobileFullscreenButton);
-      // 初期表示状態を設定
-    setTimeout(updateMobileFullscreenButton, 100);    // クッキーから保存されたプレイマット設定を復元
+    window.addEventListener('resize', updateMobileFullscreenButton);    // 初期表示状態を設定
+    setTimeout(updateMobileFullscreenButton, 100);
+    
+    // クッキーから保存されたプレイマット設定を復元
     console.log('GitHub Pages Cookie Test - Page loaded');
     console.log('Current location:', window.location.href);
     console.log('Current protocol:', window.location.protocol);
     console.log('Current hostname:', window.location.hostname);
-    loadBackgroundFromCookie();
+    loadBackgroundFromCookie();    // パスワード認証システムの初期化
+    setupPasswordAuthentication();
+    
+    // 認証チェックを実行（認証済みならデッキ選択画面、未認証ならパスワード画面を表示）
+    checkAuthentication();
 
-    // Initialize with default deck
-    initGameState(document.getElementById('deck-string').value.trim().split('/').filter(id => id));
+    // Initialize with default deck（認証後にデッキ選択画面で実行される）
+    // 初期化はゲーム開始時に行うため、ここでは空のデッキで初期化
+    initGameState([]);
     renderAll();
 });
