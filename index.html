@@ -78,7 +78,7 @@
             background-position: center;
             border-radius: 8px; /* 少し角丸に */
             box-shadow: 0 0 30px rgba(255, 255, 255, 0.7);
-            transform: none; /* 回転やその他の変形を無効化 */
+            transform: none !important; /* 回転やその他の変形を最優先で無効化 */
         }
 
         #trash-expanded-zone {
@@ -732,7 +732,11 @@
                 draggedCardData = { cardId: element.dataset.cardId, isStandby: false };
                 sourceInfo.zoneId = 'temporary'; 
             }
-            if (!draggedCardData) return;
+            if (!draggedCardData && !isPile) { // パイルでない場合、カードデータがなければ終了
+                 // console.log("No dragged card data for non-pile, exiting press start.");
+                 return;
+            }
+            // パイルの場合、draggedCardDataは上で設定されるか、空ならreturn済み
 
             const touch = e.touches ? e.touches[0] : e;
             const rect = element.getBoundingClientRect();
@@ -745,6 +749,8 @@
             let startX = touch.clientX;
             let startY = touch.clientY;
 
+            let longPressActionCompleted = false; // 長押しによる拡大表示が完了したかを示すフラグ
+
             // 長押しタイマーを開始
             clearTimeout(longPressTimer); // 既存のタイマーがあればクリア
             longPressTimer = setTimeout(() => {
@@ -755,6 +761,7 @@
                     if (cardIdToZoom && cardZoomOverlay && zoomedCardImage) {
                         zoomedCardImage.style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardIdToZoom}.png')`;
                         cardZoomOverlay.style.display = 'flex';
+                        longPressActionCompleted = true; // 長押しアクションが完了したことをマーク
                     }
                 }
                 longPressTimer = null; // タイマー実行後はクリア
@@ -765,8 +772,11 @@
                 const moveX = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientX;
                 const moveY = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientY;
                 if (Math.abs(moveX - startX) > 5 || Math.abs(moveY - startY) > 5) { // 少しでも動いたら
-                    clearTimeout(longPressTimer); // 長押しタイマーをキャンセル
-                    longPressTimer = null;
+                    if (longPressTimer) { // タイマーがまだ作動していればクリア
+                        clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                    }
+                    // longPressActionCompleted はタイマーが発動しなければ false のまま
                     const cardZoomOverlay = document.getElementById('card-zoom-overlay');
                     if (cardZoomOverlay.style.display === 'flex') {
                         cardZoomOverlay.style.display = 'none'; // 拡大表示もキャンセル
@@ -774,12 +784,19 @@
 
                     if (!isDragging) { // ドラッグ開始の処理
                         isDragging = true;
-                        if (!isPile) element.style.opacity = '0.5';
-                        draggedCardVisual = document.createElement('div');
-                        draggedCardVisual.className = 'card dragging';
-                        draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.png')`;
-                        if (draggedCardData.isStandby) draggedCardVisual.style.transform = 'rotate(90deg)';
-                        document.body.appendChild(draggedCardVisual);
+                        if (!isPile && element) element.style.opacity = '0.5'; // elementが存在する場合のみ
+                        
+                        // draggedCardData がこの時点で必要
+                        if (draggedCardData) { // draggedCardData が有効な場合のみビジュアルを作成
+                            draggedCardVisual = document.createElement('div');
+                            draggedCardVisual.className = 'card dragging';
+                            draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.png')`;
+                            if (draggedCardData.isStandby) draggedCardVisual.style.transform = 'rotate(90deg)';
+                            document.body.appendChild(draggedCardVisual);
+                        } else if (isPile) {
+                            // パイルからのドラッグの場合、draggedCardDataは最初に設定されているはず
+                            // もし空のパイルなら、そもそもここまで来ない (最初のifでreturn)
+                        }
                     }
                 }
                 if (isDragging && draggedCardVisual) {
@@ -789,8 +806,13 @@
             };
 
             const onEnd = (endEvent) => {
-                clearTimeout(longPressTimer); // 長押しタイマーをクリア
-                longPressTimer = null;
+                if (longPressTimer) { // タイマーがまだ作動していれば（つまり、長押し完了前に終了した場合）
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                    // longPressActionCompleted は false のまま
+                }
+                // longPressTimerがnullでも、longPressActionCompletedがtrueなら長押しが完了している
+
                 const cardZoomOverlay = document.getElementById('card-zoom-overlay');
                 if (cardZoomOverlay.style.display === 'flex') {
                     cardZoomOverlay.style.display = 'none';
@@ -801,57 +823,50 @@
                 document.removeEventListener('mouseup', onEnd);
                 document.removeEventListener('touchend', onEnd);
                 if (!isPile && element) element.style.opacity = '1'; // elementが存在する場合のみ
+                
                 if (isDragging) {
-                    removeCardFromState(draggedCardData, sourceInfo);
-                    if (draggedCardVisual) draggedCardVisual.style.display = 'none';
-                    const endX = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientX;
-                    const endY = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientY;
-                    const targetEl = document.elementFromPoint(endX, endY);
-                    let dropped = false;
-                    const targetSlot = targetEl ? targetEl.closest('.card-slot.drop-zone') : null;
-                    const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#direction-zone):not(#temporary-expanded-zone), .temporary-zone-card-area.drop-zone') : null;
-                    const targetExpandedTrash = targetEl ? targetEl.closest('#trash-expanded-zone') : null;
-                    const targetExpandedDeck = targetEl ? targetEl.closest('#deck-expanded-zone') : null; // 山札展開ゾーンへのドロップも考慮
-                    const targetExpandedVolNoise = targetEl ? targetEl.closest('#volnoise-expanded-zone') : null; // VOLノイズ展開ゾーンへのドロップも考慮
-                    const targetTemporaryZone = targetEl ? (targetEl.closest('#temporary-expanded-zone') || targetEl.closest('.temporary-zone-card-area')) : null;
+                    if (draggedCardData) { // ドラッグデータがある場合のみ処理
+                        removeCardFromState(draggedCardData, sourceInfo);
+                        // ... (rest of drop logic)
+                        const endX = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientX;
+                        const endY = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientY;
+                        const targetEl = document.elementFromPoint(endX, endY);
+                        let dropped = false;
+                        const targetSlot = targetEl ? targetEl.closest('.card-slot.drop-zone') : null;
+                        const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#direction-zone):not(#temporary-expanded-zone), .temporary-zone-card-area.drop-zone') : null;
+                        const targetExpandedTrash = targetEl ? targetEl.closest('#trash-expanded-zone') : null;
+                        const targetTemporaryZone = targetEl ? (targetEl.closest('#temporary-expanded-zone') || targetEl.closest('.temporary-zone-card-area')) : null;
 
-
-                    if (targetSlot) {
-                        const targetInfo = {
-                            zoneId: targetSlot.dataset.zoneId,
-                            slotIndex: targetSlot.dataset.slotIndex,
-                            slotColor: targetSlot.dataset.slotColor
-                        };
-                        addCardToState(draggedCardData, targetInfo);
-                        dropped = true;
-                    } else if (targetNonSlotZone) { // ハンド、山札、トラッシュ（パイル）へのドロップ
-                        addCardToState(draggedCardData, { zoneId: targetNonSlotZone.dataset.zoneId });
-                        dropped = true;
-                    } else if (targetExpandedTrash && targetExpandedTrash.style.display === 'flex') {
-                        // 表示されている展開トラッシュゾーンへのドロップ
-                        addCardToState(draggedCardData, { zoneId: 'trash' });
-                        dropped = true;
+                        if (targetSlot) {
+                            const targetInfo = {
+                                zoneId: targetSlot.dataset.zoneId,
+                                slotIndex: targetSlot.dataset.slotIndex,
+                                slotColor: targetSlot.dataset.slotColor
+                            };
+                            addCardToState(draggedCardData, targetInfo);
+                            dropped = true;
+                        } else if (targetNonSlotZone) {
+                            addCardToState(draggedCardData, { zoneId: targetNonSlotZone.dataset.zoneId });
+                            dropped = true;
+                        } else if (targetExpandedTrash && targetExpandedTrash.style.display === 'flex') {
+                            addCardToState(draggedCardData, { zoneId: 'trash' });
+                            dropped = true;
+                        } else if (targetTemporaryZone && document.getElementById('temporary-expanded-zone').style.display === 'flex') {
+                            addCardToState(draggedCardData, { zoneId: 'temporary' });
+                            dropped = true;
+                        }
+                        if (!dropped) addCardToState(draggedCardData, sourceInfo); // ドロップ先がなければ元に戻す
                     }
-                    //  else if (targetExpandedDeck && targetExpandedDeck.style.display === 'flex') { // 山札展開ゾーンへのドロップは通常行わないのでコメントアウト
-                    //     addCardToState(draggedCardData, { zoneId: 'deck' });
-                    //     dropped = true;
-                    // }
-                    //  else if (targetExpandedVolNoise && targetExpandedVolNoise.style.display === 'flex') { // VOLノイズ展開ゾーンへのドロップは通常行わない
-                    //     addCardToState(draggedCardData, { zoneId: 'volNoise' });
-                    //     dropped = true;
-                    // }
-                     else if (targetTemporaryZone && document.getElementById('temporary-expanded-zone').style.display === 'flex') {
-                        addCardToState(draggedCardData, { zoneId: 'temporary' });
-                        dropped = true;
-                    }
-                    if (!dropped) addCardToState(draggedCardData, sourceInfo);
+                    if (draggedCardVisual) draggedCardVisual.style.display = 'none'; // ドラッグ中のビジュアルを隠す
                 } else {
                     // ドラッグでなければタップとして処理
-                    // pile-zone自体がタップされた場合も考慮
-                    if (isPile) {
-                        handleTap(element, { zoneId }); // パイルゾーンのタップ
-                    } else {
-                        handleTap(element, sourceInfo); // カードのタップ
+                    // ただし、長押しアクションが完了した場合はタップ処理をスキップ
+                    if (!longPressActionCompleted) {
+                        if (isPile) {
+                            handleTap(element, { zoneId: sourceInfo.zoneId }); // パイルゾーンのタップ
+                        } else {
+                            handleTap(element, sourceInfo); // カードのタップ
+                        }
                     }
                 }
                 if (draggedCardVisual) draggedCardVisual.remove();
@@ -1247,6 +1262,7 @@
         });
 
         // Initialize with default deck
+
         initGameState(document.getElementById('deck-string').value.trim().split('/').filter(id => id));
         renderAll();
     });
