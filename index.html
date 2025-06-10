@@ -1092,10 +1092,13 @@
                 const deckExpandedZoneEl = document.getElementById('deck-expanded-zone');
                 if (deckExpandedZoneEl.style.display === 'flex') {
                     deckExpandedZoneEl.style.display = 'none';
+                    shuffle(gameState.zones.deck); // 山札をシャッフル
+                    alert('山札をシャッフルしました。');
+                    renderAll(); // 表示を更新
                 } else {
                     deckExpandedZoneEl.style.display = 'flex';
+                    renderAll(); // 展開ゾーンのカードを再描画
                 }
-                renderAll(); // 展開ゾーンのカードを再描画
             });
             document.getElementById('search-volnoise-btn').addEventListener('click', () => { // VOLノイズからサーチボタンのイベントリスナー
                 const volNoiseExpandedZoneEl = document.getElementById('volnoise-expanded-zone');
@@ -1281,12 +1284,12 @@
                         return;
                     }
                     deckExpandedZoneEl.style.display = 'none';
+                    shuffle(gameState.zones.deck); // 山札をシャッフル
+                    alert('山札をシャッフルしました。');
+                    renderAll(); // 表示を更新
                 }
 
                 // 展開VOLノイズゾーンが表示されているか確認
-
-
-
                 if (volNoiseExpandedZoneEl.style.display === 'flex') {
                     // クリックがVOLノイズサーチボタンで発生したか確認
                     if (searchVolNoiseBtnEl.contains(event.target)) {
