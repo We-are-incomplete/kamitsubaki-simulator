@@ -39,9 +39,26 @@
             display: none; /* デスクトップでは非表示 */
         }
 
+        #fullscreen-game-btn {
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            background-color: #28a745;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            display: none; /* PC表示では非表示 */
+            width: calc(var(--card-width) + 10px);
+            box-sizing: border-box;
+        }
+
         /* スマートフォン向けスタイルでフルスクリーンボタンを表示 */
         @media (max-width: 768px) {
             #fullscreen-btn {
+                display: inline-block;
+            }
+            #fullscreen-game-btn {
                 display: inline-block;
             }
         }
@@ -946,6 +963,121 @@
             }
             .counter-value {
                 font-size: clamp(0.7rem, 2.6vmin, 1rem);
+                min-width: clamp(18px, 4vw, 24px);
+            }
+            .counter-btn {
+                font-size: clamp(0.65rem, 2.1vmin, 0.85rem);
+                padding: 0.3vmin 0.6vmin;
+            }
+            .counter-label {
+                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
+                margin-bottom: 0.1vh;
+            }
+
+            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone, #temporary-expanded-zone {
+                width: 70vw;
+                height: 50vh;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                max-width: 95vw;
+                max-height: 60vh;
+                padding: 0.4em;
+                gap: 0.2em;
+                font-size: 0.8em;
+            }
+            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card, #temporary-expanded-zone .card {
+                width: 9vw;
+                height: calc(9vw / 0.7);
+                min-width: 36px;
+                min-height: 52px;
+                max-width: 14vw;
+                max-height: calc(14vw / 0.7);
+            }
+            .temporary-zone-controls button {
+                font-size: clamp(0.35rem, 1vmin, 0.5rem);
+                padding: 0.3em 0.6em;
+            }
+
+            .dice-result {
+                width: clamp(50px, 12vw, 70px); /* 横持ち時はさらに小さく */
+                height: clamp(50px, 12vw, 70px);
+            }
+        }
+
+        /* スマートフォン横持ち特化スタイル (高さが特に低い場合) */
+        @media (max-height: 450px) and (orientation: landscape) {
+            :root {
+                --card-width-vw: 9vw; /* カード幅をさらに小さく */
+            }
+            #board-content {
+                height: calc(100% - var(--card-height) - 0.6vmin - 6px);
+            }
+            #counters-column-wrapper {
+                width: calc(var(--card-width) + 6vw);
+            }
+            #left-column {
+                 width: calc(var(--card-width) + 1.2vw);
+            }
+            #right-column {
+                width: calc(var(--card-width) + 1.2vw);
+            }
+            .deck-group {
+                bottom: 0.3vh;
+                right: 0.3vw;
+            }
+            .zone-title {
+                font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
+                top: -1.3vmin;
+            }
+            .zone-count {
+                font-size: clamp(0.65rem, 2.1vmin, 1rem);
+            }
+            #stage-zone {
+                 height: calc(var(--card-height) * 2.0 + 10px);
+            }
+            #direction-zone {
+                 height: calc(var(--card-height) * 0.95);
+            }
+            .stage-column {
+                padding-top: 12px;
+            }
+
+            #hand-zone {
+                height: calc(var(--card-height) + 1vmin + 3px);
+                padding-right: calc(var(--card-width) + 1.5vw + 8px); 
+                overflow-x: auto; /* 横スクロールを可能にする (このメディアクエリでは nowrap が優先される) */
+                flex-wrap: nowrap; /* カードを折り返さない (このメディアクエリの主要な変更) */
+            }
+            .action-btn, #open-temporary-zone-btn {
+                font-size: clamp(0.4rem, 1.4vmin, 0.6rem);
+                padding: 0.4vh 0.6vw;
+            }
+            #change-mat-btn {
+                font-size: clamp(0.55rem, 1.8vmin, 0.7rem);
+                padding: 0.6vh 1vw;
+            }
+            #draw-bottom-deck-btn {
+                font-size: clamp(0.45rem, 1.4vmin, 0.6rem);
+                width: calc(var(--card-width) + 5px);
+            }
+
+            .counters-group { /* #counters-column-wrapper の中のカウンター群 */
+                gap: 1vh; /* カウンター間の縦の隙間 */
+                padding: 0.5vmin;
+                background-color: rgba(128, 128, 128, 0.2);
+            }
+            .counter {
+                gap: 0.3vmin;
+                /* width: 100%; は維持 */
+                /* max-width は調整不要かも */
+            }
+            .counter-icon {
+                width: clamp(20px, 4.5vw, 26px);
+                height: clamp(20px, 4.5vw, 26px);
+            }
+            .counter-value {
+                font-size: clamp(0.7rem, 2.6vmin, 1rem);
             }
             .counter-btn {
                 font-size: clamp(0.6rem, 2vmin, 0.8rem);
@@ -1120,7 +1252,7 @@
                 bottom: 0.3vh;
                 right: 0.3vw;
             }
-             .zone-title {
+            .zone-title {
                 font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
                 top: -1.3vmin;
             }
@@ -1233,7 +1365,7 @@
                 bottom: 0.3vh;
                 right: 0.3vw;
             }
-             .zone-title {
+            .zone-title {
                 font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
                 top: -1.3vmin;
             }
@@ -1346,7 +1478,7 @@
                 bottom: 0.3vh;
                 right: 0.3vw;
             }
-             .zone-title {
+            .zone-title {
                 font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
                 top: -1.3vmin;
             }
@@ -1459,685 +1591,7 @@
                 bottom: 0.3vh;
                 right: 0.3vw;
             }
-             .zone-title {
-                font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
-                top: -1.3vmin;
-            }
-            .zone-count {
-                font-size: clamp(0.65rem, 2.1vmin, 1rem);
-            }
-            #stage-zone {
-                 height: calc(var(--card-height) * 2.0 + 10px);
-            }
-            #direction-zone {
-                 height: calc(var(--card-height) * 0.95);
-            }
-            .stage-column {
-                padding-top: 12px;
-            }
-
-            #hand-zone {
-                height: calc(var(--card-height) + 1vmin + 3px);
-                padding-right: calc(var(--card-width) + 1.5vw + 8px); 
-                overflow-x: auto; /* 横スクロールを可能にする (このメディアクエリでは nowrap が優先される) */
-                flex-wrap: nowrap; /* カードを折り返さない (このメディアクエリの主要な変更) */
-            }
-            .action-btn, #open-temporary-zone-btn {
-                font-size: clamp(0.4rem, 1.4vmin, 0.6rem);
-                padding: 0.4vh 0.6vw;
-            }
-            #change-mat-btn {
-                font-size: clamp(0.55rem, 1.8vmin, 0.7rem);
-                padding: 0.6vh 1vw;
-            }
-            #draw-bottom-deck-btn {
-                font-size: clamp(0.45rem, 1.4vmin, 0.6rem);
-                width: calc(var(--card-width) + 5px);
-            }
-
-            .counters-group { /* #counters-column-wrapper の中のカウンター群 */
-                gap: 1vh; /* カウンター間の縦の隙間 */
-                padding: 0.5vmin;
-                background-color: rgba(128, 128, 128, 0.2);
-            }
-            .counter {
-                gap: 0.3vmin;
-                /* width: 100%; は維持 */
-                /* max-width は調整不要かも */
-            }
-            .counter-icon {
-                width: clamp(20px, 4.5vw, 26px);
-                height: clamp(20px, 4.5vw, 26px);
-            }
-            .counter-value {
-                font-size: clamp(0.7rem, 2.6vmin, 1rem);
-            }
-            .counter-btn {
-                font-size: clamp(0.6rem, 2vmin, 0.8rem);
-            }
-            .counter-label {
-                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
-                margin-bottom: 0.1vh;
-            }
-
-            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone, #temporary-expanded-zone {
-                width: 70vw;
-                height: 50vh;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-                max-width: 95vw;
-                max-height: 60vh;
-                padding: 0.4em;
-                gap: 0.2em;
-                font-size: 0.8em;
-            }
-            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card, #temporary-expanded-zone .card {
-                width: 9vw;
-                height: calc(9vw / 0.7);
-                min-width: 36px;
-                min-height: 52px;
-                max-width: 14vw;
-                max-height: calc(14vw / 0.7);
-            }
-            .temporary-zone-controls button {
-                font-size: clamp(0.35rem, 1vmin, 0.5rem);
-                padding: 0.3em 0.6em;
-            }
-
-            .dice-result {
-                width: clamp(50px, 12vw, 70px); /* 横持ち時はさらに小さく */
-                height: clamp(50px, 12vw, 70px);
-            }
-        }
-
-        /* スマートフォン横持ち特化スタイル (高さが特に低い場合) */
-        @media (max-height: 450px) and (orientation: landscape) {
-            :root {
-                --card-width-vw: 9vw; /* カード幅をさらに小さく */
-            }
-            #board-content {
-                height: calc(100% - var(--card-height) - 0.6vmin - 6px);
-            }
-            #counters-column-wrapper {
-                width: calc(var(--card-width) + 6vw);
-            }
-            #left-column {
-                 width: calc(var(--card-width) + 1.2vw);
-            }
-            #right-column {
-                width: calc(var(--card-width) + 1.2vw);
-            }
-            .deck-group {
-                bottom: 0.3vh;
-                right: 0.3vw;
-            }
-             .zone-title {
-                font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
-                top: -1.3vmin;
-            }
-            .zone-count {
-                font-size: clamp(0.65rem, 2.1vmin, 1rem);
-            }
-            #stage-zone {
-                 height: calc(var(--card-height) * 2.0 + 10px);
-            }
-            #direction-zone {
-                 height: calc(var(--card-height) * 0.95);
-            }
-            .stage-column {
-                padding-top: 12px;
-            }
-
-            #hand-zone {
-                height: calc(var(--card-height) + 1vmin + 3px);
-                padding-right: calc(var(--card-width) + 1.5vw + 8px); 
-                overflow-x: auto; /* 横スクロールを可能にする (このメディアクエリでは nowrap が優先される) */
-                flex-wrap: nowrap; /* カードを折り返さない (このメディアクエリの主要な変更) */
-            }
-            .action-btn, #open-temporary-zone-btn {
-                font-size: clamp(0.4rem, 1.4vmin, 0.6rem);
-                padding: 0.4vh 0.6vw;
-            }
-            #change-mat-btn {
-                font-size: clamp(0.55rem, 1.8vmin, 0.7rem);
-                padding: 0.6vh 1vw;
-            }
-            #draw-bottom-deck-btn {
-                font-size: clamp(0.45rem, 1.4vmin, 0.6rem);
-                width: calc(var(--card-width) + 5px);
-            }
-
-            .counters-group { /* #counters-column-wrapper の中のカウンター群 */
-                gap: 1vh; /* カウンター間の縦の隙間 */
-                padding: 0.5vmin;
-                background-color: rgba(128, 128, 128, 0.2);
-            }
-            .counter {
-                gap: 0.3vmin;
-                /* width: 100%; は維持 */
-                /* max-width は調整不要かも */
-            }
-            .counter-icon {
-                width: clamp(20px, 4.5vw, 26px);
-                height: clamp(20px, 4.5vw, 26px);
-            }
-            .counter-value {
-                font-size: clamp(0.7rem, 2.6vmin, 1rem);
-            }
-            .counter-btn {
-                font-size: clamp(0.6rem, 2vmin, 0.8rem);
-            }
-            .counter-label {
-                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
-                margin-bottom: 0.1vh;
-            }
-
-            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone, #temporary-expanded-zone {
-                width: 70vw;
-                height: 50vh;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-                max-width: 95vw;
-                max-height: 60vh;
-                padding: 0.4em;
-                gap: 0.2em;
-                font-size: 0.8em;
-            }
-            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card, #temporary-expanded-zone .card {
-                width: 9vw;
-                height: calc(9vw / 0.7);
-                min-width: 36px;
-                min-height: 52px;
-                max-width: 14vw;
-                max-height: calc(14vw / 0.7);
-            }
-            .temporary-zone-controls button {
-                font-size: clamp(0.35rem, 1vmin, 0.5rem);
-                padding: 0.3em 0.6em;
-            }
-
-            .dice-result {
-                width: clamp(50px, 12vw, 70px); /* 横持ち時はさらに小さく */
-                height: clamp(50px, 12vw, 70px);
-            }
-        }
-
-        /* スマートフォン横持ち特化スタイル (高さが特に低い場合) */
-        @media (max-height: 450px) and (orientation: landscape) {
-            :root {
-                --card-width-vw: 9vw; /* カード幅をさらに小さく */
-            }
-            #board-content {
-                height: calc(100% - var(--card-height) - 0.6vmin - 6px);
-            }
-            #counters-column-wrapper {
-                width: calc(var(--card-width) + 6vw);
-            }
-            #left-column {
-                 width: calc(var(--card-width) + 1.2vw);
-            }
-            #right-column {
-                width: calc(var(--card-width) + 1.2vw);
-            }
-            .deck-group {
-                bottom: 0.3vh;
-                right: 0.3vw;
-            }
-             .zone-title {
-                font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
-                top: -1.3vmin;
-            }
-            .zone-count {
-                font-size: clamp(0.65rem, 2.1vmin, 1rem);
-            }
-            #stage-zone {
-                 height: calc(var(--card-height) * 2.0 + 10px);
-            }
-            #direction-zone {
-                 height: calc(var(--card-height) * 0.95);
-            }
-            .stage-column {
-                padding-top: 12px;
-            }
-
-            #hand-zone {
-                height: calc(var(--card-height) + 1vmin + 3px);
-                padding-right: calc(var(--card-width) + 1.5vw + 8px); 
-                overflow-x: auto; /* 横スクロールを可能にする (このメディアクエリでは nowrap が優先される) */
-                flex-wrap: nowrap; /* カードを折り返さない (このメディアクエリの主要な変更) */
-            }
-            .action-btn, #open-temporary-zone-btn {
-                font-size: clamp(0.4rem, 1.4vmin, 0.6rem);
-                padding: 0.4vh 0.6vw;
-            }
-            #change-mat-btn {
-                font-size: clamp(0.55rem, 1.8vmin, 0.7rem);
-                padding: 0.6vh 1vw;
-            }
-            #draw-bottom-deck-btn {
-                font-size: clamp(0.45rem, 1.4vmin, 0.6rem);
-                width: calc(var(--card-width) + 5px);
-            }
-
-            .counters-group { /* #counters-column-wrapper の中のカウンター群 */
-                gap: 1vh; /* カウンター間の縦の隙間 */
-                padding: 0.5vmin;
-                background-color: rgba(128, 128, 128, 0.2);
-            }
-            .counter {
-                gap: 0.3vmin;
-                /* width: 100%; は維持 */
-                /* max-width は調整不要かも */
-            }
-            .counter-icon {
-                width: clamp(20px, 4.5vw, 26px);
-                height: clamp(20px, 4.5vw, 26px);
-            }
-            .counter-value {
-                font-size: clamp(0.7rem, 2.6vmin, 1rem);
-            }
-            .counter-btn {
-                font-size: clamp(0.6rem, 2vmin, 0.8rem);
-            }
-            .counter-label {
-                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
-                margin-bottom: 0.1vh;
-            }
-
-            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone, #temporary-expanded-zone {
-                width: 70vw;
-                height: 50vh;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-                max-width: 95vw;
-                max-height: 60vh;
-                padding: 0.4em;
-                gap: 0.2em;
-                font-size: 0.8em;
-            }
-            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card, #temporary-expanded-zone .card {
-                width: 9vw;
-                height: calc(9vw / 0.7);
-                min-width: 36px;
-                min-height: 52px;
-                max-width: 14vw;
-                max-height: calc(14vw / 0.7);
-            }
-            .temporary-zone-controls button {
-                font-size: clamp(0.35rem, 1vmin, 0.5rem);
-                padding: 0.3em 0.6em;
-            }
-
-            .dice-result {
-                width: clamp(50px, 12vw, 70px); /* 横持ち時はさらに小さく */
-                height: clamp(50px, 12vw, 70px);
-            }
-        }
-
-        /* スマートフォン横持ち特化スタイル (高さが特に低い場合) */
-        @media (max-height: 450px) and (orientation: landscape) {
-            :root {
-                --card-width-vw: 9vw; /* カード幅をさらに小さく */
-            }
-            #board-content {
-                height: calc(100% - var(--card-height) - 0.6vmin - 6px);
-            }
-            #counters-column-wrapper {
-                width: calc(var(--card-width) + 6vw);
-            }
-            #left-column {
-                 width: calc(var(--card-width) + 1.2vw);
-            }
-            #right-column {
-                width: calc(var(--card-width) + 1.2vw);
-            }
-            .deck-group {
-                bottom: 0.3vh;
-                right: 0.3vw;
-            }
-             .zone-title {
-                font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
-                top: -1.3vmin;
-            }
-            .zone-count {
-                font-size: clamp(0.65rem, 2.1vmin, 1rem);
-            }
-            #stage-zone {
-                 height: calc(var(--card-height) * 2.0 + 10px);
-            }
-            #direction-zone {
-                 height: calc(var(--card-height) * 0.95);
-            }
-            .stage-column {
-                padding-top: 12px;
-            }
-
-            #hand-zone {
-                height: calc(var(--card-height) + 1vmin + 3px);
-                padding-right: calc(var(--card-width) + 1.5vw + 8px); 
-                overflow-x: auto; /* 横スクロールを可能にする (このメディアクエリでは nowrap が優先される) */
-                flex-wrap: nowrap; /* カードを折り返さない (このメディアクエリの主要な変更) */
-            }
-            .action-btn, #open-temporary-zone-btn {
-                font-size: clamp(0.4rem, 1.4vmin, 0.6rem);
-                padding: 0.4vh 0.6vw;
-            }
-            #change-mat-btn {
-                font-size: clamp(0.55rem, 1.8vmin, 0.7rem);
-                padding: 0.6vh 1vw;
-            }
-            #draw-bottom-deck-btn {
-                font-size: clamp(0.45rem, 1.4vmin, 0.6rem);
-                width: calc(var(--card-width) + 5px);
-            }
-
-            .counters-group { /* #counters-column-wrapper の中のカウンター群 */
-                gap: 1vh; /* カウンター間の縦の隙間 */
-                padding: 0.5vmin;
-                background-color: rgba(128, 128, 128, 0.2);
-            }
-            .counter {
-                gap: 0.3vmin;
-                /* width: 100%; は維持 */
-                /* max-width は調整不要かも */
-            }
-            .counter-icon {
-                width: clamp(20px, 4.5vw, 26px);
-                height: clamp(20px, 4.5vw, 26px);
-            }
-            .counter-value {
-                font-size: clamp(0.7rem, 2.6vmin, 1rem);
-            }
-            .counter-btn {
-                font-size: clamp(0.6rem, 2vmin, 0.8rem);
-            }
-            .counter-label {
-                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
-                margin-bottom: 0.1vh;
-            }
-
-            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone, #temporary-expanded-zone {
-                width: 70vw;
-                height: 50vh;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-                max-width: 95vw;
-                max-height: 60vh;
-                padding: 0.4em;
-                gap: 0.2em;
-                font-size: 0.8em;
-            }
-            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card, #temporary-expanded-zone .card {
-                width: 9vw;
-                height: calc(9vw / 0.7);
-                min-width: 36px;
-                min-height: 52px;
-                max-width: 14vw;
-                max-height: calc(14vw / 0.7);
-            }
-            .temporary-zone-controls button {
-                font-size: clamp(0.35rem, 1vmin, 0.5rem);
-                padding: 0.3em 0.6em;
-            }
-
-            .dice-result {
-                width: clamp(50px, 12vw, 70px); /* 横持ち時はさらに小さく */
-                height: clamp(50px, 12vw, 70px);
-            }
-        }
-
-        /* スマートフォン横持ち特化スタイル (高さが特に低い場合) */
-        @media (max-height: 450px) and (orientation: landscape) {
-            :root {
-                --card-width-vw: 9vw; /* カード幅をさらに小さく */
-            }
-            #board-content {
-                height: calc(100% - var(--card-height) - 0.6vmin - 6px);
-            }
-            #counters-column-wrapper {
-                width: calc(var(--card-width) + 6vw);
-            }
-            #left-column {
-                 width: calc(var(--card-width) + 1.2vw);
-            }
-            #right-column {
-                width: calc(var(--card-width) + 1.2vw);
-            }
-            .deck-group {
-                bottom: 0.3vh;
-                right: 0.3vw;
-            }
-             .zone-title {
-                font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
-                top: -1.3vmin;
-            }
-            .zone-count {
-                font-size: clamp(0.65rem, 2.1vmin, 1rem);
-            }
-            #stage-zone {
-                 height: calc(var(--card-height) * 2.0 + 10px);
-            }
-            #direction-zone {
-                 height: calc(var(--card-height) * 0.95);
-            }
-            .stage-column {
-                padding-top: 12px;
-            }
-
-            #hand-zone {
-                height: calc(var(--card-height) + 1vmin + 3px);
-                padding-right: calc(var(--card-width) + 1.5vw + 8px); 
-                overflow-x: auto; /* 横スクロールを可能にする (このメディアクエリでは nowrap が優先される) */
-                flex-wrap: nowrap; /* カードを折り返さない (このメディアクエリの主要な変更) */
-            }
-            .action-btn, #open-temporary-zone-btn {
-                font-size: clamp(0.4rem, 1.4vmin, 0.6rem);
-                padding: 0.4vh 0.6vw;
-            }
-            #change-mat-btn {
-                font-size: clamp(0.55rem, 1.8vmin, 0.7rem);
-                padding: 0.6vh 1vw;
-            }
-            #draw-bottom-deck-btn {
-                font-size: clamp(0.45rem, 1.4vmin, 0.6rem);
-                width: calc(var(--card-width) + 5px);
-            }
-
-            .counters-group { /* #counters-column-wrapper の中のカウンター群 */
-                gap: 1vh; /* カウンター間の縦の隙間 */
-                padding: 0.5vmin;
-                background-color: rgba(128, 128, 128, 0.2);
-            }
-            .counter {
-                gap: 0.3vmin;
-                /* width: 100%; は維持 */
-                /* max-width は調整不要かも */
-            }
-            .counter-icon {
-                width: clamp(20px, 4.5vw, 26px);
-                height: clamp(20px, 4.5vw, 26px);
-            }
-            .counter-value {
-                font-size: clamp(0.7rem, 2.6vmin, 1rem);
-            }
-            .counter-btn {
-                font-size: clamp(0.6rem, 2vmin, 0.8rem);
-            }
-            .counter-label {
-                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
-                margin-bottom: 0.1vh;
-            }
-
-            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone, #temporary-expanded-zone {
-                width: 70vw;
-                height: 50vh;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-                max-width: 95vw;
-                max-height: 60vh;
-                padding: 0.4em;
-                gap: 0.2em;
-                font-size: 0.8em;
-            }
-            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card, #temporary-expanded-zone .card {
-                width: 9vw;
-                height: calc(9vw / 0.7);
-                min-width: 36px;
-                min-height: 52px;
-                max-width: 14vw;
-                max-height: calc(14vw / 0.7);
-            }
-            .temporary-zone-controls button {
-                font-size: clamp(0.35rem, 1vmin, 0.5rem);
-                padding: 0.3em 0.6em;
-            }
-
-            .dice-result {
-                width: clamp(50px, 12vw, 70px); /* 横持ち時はさらに小さく */
-                height: clamp(50px, 12vw, 70px);
-            }
-        }
-
-        /* スマートフォン横持ち特化スタイル (高さが特に低い場合) */
-        @media (max-height: 450px) and (orientation: landscape) {
-            :root {
-                --card-width-vw: 9vw; /* カード幅をさらに小さく */
-            }
-            #board-content {
-                height: calc(100% - var(--card-height) - 0.6vmin - 6px);
-            }
-            #counters-column-wrapper {
-                width: calc(var(--card-width) + 6vw);
-            }
-            #left-column {
-                 width: calc(var(--card-width) + 1.2vw);
-            }
-            #right-column {
-                width: calc(var(--card-width) + 1.2vw);
-            }
-            .deck-group {
-                bottom: 0.3vh;
-                right: 0.3vw;
-            }
-             .zone-title {
-                font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
-                top: -1.3vmin;
-            }
-            .zone-count {
-                font-size: clamp(0.65rem, 2.1vmin, 1rem);
-            }
-            #stage-zone {
-                 height: calc(var(--card-height) * 2.0 + 10px);
-            }
-            #direction-zone {
-                 height: calc(var(--card-height) * 0.95);
-            }
-            .stage-column {
-                padding-top: 12px;
-            }
-
-            #hand-zone {
-                height: calc(var(--card-height) + 1vmin + 3px);
-                padding-right: calc(var(--card-width) + 1.5vw + 8px); 
-                overflow-x: auto; /* 横スクロールを可能にする (このメディアクエリでは nowrap が優先される) */
-                flex-wrap: nowrap; /* カードを折り返さない (このメディアクエリの主要な変更) */
-            }
-            .action-btn, #open-temporary-zone-btn {
-                font-size: clamp(0.4rem, 1.4vmin, 0.6rem);
-                padding: 0.4vh 0.6vw;
-            }
-            #change-mat-btn {
-                font-size: clamp(0.55rem, 1.8vmin, 0.7rem);
-                padding: 0.6vh 1vw;
-            }
-            #draw-bottom-deck-btn {
-                font-size: clamp(0.45rem, 1.4vmin, 0.6rem);
-                width: calc(var(--card-width) + 5px);
-            }
-
-            .counters-group { /* #counters-column-wrapper の中のカウンター群 */
-                gap: 1vh; /* カウンター間の縦の隙間 */
-                padding: 0.5vmin;
-                background-color: rgba(128, 128, 128, 0.2);
-            }
-            .counter {
-                gap: 0.3vmin;
-                /* width: 100%; は維持 */
-                /* max-width は調整不要かも */
-            }
-            .counter-icon {
-                width: clamp(20px, 4.5vw, 26px);
-                height: clamp(20px, 4.5vw, 26px);
-            }
-            .counter-value {
-                font-size: clamp(0.7rem, 2.6vmin, 1rem);
-            }
-            .counter-btn {
-                font-size: clamp(0.6rem, 2vmin, 0.8rem);
-            }
-            .counter-label {
-                font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
-                margin-bottom: 0.1vh;
-            }
-
-            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone, #temporary-expanded-zone {
-                width: 70vw;
-                height: 50vh;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-                max-width: 95vw;
-                max-height: 60vh;
-                padding: 0.4em;
-                gap: 0.2em;
-                font-size: 0.8em;
-            }
-            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card, #temporary-expanded-zone .card {
-                width: 9vw;
-                height: calc(9vw / 0.7);
-                min-width: 36px;
-                min-height: 52px;
-                max-width: 14vw;
-                max-height: calc(14vw / 0.7);
-            }
-            .temporary-zone-controls button {
-                font-size: clamp(0.35rem, 1vmin, 0.5rem);
-                padding: 0.3em 0.6em;
-            }
-
-            .dice-result {
-                width: clamp(50px, 12vw, 70px); /* 横持ち時はさらに小さく */
-                height: clamp(50px, 12vw, 70px);
-            }
-        }
-
-        /* スマートフォン横持ち特化スタイル (高さが特に低い場合) */
-        @media (max-height: 450px) and (orientation: landscape) {
-            :root {
-                --card-width-vw: 9vw; /* カード幅をさらに小さく */
-            }
-            #board-content {
-                height: calc(100% - var(--card-height) - 0.6vmin - 6px);
-            }
-            #counters-column-wrapper {
-                width: calc(var(--card-width) + 6vw);
-            }
-            #left-column {
-                 width: calc(var(--card-width) + 1.2vw);
-            }
-            #right-column {
-                width: calc(var(--card-width) + 1.2vw);
-            }
-            .deck-group {
-                bottom: 0.3vh;
-                right: 0.3vw;
-            }
-             .zone-title {
+            .zone-title {
                 font-size: clamp(0.4rem, 1.3vmin, 0.6rem);
                 top: -1.3vmin;
             }
@@ -3425,6 +2879,7 @@
                                 <button id="roll-dice-btn" class="action-btn">ダイスを振る</button>
                                 <button id="draw-bottom-deck-btn" class="action-btn">山札の下から1枚ドロー</button>
                                 <button id="sort-hand-btn" class="action-btn">ソート</button> <!-- Moved here -->
+                                <button id="fullscreen-game-btn">全画面表示</button>
                                 <!-- 山札ゾーンとドローボタンを新しいdivでラップ -->
                                 <div class="deck-group">
                                     <div id="deck-zone" class="zone pile-zone drop-zone" data-zone-id="deck"><div class="zone-title">山札</div></div>
@@ -4474,6 +3929,17 @@
 
         // 全画面表示ボタンのイベントリスナー
         document.getElementById('fullscreen-btn').addEventListener('click', () => {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.webkitRequestFullscreen) { // Safari
+                document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+                document.documentElement.msRequestFullscreen();
+            }
+        });
+
+        // ゲーム画面の全画面表示ボタンのイベントリスナー
+        document.getElementById('fullscreen-game-btn').addEventListener('click', () => {
             if (document.documentElement.requestFullscreen) {
                 document.documentElement.requestFullscreen();
             } else if (document.documentElement.webkitRequestFullscreen) { // Safari
