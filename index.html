@@ -1033,6 +1033,17 @@
                 if (trashExpandedZoneEl.style.display === 'flex') { // 表示判定を 'flex' に
                     trashExpandedZoneEl.style.display = 'none';
                 } else {
+                    // トラッシュゾーンを開く前にソートする
+                    if (gameState.initialDeckOrder && gameState.initialDeckOrder.length > 0) {
+                        gameState.zones.trash.sort((cardIdA, cardIdB) => {
+                            const indexA = gameState.initialDeckOrder.indexOf(cardIdA);
+                            const indexB = gameState.initialDeckOrder.indexOf(cardIdB);
+                            if (indexA === -1 && indexB === -1) return 0;
+                            if (indexA === -1) return 1;
+                            if (indexB === -1) return -1;
+                            return indexA - indexB;
+                        });
+                    }
                     trashExpandedZoneEl.style.display = 'flex'; // 表示を 'flex' に
                 }
                 renderAll(); // 展開ゾーンのカードを再描画
