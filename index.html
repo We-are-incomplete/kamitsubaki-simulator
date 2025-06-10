@@ -421,6 +421,7 @@
 
                             <!-- 山札ゾーン -->
                             <div id="deck-zone" class="zone pile-zone drop-zone" data-zone-id="deck"><div class="zone-title">山札</div></div>
+                            <button id="draw-bottom-deck-btn" class="action-btn">山札の下から1枚ドロー</button>
                         </div>
                         <!-- カウンター群 -->
                         <div class="counters-group" style="display:flex; flex-direction:column; gap:5px;">
@@ -1179,6 +1180,25 @@
                 if (confirm('ゲームをリセットしますか？')) window.location.reload();
             });
             document.getElementById('change-mat-btn').addEventListener('click', changeBackground);
+
+            // 山札の下からドローボタンのイベントリスナー
+            document.getElementById('draw-bottom-deck-btn').addEventListener('click', () => {
+                if (gameState.zones.deck.length > 0) {
+                    const bottomCard = gameState.zones.deck.shift(); // 配列の先頭（一番下）のカードを取り出す
+                    if (bottomCard) {
+                        // テンポラリーゾーンが開いているか確認
+                        const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone');
+                        if (temporaryExpandedZoneEl.style.display === 'flex') {
+                            gameState.zones.temporary.push(bottomCard);
+                        } else {
+                            gameState.zones.hand.push(bottomCard);
+                        }
+                        renderAll();
+                    }
+                } else {
+                    alert('山札がありません。');
+                }
+            });
 
             let isRolling = false; // ローリング中フラグ
             // let diceTimer; // タイマーIDを保持
