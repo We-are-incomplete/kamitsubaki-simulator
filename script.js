@@ -796,9 +796,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // ターンカウンターを進める
             gameState.counters.turn++;
             renderAll();
-        });
-        document.getElementById('reset-btn').addEventListener('click', () => {
-            if (confirm('ゲームをリセットしますか？')) window.location.reload();
+        });        document.getElementById('reset-btn').addEventListener('click', () => {
+            showResetPopup();
         });
         document.getElementById('change-mat-btn').addEventListener('click', changeBackground);
 
@@ -931,19 +930,83 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (openTemporaryBtnEl.contains(event.target) || temporaryExpandedZoneEl.contains(event.target)) {
                     // 開くボタン自身、またはゾーン内部（ボタンやカードエリア含む）のクリックは無視
                     return;
-                }
-                temporaryExpandedZoneEl.style.display = 'none';
+                }                temporaryExpandedZoneEl.style.display = 'none';
             }
+        });        // リセットポップアップのイベントリスナー
+        document.getElementById('reset-to-deck-select').addEventListener('click', () => {
+            hideResetPopup();
+            // デッキ選択画面に戻る
+            document.getElementById('game-board').style.display = 'none';
+            document.getElementById('deck-input-screen').style.display = 'flex';
+            // デッキ入力欄を空にする
+            document.getElementById('deck-string').value = '';
+            // モバイル全画面ボタンの表示状態を更新
+            updateMobileFullscreenButton();
         });
+
+        document.getElementById('reset-same-deck').addEventListener('click', () => {
+            hideResetPopup();
+            // 同じデッキでリセット
+            const currentDeck = gameState.initialDeckOrder.slice(); // 初期デッキをコピー
+            initGameState(currentDeck);
+            renderAll();
+        });
+
+        document.getElementById('reset-cancel').addEventListener('click', () => {
+            hideResetPopup();
+        });
+
+        // ポップアップオーバーレイをクリックした時にポップアップを閉じる
+        document.getElementById('reset-popup-overlay').addEventListener('click', (event) => {
+            if (event.target === document.getElementById('reset-popup-overlay')) {
+                hideResetPopup();
+            }
+        });    }
+
+    // リセットポップアップを表示
+    function showResetPopup() {
+        document.getElementById('reset-popup-overlay').style.display = 'flex';
     }
 
-    function changeBackground() {
-        if (document.body.style.backgroundImage.includes('wall.png')) {
-            document.body.style.backgroundImage = "url('item/wall1.png')";
+    // リセットポップアップを非表示
+    function hideResetPopup() {
+        document.getElementById('reset-popup-overlay').style.display = 'none';
+    }    function changeBackground() {
+        const currentBg = document.body.style.backgroundImage;
+        
+        // 現在の背景状態を判定
+        if (!currentBg || currentBg === '' || currentBg === 'none') {
+            // 未設定 → wall.png
+            setBackgroundWithCheck('item/wall.png');
+        } else if (currentBg.includes('wall.png') && !currentBg.includes('wall1.png') && !currentBg.includes('wall2.png')) {
+            // wall.png → wall1.png
+            setBackgroundWithCheck('item/wall1.png');
+        } else if (currentBg.includes('wall1.png')) {
+            // wall1.png → wall2.png
+            setBackgroundWithCheck('item/wall2.png');
+        } else if (currentBg.includes('wall2.png')) {
+            // wall2.png → 未設定
+            document.body.style.backgroundImage = '';
         } else {
-            document.body.style.backgroundImage = "url('item/wall.png')";
+            // 不明な状態の場合は未設定に戻す
+            document.body.style.backgroundImage = '';
         }
-    }    document.getElementById('start-game-btn').addEventListener('click', () => {
+    }
+
+    function setBackgroundWithCheck(imagePath) {
+        // 画像の存在確認
+        const img = new Image();
+        img.onload = function() {
+            // 画像が正常に読み込めた場合
+            document.body.style.backgroundImage = `url('${imagePath}')`;
+        };
+        img.onerror = function() {
+            // 画像が見つからない場合は未設定に戻す
+            console.warn(`Background image not found: ${imagePath}`);
+            document.body.style.backgroundImage = '';
+        };
+        img.src = imagePath;
+    }document.getElementById('start-game-btn').addEventListener('click', () => {
         const deckList = document.getElementById('deck-string').value.trim().split('/').filter(id => id);
         if (deckList.length === 0) {
             alert('有効なデッキリストを入力してください。');

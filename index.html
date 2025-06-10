@@ -144,9 +144,20 @@
         <div class="temporary-zone-card-area drop-zone" data-zone-id="temporary">
             {/* カードはここにレンダリングされる */}
         </div>
-    </div>
-    <div id="card-zoom-overlay">
+    </div>    <div id="card-zoom-overlay">
         <div id="zoomed-card-image"></div>
+    </div>
+    
+    <!-- リセット確認ポップアップ -->
+    <div id="reset-popup-overlay" class="popup-overlay">
+        <div id="reset-popup" class="popup">
+            <h3>ゲームをリセットしますか？</h3>
+            <div class="popup-buttons">
+                <button id="reset-to-deck-select" class="popup-btn reset-primary">デッキ選択画面に戻る</button>
+                <button id="reset-same-deck" class="popup-btn reset-secondary">同じデッキでもう一度</button>
+                <button id="reset-cancel" class="popup-btn reset-cancel">キャンセル</button>
+            </div>
+        </div>
     </div>
     
     <script src="script.js"></script>
