@@ -475,6 +475,211 @@
             pointer-events: none; /* クリックイベントを透過 */
             text-align: center;
         }
+
+        @media (max-width: 768px) {
+            :root {
+                --card-height: 17vh; /* カード高さを少し小さく */
+            }
+
+            body, html {
+                -webkit-text-size-adjust: 100%; /* iOSでのフォントサイズ自動調整を防ぐ */
+            }
+
+            .screen {
+                padding: 1vh 1vw; /* 全体のパディングを少し減らす */
+            }
+
+            #main-area {
+                flex-direction: column; /* スマホ縦画面ではメインエリアを縦積みに変更も検討 */
+                height: calc(100% - var(--card-height) - 1vh); /* 手札ゾーンの高さを考慮 */
+                gap: 0.5vh;
+            }
+
+            #left-column, #right-column {
+                flex-direction: row; /* カラム内の要素を横並びに */
+                justify-content: space-around;
+                align-items: center;
+                width: 100%;
+                padding: 5px 0;
+                gap: 1vw;
+            }
+            #center-column {
+                order: -1; /* 中央カラムを一番上に持ってくる */
+                gap: 0.5vh;
+            }
+             #left-column {
+                height: auto;
+                order: 0; /* left-columnを中央の下に */
+            }
+            #right-column {
+                height: auto;
+                order: 1; /* right-columnを一番下に */
+                flex-direction: column; /* 右カラム内の要素は縦積み */
+                align-items: center;
+            }
+
+
+            .pile-zone {
+                width: calc(var(--card-width) + 8px);
+                height: calc(var(--card-height) + 8px);
+            }
+            .zone-title {
+                font-size: 1.3vh;
+                top: -1.3vh;
+            }
+            .zone-count {
+                font-size: 3vh;
+            }
+
+            #stage-zone, #direction-zone {
+                gap: 1vw; /* ステージ、ディレクション内のスロット間隔を詰める */
+                flex-grow: 0; /* 中央カラムの高さに合わせて伸縮しないように */
+                min-height: calc(var(--card-height) * 2.2); /* ステージの最低高さを確保 */
+            }
+             #direction-zone {
+                min-height: calc(var(--card-height) * 1.1); /* ディレクションの最低高さを確保 */
+            }
+
+
+            .stage-column {
+                padding-top: 18px; /* チェンジボタン用スペース調整 */
+            }
+            .change-stage-btn {
+                font-size: 0.6rem;
+                padding: 3px 5px;
+                top: 1px;
+            }
+
+            #hand-zone {
+                height: calc(var(--card-height) + 1vh); /* 手札ゾーンの高さを調整 */
+                gap: 0.3vw;
+                padding: 0.5vh 0;
+            }
+
+            .action-btn, #open-temporary-zone-btn {
+                font-size: 0.75rem;
+                padding: 6px 8px;
+                width: calc(var(--card-width) + 8px);
+                margin-bottom: 3px;
+            }
+            #sort-hand-btn {
+                font-size: 0.65rem;
+                padding: 4px 8px;
+                bottom: 5px;
+                right: 5px;
+            }
+            #change-mat-btn {
+                font-size: 0.8rem;
+                padding: 6px 10px;
+                margin-bottom: 5px;
+            }
+             #draw-bottom-deck-btn { /* 山札下からドローボタンも調整 */
+                font-size: 0.7rem;
+                width: calc(var(--card-width) + 8px);
+            }
+
+
+            .right-inner {
+                flex-direction: column; /* ボタン群とカウンター群を縦積みに */
+                align-items: center; /* 中央揃え */
+                gap: 8px;
+            }
+            .buttons-deck-wrapper {
+                gap: 3px;
+            }
+
+            .counters-group {
+                gap: 10px;
+                padding: 8px;
+                flex-direction: row; /* カウンターを横並びに */
+                flex-wrap: wrap; /* 折り返し許可 */
+                justify-content: center;
+            }
+            .counter {
+                gap: 4px;
+            }
+            .counter-icon {
+                width: 35px;
+                height: 35px;
+            }
+            .counter-value {
+                font-size: 1.5rem;
+                min-width: 28px;
+            }
+            .counter-btn {
+                font-size: 1rem;
+                padding: 3px 6px;
+            }
+            .counter-label {
+                font-size: 0.8rem;
+                margin-bottom: 1px;
+            }
+            .counter:last-child .counter-label { /* ターンカウンターのラベル */
+                font-size: 0.9rem;
+            }
+
+
+            #trash-expanded-zone, #deck-expanded-zone, #volnoise-expanded-zone {
+                width: 95vw;
+                height: 80vh;
+                max-width: none;
+                max-height: none;
+                padding: 10px;
+                gap: 8px;
+            }
+            #trash-expanded-zone .card, #deck-expanded-zone .card, #volnoise-expanded-zone .card {
+                width: calc(var(--card-width) * 0.75);
+                height: calc(var(--card-height) * 0.75);
+            }
+
+            #temporary-expanded-zone {
+                width: 95vw;
+                height: 85vh;
+                max-width: none;
+                max-height: none;
+                padding: 10px;
+                gap: 8px;
+            }
+            .temporary-zone-controls {
+                padding-bottom: 8px;
+                gap: 5px; /* ボタン間の隙間 */
+                flex-wrap: wrap; /* ボタン折り返し */
+                justify-content: center;
+            }
+            .temporary-zone-controls button {
+                font-size: 0.7rem;
+                padding: 5px 8px;
+            }
+            #temporary-expanded-zone .card {
+                 width: calc(var(--card-width) * 0.75);
+                height: calc(var(--card-height) * 0.75);
+            }
+            .temporary-zone-card-area {
+                gap: 8px;
+                padding: 3px;
+            }
+
+
+            #deck-input-screen h1 { font-size: 1.1rem; margin-bottom: 10px; }
+            #deck-input-screen p { font-size: 0.85rem; margin-bottom: 10px; }
+            #deck-string { 
+                height: 100px; 
+                font-size: 0.85rem; 
+                margin-bottom: 10px;
+                width: 95%;
+            }
+            #start-game-btn { padding: 10px 18px; font-size: 0.95rem; }
+
+            #shuffle-message {
+                font-size: 1.6rem;
+                padding: 12px 25px;
+            }
+            
+            #zoomed-card-image {
+                width: calc(var(--card-width) * 2.5);
+                height: calc(var(--card-height) * 2.5);
+            }
+        }
     </style>
 </head>
 <body>
@@ -1189,6 +1394,7 @@
                             return indexA - indexB;
                         });
                     }
+
                     trashExpandedZoneEl.style.display = 'flex'; // 表示を 'flex' に
                 }
                 renderAll(); // 展開ゾーンのカードを再描画
