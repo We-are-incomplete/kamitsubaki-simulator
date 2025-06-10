@@ -210,18 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cardElement = createCardElement(cardId, false, 'temporary-expanded', 'drag');
                 temporaryCardAreaEl.appendChild(cardElement);
             });
-        }
-
-        // Update temporary zone button text with card count
-        const openTemporaryZoneBtn = document.getElementById('open-temporary-zone-btn');
-        if (openTemporaryZoneBtn) {
-            const tempCount = gameState.zones.temporary.length;
-            if (tempCount > 0) {
-                openTemporaryZoneBtn.textContent = `テンポラリー (${tempCount})`;
-            } else {
-                openTemporaryZoneBtn.textContent = 'テンポラリー';
-            }
-        }
+        }        // Update temporary zone button text with card count and color
+        updateTemporaryButtonState();
     }
 
     function createCardElement(cardId, isStandby, zoneId, interactiveType, slotIndex, slotColor) {
@@ -732,11 +722,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 volNoiseExpandedZoneEl.style.display = 'flex';
             }
             renderAll(); // 展開ゾーンのカードを再描画
-        });
-        document.getElementById('open-temporary-zone-btn').addEventListener('click', () => {
+        });        document.getElementById('open-temporary-zone-btn').addEventListener('click', () => {
             const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone');
             if ( temporaryExpandedZoneEl.style.display === 'flex') {
                 temporaryExpandedZoneEl.style.display = 'none';
+                // テンポラリーゾーンを閉じた時にボタンの状態を更新
+                updateTemporaryButtonState();
             } else {
                 temporaryExpandedZoneEl.style.display = 'flex';
             }
@@ -1027,7 +1018,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('モバイル全画面ボタンを非表示:', { isGameVisible, isFullscreen, isMobile });
             }
         }
-    }    // 全画面状態変化のイベントリスナーを追加
+    }
+    
+    // テンポラリーボタンの状態を更新
+    function updateTemporaryButtonState() {
+        const openTemporaryZoneBtn = document.getElementById('open-temporary-zone-btn');
+        if (openTemporaryZoneBtn) {
+            const tempCount = gameState.zones.temporary.length;
+            if (tempCount > 0) {
+                openTemporaryZoneBtn.textContent = `テンポラリー (${tempCount})`;
+                openTemporaryZoneBtn.classList.add('has-cards');
+            } else {
+                openTemporaryZoneBtn.textContent = 'テンポラリー';
+                openTemporaryZoneBtn.classList.remove('has-cards');
+            }
+        }
+    }
+
+    // 全画面状態変化のイベントリスナーを追加
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     document.addEventListener('msfullscreenchange', handleFullscreenChange);

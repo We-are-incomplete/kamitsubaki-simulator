@@ -509,6 +509,15 @@ body, html {
     text-align: center;
     width: calc(var(--card-width) + 10px);
     box-sizing: border-box;
+    transition: background-color 0.3s ease;
+}
+
+#open-temporary-zone-btn.has-cards {
+    background-color: #dc3545; /* 赤色 */
+}
+
+#open-temporary-zone-btn.has-cards:hover {
+    background-color: #c82333; /* より濃い赤色 */
 }
 
 .action-btn {
