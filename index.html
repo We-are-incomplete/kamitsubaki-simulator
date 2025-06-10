@@ -47,7 +47,17 @@
         #direction-zone .card-slot { border-color: #e83e8c; }
         .card-slot .card { position: absolute; top: 0; left: 0; }
         
-        #hand-zone { width: 100%; height: calc(var(--card-height) + 2vh); border-top: 1px solid var(--border-color); display: flex; justify-content: center; align-items: center; gap: 0.5vw; padding: 1vh 0; }
+        #hand-zone { 
+            width: 100%; 
+            height: calc(var(--card-height) + 2vh); 
+            border-top: 1px solid var(--border-color); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 0.5vw; 
+            padding: 1vh 0; 
+            position: relative; /* 子要素の絶対配置のため */
+        }
         .pile-zone .card { position: absolute; top: 5px; left: 5px; pointer-events: none; }
         .pile-zone .card:nth-child(2) { transform: translate(1px, 1px); }
         .pile-zone .card:nth-child(3) { transform: translate(2px, 2px); }
@@ -292,6 +302,17 @@
             box-sizing: border-box;
             margin-bottom: 5px; /* ボタン間のマージン調整 */
         }
+        #sort-hand-btn { /* 手札ゾーン内のソートボタンのスタイル */
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            background-color: #6c757d; /* 少し目立たない色に */
+            z-index: 100; /* カードより手前に表示 */
+            width: auto; /* 幅を自動に */
+            margin-bottom: 0; /* action-btn のマージンを上書き */
+        }
         #turn-end-btn { /* ターンエンドボタン特有のスタイルがあればここに */
             background-color: #ffc107; /* 例: 警告色っぽい黄色 */
             color: black;
@@ -431,6 +452,7 @@
                             <button id="search-deck-btn" class="action-btn">山札からサーチ</button>
                             <button id="search-volnoise-btn" class="action-btn">VOLノイズからサーチ</button>
                             <button id="move-hand-to-trash-btn" class="action-btn">手札を全てトラッシュ</button>
+                            <!-- <button id="sort-hand-btn" class="action-btn">手札ソート</button> 手札ソートボタンをここから削除 -->
                             <button id="mulligan-btn" class="action-btn">マリガン</button>
                             <button id="reset-btn" class="action-btn">リセット</button>
                             <button id="change-mat-btn">プレイマット変更</button>
@@ -451,7 +473,9 @@
                     </div>
                 </div>
             </div>
-            <div id="hand-zone" class="zone drop-zone" data-zone-id="hand"></div>
+            <div id="hand-zone" class="zone drop-zone" data-zone-id="hand">
+                <button id="sort-hand-btn" class="action-btn">ソート</button> <!-- 手札ソートボタンを手札ゾーン内に移動 -->
+            </div>
             <div id="dice-container"></div>
         </div>
         <div id="shuffle-message">SHUFFLE</div>
@@ -520,7 +544,8 @@
                     trash: [],
                     volNoise: [], // VOLノイズ置き場を初期化
                     temporary: [], // テンポラリーゾーンを初期化
-                }
+                },
+                initialDeckOrder: [...deckList] // 初期デッキの順番を保存
             };
             for (let i = 0; i < 7; i++) {
                 if (gameState.zones.deck.length > 0) {
@@ -577,7 +602,9 @@
 
             // Render hand
             const handZone = document.getElementById('hand-zone');
-            handZone.innerHTML = '';
+            // handZone.innerHTML = ''; // この行をコメントアウトまたは削除
+            // 手札ゾーン内の既存のカード要素のみを削除
+            handZone.querySelectorAll('.card').forEach(cardEl => cardEl.remove());
             gameState.zones.hand.forEach(cardId => {
                 handZone.appendChild(createCardElement(cardId, false, 'hand', 'drag'));
             });
@@ -1085,9 +1112,29 @@
             renderAll();
         }
 
+        function sortHand() {
+            if (!gameState.initialDeckOrder || gameState.initialDeckOrder.length === 0) {
+                console.warn("Initial deck order is not available for sorting.");
+                return;
+            }
+            gameState.zones.hand.sort((cardIdA, cardIdB) => {
+                const indexA = gameState.initialDeckOrder.indexOf(cardIdA);
+                const indexB = gameState.initialDeckOrder.indexOf(cardIdB);
+
+                // initialDeckOrder に見つからないカードは末尾に（実際にはこのシミュレーターでは発生しづらい）
+                if (indexA === -1 && indexB === -1) return 0;
+                if (indexA === -1) return 1;
+                if (indexB === -1) return -1;
+
+                return indexA - indexB;
+            });
+            renderAll();
+        }
+
         function setupEventListeners() {
             document.getElementById('mulligan-btn').addEventListener('click', mulliganHand);
             document.getElementById('move-hand-to-trash-btn').addEventListener('click', moveHandToTrash);
+            document.getElementById('sort-hand-btn').addEventListener('click', sortHand); // 手札ソートボタンのリスナーを追加
             
             // パイルゾーンのイベントリスナー
             const trashZoneEl = document.getElementById('trash-zone');
@@ -1116,7 +1163,7 @@
                 displayShuffleMessage();
                 renderAll();
             });
-            document.getElementById('search-deck-btn').addEventListener('click', () => { // 山札からサーチボタンのイベントリスナー
+            document.getElementById('search-deck-btn').addEventListener('click', () => { // 山札からサーチボタン
                 const deckExpandedZoneEl = document.getElementById('deck-expanded-zone');
                 if (deckExpandedZoneEl.style.display === 'flex') {
                     deckExpandedZoneEl.style.display = 'none';
