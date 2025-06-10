@@ -24,15 +24,23 @@ document.addEventListener('DOMContentLoaded', () => {
             [array[i], array[j]] = [array[j], array[i]];
         }
         return array;
-    }
-
-    function displayShuffleMessage() {
+    }    function displayShuffleMessage() {
         const shuffleMessageEl = document.getElementById('shuffle-message');
         if (shuffleMessageEl) {
             shuffleMessageEl.style.display = 'block';
             setTimeout(() => {
                 shuffleMessageEl.style.display = 'none';
             }, 500); // 0.5秒後に非表示
+        }
+    }
+
+    function displayTurnEndMessage() {
+        const turnEndMessageEl = document.getElementById('turn-end-message');
+        if (turnEndMessageEl) {
+            turnEndMessageEl.style.display = 'block';
+            setTimeout(() => {
+                turnEndMessageEl.style.display = 'none';
+            }, 1000); // 1秒後に非表示
         }
     }
 
@@ -790,12 +798,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             card.isStandby = false;
                         }
                     });
-                }
-            });
+                }            });
             // ターンカウンターを進める
             gameState.counters.turn++;
+            // TURN ENDメッセージを表示
+            displayTurnEndMessage();
+            // 山札から1枚ドロー
+            if (gameState.zones.deck.length > 0) {
+                const drawnCard = gameState.zones.deck.pop();
+                gameState.zones.hand.push(drawnCard);
+            }
             renderAll();
-        });        document.getElementById('reset-btn').addEventListener('click', () => {
+        });document.getElementById('reset-btn').addEventListener('click', () => {
             showResetPopup();
         });
         document.getElementById('change-mat-btn').addEventListener('click', changeBackground);

@@ -71,17 +71,15 @@
                         </div>
                     </div>
                     <div id="right-column">
-                        <div class="right-inner">
-                            <div class="buttons-deck-wrapper" style="display:flex; flex-direction:column; align-items:center; gap:5px;">
-                                <button id="turn-end-btn" class="action-btn">ターンエンド</button>
+                        <div class="right-inner">                            <div class="buttons-deck-wrapper" style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+                                <button id="change-mat-btn">プレイマット変更</button>
                                 <button id="shuffle-btn" class="action-btn">山札シャッフル</button>
                                 <button id="search-deck-btn" class="action-btn">山札からサーチ</button>
                                 <button id="search-volnoise-btn" class="action-btn">VOLノイズからサーチ</button>
-                                <button id="move-hand-to-trash-btn" class="action-btn">手札を全てトラッシュ</button>
-                                <button id="mulligan-btn" class="action-btn">マリガン</button>
+                                <button id="move-hand-to-trash-btn" class="action-btn">手札を全てトラッシュ</button>                                <button id="mulligan-btn" class="action-btn">マリガン</button>
                                 <button id="reset-btn" class="action-btn">リセット</button>
-                                <button id="change-mat-btn">プレイマット変更</button>
-                                <button id="roll-dice-btn" class="action-btn">ダイスを振る</button>                                <button id="draw-bottom-deck-btn" class="action-btn">山札の下から1枚ドロー</button>
+                                <button id="turn-end-btn" class="action-btn">ターンエンド</button>
+                                <button id="roll-dice-btn" class="action-btn">ダイスを振る</button><button id="draw-bottom-deck-btn" class="action-btn">山札の下から1枚ドロー</button>
                                 <button id="sort-hand-btn" class="action-btn">ソート</button> <!-- Moved here -->
                                 <!-- 山札ゾーンとドローボタンを新しいdivでラップ -->
                                 <div class="deck-group">
@@ -141,9 +139,9 @@
             <div id="hand-zone" class="zone drop-zone" data-zone-id="hand">
                 <!-- 手札ソートボタンは上記に移動 -->
             </div>
-            <div id="dice-container"></div>
-        </div>
+            <div id="dice-container"></div>        </div>
         <div id="shuffle-message">SHUFFLE</div>
+        <div id="turn-end-message">TURN END</div>
     </div>
     <div id="trash-expanded-zone"></div>
     <div id="deck-expanded-zone"></div>
