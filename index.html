@@ -37,7 +37,7 @@
         .zone-title { position: absolute; top: -1.5vh; left: 5px; background: #1a1a1d; padding: 0 5px; font-size: 1.5vh; color: #ccc; z-index: 10; }
         .pile-zone { width: calc(var(--card-width) + 10px); height: calc(var(--card-height) + 10px); cursor: pointer; }
         
-        #stage-zone, #direction-zone { display: flex; justify-content: space-around; align-items: center; flex-grow: 1; }
+        #stage-zone, #direction-zone { display: flex; justify-content: space-around; align-items: center; flex-grow: 1; gap: 1.5vw; /* 間隔を調整 */ }
         .stage-column { position: relative; width: var(--card-width); height: calc(var(--card-height) * 2); }
         .card-slot { position: relative; width: var(--card-width); height: var(--card-height); border: 1px dashed var(--border-color); border-radius: 4px; box-sizing: border-box; }
         .stage-column .card-slot { position: absolute; left: 0; }
