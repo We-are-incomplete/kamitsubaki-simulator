@@ -262,8 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         let isDragging = false;
         let draggedCardVisual = null;
-        let draggedCardData = null;
-        let sourceInfo = { zoneId, slotIndex, slotColor };
+        let draggedCardData = null;        let sourceInfo = { zoneId, slotIndex, slotColor };
         let isPile = (element.classList.contains('pile-zone')); // pile-zoneクラスで判定
 
         if (isPile) {
@@ -926,18 +925,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 展開テンポラリーゾーンが表示されているか確認
-            if (temporaryExpandedZoneEl.style.display === 'flex') {
-                if (openTemporaryBtnEl.contains(event.target) || temporaryExpandedZoneEl.contains(event.target)) {
+            if (temporaryExpandedZoneEl.style.display === 'flex') {                if (openTemporaryBtnEl.contains(event.target) || temporaryExpandedZoneEl.contains(event.target)) {
                     // 開くボタン自身、またはゾーン内部（ボタンやカードエリア含む）のクリックは無視
                     return;
-                }                temporaryExpandedZoneEl.style.display = 'none';
+                }
+                temporaryExpandedZoneEl.style.display = 'none';
             }
-        });        // リセットポップアップのイベントリスナー
+        });
+        
+        // リセットポップアップのイベントリスナー
         document.getElementById('reset-to-deck-select').addEventListener('click', () => {
             hideResetPopup();
             // デッキ選択画面に戻る
-            document.getElementById('game-board').style.display = 'none';
-            document.getElementById('deck-input-screen').style.display = 'flex';
+            showDeckInputScreen();
             // デッキ入力欄を空にする
             document.getElementById('deck-string').value = '';
             // モバイル全画面ボタンの表示状態を更新
@@ -1114,12 +1114,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (passwordInput) passwordInput.focus();
         }, 100);
     }
-    
-    // デッキ入力画面を表示
+      // デッキ入力画面を表示
     function showDeckInputScreen() {
         document.getElementById('password-screen').style.display = 'none';
         document.getElementById('deck-input-screen').style.display = 'flex';
         document.getElementById('game-board').style.display = 'none';
+    }
+    
+    // ゲーム画面を表示
+    function showGameScreen() {
+        document.getElementById('password-screen').style.display = 'none';
+        document.getElementById('deck-input-screen').style.display = 'none';
+        document.getElementById('game-board').style.display = 'flex';
     }
       // パスワード認証処理
     async function authenticatePassword() {
@@ -1176,17 +1182,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 authenticatePassword();
             }
         });
-    }
-
-    document.getElementById('start-game-btn').addEventListener('click', () => {
+    }    document.getElementById('start-game-btn').addEventListener('click', () => {
         const deckList = document.getElementById('deck-string').value.trim().split('/').filter(id => id);
         if (deckList.length === 0) {
             alert('有効なデッキリストを入力してください。');
             return;
         }
         initGameState(deckList);
-        document.getElementById('deck-input-screen').style.display = 'none';
-        document.getElementById('game-board').style.display = 'flex';
+        showGameScreen();
         setupEventListeners();
         renderAll();
         
