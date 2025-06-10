@@ -577,10 +577,24 @@
                     if (slotEl && cardArray.length > 0) {
                         cardArray.forEach((card, i) => {
                             const cardElement = createCardElement(card.cardId, card.isStandby, 'stage', 'drag', index, color);
-                            let transformString = `translate(${i * 2}px, ${i * 2}px)`;
+                            let transformString = '';
+                            if (color === 'green') {
+                                // 新しいカード(i = cardArray.length - 1)が一番手前(yOffset = 0)
+                                // 古いカードほど奥に、より上にずれる
+                                const yOffset = (i - (cardArray.length - 1)) * 30; // ずらす量を30pxに増加
+                                transformString = `translate(0px, ${yOffset}px)`;
+                            } else if (color === 'red') {
+                                // 2枚目以降のカードを下に40pxずつずらす
+                                const yOffset = i * 40;
+                                transformString = `translate(0px, ${yOffset}px)`;
+                            } else {
+                                // 青スロットは既存の斜め重ね表示 (現状、青は1枚しか置けない想定だが、念のため)
+                                transformString = `translate(${i * 2}px, ${i * 2}px)`;
+                            }
+                            
                             if (card.isStandby) transformString += ' rotate(90deg)';
                             cardElement.style.transform = transformString;
-                            cardElement.style.zIndex = i;
+                            cardElement.style.zIndex = i; // zIndexで手前に表示
                             slotEl.appendChild(cardElement);
                         });
                     }
@@ -1246,6 +1260,9 @@
                 }
 
                 // 展開VOLノイズゾーンが表示されているか確認
+
+
+
                 if (volNoiseExpandedZoneEl.style.display === 'flex') {
                     // クリックがVOLノイズサーチボタンで発生したか確認
                     if (searchVolNoiseBtnEl.contains(event.target)) {
