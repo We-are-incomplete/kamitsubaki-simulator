@@ -1119,6 +1119,8 @@
                     gameState.zones.trash.push(...gameState.zones.temporary);
                     gameState.zones.temporary = [];
                     renderAll();
+                    const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone');
+                    temporaryExpandedZoneEl.style.display = 'none'; // ゾーンを閉じる
                 }
             });
             document.getElementById('temp-to-deck-shuffle-btn').addEventListener('click', () => {
@@ -1127,6 +1129,8 @@
                     gameState.zones.temporary = [];
                     shuffle(gameState.zones.deck);
                     renderAll();
+                    const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone');
+                    temporaryExpandedZoneEl.style.display = 'none'; // ゾーンを閉じる
                 }
             });
             document.getElementById('temp-to-deck-bottom-btn').addEventListener('click', () => {
