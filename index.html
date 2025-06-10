@@ -827,7 +827,7 @@
                 if (isDragging) {
                     if (draggedCardData) { // ドラッグデータがある場合のみ処理
                         removeCardFromState(draggedCardData, sourceInfo);
-                        // ... (rest of drop logic)
+                        
                         const endX = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientX;
                         const endY = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientY;
                         const targetEl = document.elementFromPoint(endX, endY);
@@ -843,19 +843,26 @@
                                 slotIndex: targetSlot.dataset.slotIndex,
                                 slotColor: targetSlot.dataset.slotColor
                             };
-                            addCardToState(draggedCardData, targetInfo);
-                            dropped = true;
+                            if (addCardToState(draggedCardData, targetInfo)) {
+                                dropped = true;
+                            }
                         } else if (targetNonSlotZone) {
-                            addCardToState(draggedCardData, { zoneId: targetNonSlotZone.dataset.zoneId });
-                            dropped = true;
+                            if (addCardToState(draggedCardData, { zoneId: targetNonSlotZone.dataset.zoneId })) {
+                                dropped = true;
+                            }
                         } else if (targetExpandedTrash && targetExpandedTrash.style.display === 'flex') {
-                            addCardToState(draggedCardData, { zoneId: 'trash' });
-                            dropped = true;
+                            if (addCardToState(draggedCardData, { zoneId: 'trash' })) {
+                                dropped = true;
+                            }
                         } else if (targetTemporaryZone && document.getElementById('temporary-expanded-zone').style.display === 'flex') {
-                            addCardToState(draggedCardData, { zoneId: 'temporary' });
-                            dropped = true;
+                            if (addCardToState(draggedCardData, { zoneId: 'temporary' })) {
+                                dropped = true;
+                            }
                         }
-                        if (!dropped) addCardToState(draggedCardData, sourceInfo); // ドロップ先がなければ元に戻す
+                        
+                        if (!dropped) { // いずれのドロップ先でも成功しなかった場合、元の場所に戻す
+                            addCardToState(draggedCardData, sourceInfo); 
+                        }
                     }
                     if (draggedCardVisual) draggedCardVisual.style.display = 'none'; // ドラッグ中のビジュアルを隠す
                 } else {
@@ -901,16 +908,36 @@
         }
 
         function addCardToState(cardData, toInfo) {
-            if (!cardData || !toInfo || !toInfo.zoneId) return;
+            if (!cardData || !toInfo || !toInfo.zoneId) return false;
             const zoneId = toInfo.zoneId;
             const cardObject = { cardId: cardData.cardId, isStandby: false };
+
             if (zoneId === 'direction') {
-                if (toInfo.slotIndex !== undefined) gameState.zones.direction[toInfo.slotIndex].push(cardObject);
+                if (toInfo.slotIndex !== undefined) {
+                    // ディレクションスロットに既にカードがある場合は追加しない
+                    if (gameState.zones.direction[toInfo.slotIndex].length > 0) {
+                        // console.log("Direction slot already full. Card not added.");
+                        return false; 
+                    }
+                    gameState.zones.direction[toInfo.slotIndex].push(cardObject);
+                    return true;
+                }
+                return false; // slotIndex が undefined の場合
             } else if (zoneId === 'stage') {
                 if (toInfo.slotIndex !== undefined && toInfo.slotColor) {
-                    if (toInfo.slotColor === 'blue') cardObject.isStandby = true;
+                    if (toInfo.slotColor === 'blue') {
+                        // 青スロットに既にカードがある場合は追加しない
+                        if (gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor].length > 0) {
+                            // console.log("Blue stage slot already full. Card not added.");
+                            return false;
+                        }
+                        cardObject.isStandby = true;
+                    }
+                    // 他の色（green, red）のスロットや、空の青スロットへの追加
                     gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor].push(cardObject);
+                    return true;
                 }
+                return false; // slotIndex または slotColor が undefined の場合
             } else {
                 const zone = gameState.zones[zoneId];
                 if (zone && typeof cardObject.cardId === 'string') {
@@ -918,7 +945,9 @@
                     if (zoneId === 'volNoise') {
                         shuffle(gameState.zones.volNoise); // VOLノイズ置き場に追加されたらシャッフル
                     }
+                    return true;
                 }
+                return false; // zone が無効、または cardId が文字列でない場合
             }
         }
 
