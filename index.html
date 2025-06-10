@@ -366,8 +366,53 @@
         .counters-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 22px; /* カウンター間のスペースを調整 (25px * 0.9) */
+            background-color: rgba(128, 128, 128, 0.2); /* 半透明の灰色の背景を追加 */
+            padding: 15px; /* 内側の余白を追加 */
+            border-radius: 8px; /* 角を丸める */
         }
+
+        .counter {
+            display: flex;
+            flex-direction: column; /* アイコンとコントロールを縦に並べる */
+            align-items: center; /* 中央揃え */
+            gap: 7px; /* アイコンとコントロール間のスペース (8px * 0.9) */
+        }
+
+        .counter-icon {
+            width: 72px; /* アイコンの幅 (80px * 0.9) */
+            height: 72px; /* アイコンの高さ (80px * 0.9) */
+            object-fit: contain; /* 画像のアスペクト比を保つ */
+        }
+
+        .counter-value-controls {
+            display: flex;
+            align-items: center;
+            gap: 11px; /* 値とボタン間のスペースを調整 (12px * 0.9) */
+        }
+
+        .counter-value {
+            font-size: 2.9rem; /* 値のフォントサイズを調整 (3.2rem * 0.9) */
+            font-weight: bold;
+            min-width: 45px; /* 値表示エリアの最小幅を調整 (50px * 0.9) */
+            text-align: center;
+            color: #fff;
+        }
+
+        .counter-btn {
+            font-size: 1.8rem; /* ボタンのフォントサイズを調整 (2rem * 0.9) */
+            padding: 7px 14px; /* ボタンのパディングを調整 (8px*0.9, 15px*0.9) */
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px; 
+            cursor: pointer;
+            line-height: 1; 
+        }
+        .counter-btn:hover {
+            background-color: #444;
+        }
+
 
         /* 右カラム内の新しいラッパー */
         .right-inner {
@@ -502,12 +547,47 @@
                             <button id="draw-bottom-deck-btn" class="action-btn">山札の下から1枚ドロー</button>
                         </div>
                         <!-- カウンター群 -->
-                        <div class="counters-group" style="display:flex; flex-direction:column; gap:5px;">
-                            <div class="counter"><div class="counter-label">VOL</div><div class="counter-controls"><button class="counter-btn" data-counter="vol" data-amount="-1">-</button><span id="vol-value" class="counter-value">0</span><button class="counter-btn" data-counter="vol" data-amount="1">+</button></div></div>
-                            <div class="counter"><div class="counter-label">魔力 α</div><div class="counter-controls"><button class="counter-btn" data-counter="manaAlpha" data-amount="-1">-</button><span id="mana-alpha-value" class="counter-value">0</span><button class="counter-btn" data-counter="manaAlpha" data-amount="1">+</button></div></div>
-                            <div class="counter"><div class="counter-label">魔力 β</div><div class="counter-controls"><button class="counter-btn" data-counter="manaBeta" data-amount="-1">-</button><span id="mana-beta-value" class="counter-value">0</span><button class="counter-btn" data-counter="manaBeta" data-amount="1">+</button></div></div>
-                            <div class="counter"><div class="counter-label">魔力 Ω</div><div class="counter-controls"><button class="counter-btn" data-counter="manaOmega" data-amount="-1">-</button><span id="mana-omega-value" class="counter-value">0</span><button class="counter-btn" data-counter="manaOmega" data-amount="1">+</button></div></div>
-                            <div class="counter"><div class="counter-label">ターン</div><div class="counter-controls"><button class="counter-btn" data-counter="turn" data-amount="-1">-</button><span id="turn-value" class="counter-value">1</span><button class="counter-btn" data-counter="turn" data-amount="1">+</button></div></div>
+                        <div class="counters-group">
+                            <div class="counter">
+                                <img src="item/vol.png" alt="VOL" class="counter-icon">
+                                <div class="counter-value-controls">
+                                    <button class="counter-btn" data-counter="vol" data-amount="-1">-</button>
+                                    <span id="vol-value" class="counter-value">0</span>
+                                    <button class="counter-btn" data-counter="vol" data-amount="1">+</button>
+                                </div>
+                            </div>
+                            <div class="counter">
+                                <img src="item/alpha.png" alt="Alpha" class="counter-icon">
+                                <div class="counter-value-controls">
+                                    <button class="counter-btn" data-counter="manaAlpha" data-amount="-1">-</button>
+                                    <span id="mana-alpha-value" class="counter-value">0</span>
+                                    <button class="counter-btn" data-counter="manaAlpha" data-amount="1">+</button>
+                                </div>
+                            </div>
+                            <div class="counter">
+                                <img src="item/beta.png" alt="Beta" class="counter-icon">
+                                <div class="counter-value-controls">
+                                    <button class="counter-btn" data-counter="manaBeta" data-amount="-1">-</button>
+                                    <span id="mana-beta-value" class="counter-value">0</span>
+                                    <button class="counter-btn" data-counter="manaBeta" data-amount="1">+</button>
+                                </div>
+                            </div>
+                            <div class="counter">
+                                <img src="item/omega.png" alt="Omega" class="counter-icon">
+                                <div class="counter-value-controls">
+                                    <button class="counter-btn" data-counter="manaOmega" data-amount="-1">-</button>
+                                    <span id="mana-omega-value" class="counter-value">0</span>
+                                    <button class="counter-btn" data-counter="manaOmega" data-amount="1">+</button>
+                                </div>
+                            </div>
+                            <div class="counter">
+                                <div class="counter-label" style="font-size: 1.4rem; margin-bottom: 3px;">ターン</div>
+                                <div class="counter-value-controls">
+                                    <button class="counter-btn" data-counter="turn" data-amount="-1">-</button>
+                                    <span id="turn-value" class="counter-value">1</span>
+                                    <button class="counter-btn" data-counter="turn" data-amount="1">+</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
