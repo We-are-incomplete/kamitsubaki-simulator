@@ -56,6 +56,31 @@
         .card { width: var(--card-width); height: var(--card-height); background-size: cover; background-position: center; background-repeat: no-repeat; border-radius: 4px; transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease; cursor: grab; touch-action: none; transform-origin: center; }
         .card.dragging { position: fixed; z-index: 3000; cursor: grabbing; box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); pointer-events: none; transition: none; }
 
+        #card-zoom-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* 半透明の背景 */
+            display: none; /* 初期状態は非表示 */
+            justify-content: center;
+            align-items: center;
+            z-index: 6000; /* 最前面に表示 */
+            pointer-events: none; /* オーバーレイ自体はクリックイベントを透過 */
+        }
+
+        #zoomed-card-image {
+            width: calc(var(--card-width) * 3); /* 通常のカードの3倍の幅 */
+            height: calc(var(--card-height) * 3); /* 通常のカードの3倍の高さ */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 8px; /* 少し角丸に */
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.7);
+            transform: none; /* 回転やその他の変形を無効化 */
+        }
+
         #trash-expanded-zone {
             display: none; /* 初期状態は非表示 */
             position: absolute; /* ゲームボードに対する絶対位置 */
@@ -409,7 +434,7 @@
                 </div>
             </div>
             <div id="hand-zone" class="zone drop-zone" data-zone-id="hand"></div>
-            <div id="dice-container"></div> {/* ダイス表示コンテナ */}
+            <div id="dice-container"></div>
         </div>
     </div>
     <div id="trash-expanded-zone"></div> {/* 展開用トラッシュゾーン */}
@@ -426,6 +451,9 @@
             {/* カードはここにレンダリングされる */}
         </div>
     </div>
+    <div id="card-zoom-overlay">
+        <div id="zoomed-card-image"></div>
+    </div>
     
     <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -439,8 +467,10 @@
         let gameState = {};
         const CARD_IMAGE_PATH = 'cards/';
         const DOUBLE_TAP_THRESHOLD = 300;
+        const LONG_PRESS_DELAY = 500; // 長押しとみなすまでの時間（ミリ秒）
         let lastTapTime = 0;
         let lastTapTargetCardId = null;
+        let longPressTimer = null; // 長押しタイマーのIDを保持
 
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -715,17 +745,42 @@
             let startX = touch.clientX;
             let startY = touch.clientY;
 
+            // 長押しタイマーを開始
+            clearTimeout(longPressTimer); // 既存のタイマーがあればクリア
+            longPressTimer = setTimeout(() => {
+                if (!isDragging && element.classList.contains('card') && !isPile) {
+                    const cardIdToZoom = element.dataset.cardId;
+                    const cardZoomOverlay = document.getElementById('card-zoom-overlay');
+                    const zoomedCardImage = document.getElementById('zoomed-card-image');
+                    if (cardIdToZoom && cardZoomOverlay && zoomedCardImage) {
+                        zoomedCardImage.style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardIdToZoom}.png')`;
+                        cardZoomOverlay.style.display = 'flex';
+                    }
+                }
+                longPressTimer = null; // タイマー実行後はクリア
+            }, LONG_PRESS_DELAY);
+
+
             const onMove = (moveEvent) => {
                 const moveX = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientX;
                 const moveY = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientY;
-                if (!isDragging && (Math.abs(moveX - startX) > 5 || Math.abs(moveY - startY) > 5)) {
-                    isDragging = true;
-                    if (!isPile) element.style.opacity = '0.5';
-                    draggedCardVisual = document.createElement('div');
-                    draggedCardVisual.className = 'card dragging';
-                    draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.png')`;
-                    if (draggedCardData.isStandby) draggedCardVisual.style.transform = 'rotate(90deg)';
-                    document.body.appendChild(draggedCardVisual);
+                if (Math.abs(moveX - startX) > 5 || Math.abs(moveY - startY) > 5) { // 少しでも動いたら
+                    clearTimeout(longPressTimer); // 長押しタイマーをキャンセル
+                    longPressTimer = null;
+                    const cardZoomOverlay = document.getElementById('card-zoom-overlay');
+                    if (cardZoomOverlay.style.display === 'flex') {
+                        cardZoomOverlay.style.display = 'none'; // 拡大表示もキャンセル
+                    }
+
+                    if (!isDragging) { // ドラッグ開始の処理
+                        isDragging = true;
+                        if (!isPile) element.style.opacity = '0.5';
+                        draggedCardVisual = document.createElement('div');
+                        draggedCardVisual.className = 'card dragging';
+                        draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.png')`;
+                        if (draggedCardData.isStandby) draggedCardVisual.style.transform = 'rotate(90deg)';
+                        document.body.appendChild(draggedCardVisual);
+                    }
                 }
                 if (isDragging && draggedCardVisual) {
                     draggedCardVisual.style.left = `${moveX - offsetX}px`;
@@ -734,6 +789,13 @@
             };
 
             const onEnd = (endEvent) => {
+                clearTimeout(longPressTimer); // 長押しタイマーをクリア
+                longPressTimer = null;
+                const cardZoomOverlay = document.getElementById('card-zoom-overlay');
+                if (cardZoomOverlay.style.display === 'flex') {
+                    cardZoomOverlay.style.display = 'none';
+                }
+
                 document.removeEventListener('mousemove', onMove);
                 document.removeEventListener('touchmove', onMove);
                 document.removeEventListener('mouseup', onEnd);
