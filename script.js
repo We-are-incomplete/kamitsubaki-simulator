@@ -966,34 +966,100 @@ document.addEventListener('DOMContentLoaded', () => {
     // リセットポップアップを表示
     function showResetPopup() {
         document.getElementById('reset-popup-overlay').style.display = 'flex';
-    }
-
-    // リセットポップアップを非表示
+    }    // リセットポップアップを非表示
     function hideResetPopup() {
         document.getElementById('reset-popup-overlay').style.display = 'none';
+    }    // クッキー管理関数
+    function setCookie(name, value, days = 30) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+        
+        // GitHub Pages対応のクッキー設定
+        let cookieString = `${name}=${value};expires=${expires.toUTCString()}`;
+        
+        // HTTPSの場合（GitHub Pages）はSecure属性を追加
+        if (location.protocol === 'https:') {
+            cookieString += ';Secure';
+        }
+        
+        // SameSite属性を追加（モダンブラウザ対応）
+        cookieString += ';SameSite=Lax';
+        
+        // パスを設定（GitHub Pagesのサブディレクトリ対応）
+        const currentPath = location.pathname;
+        const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+        cookieString += `;path=${basePath || '/'}`;
+        
+        document.cookie = cookieString;
+        
+        // デバッグ用ログ（GitHub Pages環境での確認用）
+        console.log('Cookie set:', cookieString);
+    }    function getCookie(name) {
+        // デバッグ用ログ（GitHub Pages環境での確認用）
+        console.log('Getting cookie:', name);
+        console.log('All cookies:', document.cookie);
+        
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) {
+                const value = c.substring(nameEQ.length, c.length);
+                console.log('Cookie found:', name, '=', value);
+                return value;
+            }
+        }
+        console.log('Cookie not found:', name);
+        return null;
+    }    function loadBackgroundFromCookie() {
+        console.log('Loading background from cookie...');
+        const savedBackground = getCookie('playmat-background');
+        console.log('Saved background value:', savedBackground);
+        
+        if (savedBackground) {
+            if (savedBackground === 'none') {
+                console.log('Setting background to none');
+                document.body.style.backgroundImage = '';
+            } else {
+                console.log('Setting background to:', savedBackground);
+                setBackgroundWithCheck(savedBackground);
+            }
+        } else {
+            console.log('No saved background found');
+        }
     }    function changeBackground() {
         const currentBg = document.body.style.backgroundImage;
+        console.log('Current background:', currentBg);
         
         // 現在の背景状態を判定
         if (!currentBg || currentBg === '' || currentBg === 'none') {
             // 未設定 → wall.png
+            console.log('Changing to wall.png');
             setBackgroundWithCheck('item/wall.png');
+            setCookie('playmat-background', 'item/wall.png');
         } else if (currentBg.includes('wall.png') && !currentBg.includes('wall1.png') && !currentBg.includes('wall2.png')) {
             // wall.png → wall1.png
+            console.log('Changing to wall1.png');
             setBackgroundWithCheck('item/wall1.png');
+            setCookie('playmat-background', 'item/wall1.png');
         } else if (currentBg.includes('wall1.png')) {
             // wall1.png → wall2.png
+            console.log('Changing to wall2.png');
             setBackgroundWithCheck('item/wall2.png');
+            setCookie('playmat-background', 'item/wall2.png');
         } else if (currentBg.includes('wall2.png')) {
             // wall2.png → 未設定
+            console.log('Changing to none');
             document.body.style.backgroundImage = '';
+            setCookie('playmat-background', 'none');
         } else {
             // 不明な状態の場合は未設定に戻す
+            console.log('Unknown state, changing to none');
             document.body.style.backgroundImage = '';
+            setCookie('playmat-background', 'none');
         }
-    }
-
-    function setBackgroundWithCheck(imagePath) {
+    }function setBackgroundWithCheck(imagePath) {
         // 画像の存在確認
         const img = new Image();
         img.onload = function() {
@@ -1004,6 +1070,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 画像が見つからない場合は未設定に戻す
             console.warn(`Background image not found: ${imagePath}`);
             document.body.style.backgroundImage = '';
+            setCookie('playmat-background', 'none');
         };
         img.src = imagePath;
     }document.getElementById('start-game-btn').addEventListener('click', () => {
@@ -1105,9 +1172,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // ウィンドウサイズ変更時にも更新
     window.addEventListener('resize', updateMobileFullscreenButton);
-    
-    // 初期表示状態を設定
-    setTimeout(updateMobileFullscreenButton, 100);
+      // 初期表示状態を設定
+    setTimeout(updateMobileFullscreenButton, 100);    // クッキーから保存されたプレイマット設定を復元
+    console.log('GitHub Pages Cookie Test - Page loaded');
+    console.log('Current location:', window.location.href);
+    console.log('Current protocol:', window.location.protocol);
+    console.log('Current hostname:', window.location.hostname);
+    loadBackgroundFromCookie();
 
     // Initialize with default deck
     initGameState(document.getElementById('deck-string').value.trim().split('/').filter(id => id));
