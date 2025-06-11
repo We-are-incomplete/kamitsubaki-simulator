@@ -389,12 +389,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!isDragging) { // ドラッグ開始の処理
                     isDragging = true;
                     if (!isPile && element) element.style.opacity = '0.5'; // elementが存在する場合のみ
-                    
-                    // draggedCardData がこの時点で必要
+                      // draggedCardData がこの時点で必要
                     if (draggedCardData) { // draggedCardData が有効な場合のみビジュアルを作成
                         draggedCardVisual = document.createElement('div');
                         draggedCardVisual.className = 'card dragging';
-                        draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.png')`;
+                        
+                        // 山札からのドラッグの場合は裏面を表示
+                        if (isPile && sourceInfo.zoneId === 'deck') {
+                            draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`;
+                        } else {
+                            draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.png')`;
+                        }
+                        
                         if (draggedCardData.isStandby) draggedCardVisual.style.transform = 'rotate(90deg)';
                         document.body.appendChild(draggedCardVisual);
                     } else if (isPile) {
