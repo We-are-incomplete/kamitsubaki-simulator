@@ -759,11 +759,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone');
                 temporaryExpandedZoneEl.style.display = 'none'; // ゾーンを閉じる
             }
-        });
-        document.getElementById('temp-to-deck-bottom-btn').addEventListener('click', () => {
+        });        document.getElementById('temp-to-deck-bottom-btn').addEventListener('click', () => {
             if (gameState.zones.temporary.length > 0) {
                 shuffle(gameState.zones.temporary); // まずテンポラリーゾーンのカードをシャッフル
-                displayShuffleMessage(); // シャッフルメッセージを表示
                 gameState.zones.deck.unshift(...gameState.zones.temporary); // 山札の先頭（底）に追加
                 gameState.zones.temporary = [];
                 renderAll();
