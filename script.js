@@ -1631,6 +1631,20 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.zones = gameState.players[gameState.currentPlayer].zones;
         gameState.initialDeckOrder = gameState.players[gameState.currentPlayer].initialDeckOrder;
         
+        // ターンが帰ってきた時に赤スロットのカードを全てトラッシュ
+        if (gameState.isDualMode) {
+            gameState.zones.stage.forEach(column => {
+                if (column.red && column.red.length > 0) {
+                    // 赤スロットのカードをトラッシュに移動
+                    column.red.forEach(card => {
+                        gameState.zones.trash.push(card.cardId);
+                    });
+                    // 赤スロットを空にする
+                    column.red = [];
+                }
+            });
+        }
+        
         // 新しいプレイヤーのターンカウンターを進める
         gameState.counters.turn++;
         
