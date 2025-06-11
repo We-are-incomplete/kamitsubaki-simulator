@@ -710,6 +710,51 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.zones.stage[index2] = tempColumnData;
     }
 
+    // 現在のプレイヤーのカウンターを取得する関数
+    function getCurrentPlayerCounters() {
+        if (gameState.isDualMode) {
+            return gameState.players[gameState.currentPlayer].counters;
+        } else {
+            // 一人モードの場合は、従来の gameState.counters を使用
+            return gameState.counters || gameState.players[1].counters;
+        }
+    }
+
+    // イベントリスナーをクリアする関数
+    function clearEventListeners() {
+        // カウンターボタンのイベントリスナーをクリア
+        document.querySelectorAll('.counter-btn').forEach(btn => {
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+        });
+        
+        // その他のボタンのイベントリスナーをクリア
+        const buttonIds = [
+            'mulligan-btn', 'move-hand-to-trash-btn', 'sort-hand-btn',
+            'shuffle-btn', 'search-deck-btn', 'search-volnoise-btn',
+            'open-temporary-zone-btn', 'draw-btn', 'draw-bottom-deck-btn',
+            'turn-end-btn', 'reset-btn', 'change-mat-btn'
+        ];
+        
+        buttonIds.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                const newElement = element.cloneNode(true);
+                element.parentNode.replaceChild(newElement, element);
+            }
+        });
+        
+        // パイルゾーンのイベントリスナーをクリア
+        const zoneIds = ['trash-zone', 'deck-zone', 'volNoise-zone'];
+        zoneIds.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                const newElement = element.cloneNode(true);
+                element.parentNode.replaceChild(newElement, element);
+            }
+        });
+    }
+
     function setupEventListeners() {
         document.getElementById('mulligan-btn').addEventListener('click', mulliganHand);
         document.getElementById('move-hand-to-trash-btn').addEventListener('click', moveHandToTrash);
@@ -729,12 +774,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const volNoiseZoneEl = document.getElementById('volNoise-zone'); // IDを 'vol-noise-zone' から 'volNoise-zone' に修正
         volNoiseZoneEl.addEventListener('mousedown', e => handlePressStart(e, volNoiseZoneEl, 'volNoise'));
         volNoiseZoneEl.addEventListener('touchstart', e => handlePressStart(e, volNoiseZoneEl, 'volNoise'), { passive: false });
-        volNoiseZoneEl.addEventListener('click', e => handleTap(volNoiseZoneEl, { zoneId: 'volNoise' }));
-
-        document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => {
+        volNoiseZoneEl.addEventListener('click', e => handleTap(volNoiseZoneEl, { zoneId: 'volNoise' }));        document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => {
             const counter = btn.dataset.counter;
-            gameState.counters[counter] += parseInt(btn.dataset.amount, 10);
-            if (gameState.counters[counter] < 0) gameState.counters[counter] = 0;
+            const currentPlayerCounters = getCurrentPlayerCounters();
+            currentPlayerCounters[counter] += parseInt(btn.dataset.amount, 10);
+            if (currentPlayerCounters[counter] < 0) currentPlayerCounters[counter] = 0;
             renderAll();
         }));
         document.getElementById('shuffle-btn').addEventListener('click', () => {
@@ -1368,8 +1412,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             initGameState(deckList, false);
         }
-        
-        showGameScreen();
+          showGameScreen();
+        clearEventListeners(); // 既存のイベントリスナーをクリア
         setupEventListeners();
         renderAll();
         updateOpponentPreview();
