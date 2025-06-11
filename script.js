@@ -733,13 +733,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
         });
-        
-        // その他のボタンのイベントリスナーをクリア
+          // その他のボタンのイベントリスナーをクリア
         const buttonIds = [
             'mulligan-btn', 'move-hand-to-trash-btn', 'sort-hand-btn',
             'shuffle-btn', 'search-deck-btn', 'search-volnoise-btn',
             'open-temporary-zone-btn', 'draw-btn', 'draw-bottom-deck-btn',
-            'turn-end-btn', 'reset-btn', 'change-mat-btn'
+            'switch-player-btn', 'turn-end-btn', 'reset-btn', 'change-mat-btn'
         ];
         
         buttonIds.forEach(id => {
@@ -857,7 +856,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 gameState.zones.hand = [];
                 renderAll();
             }
-        });        document.getElementById('turn-end-btn').addEventListener('click', () => {
+        });        document.getElementById('switch-player-btn').addEventListener('click', () => {
+            switchPlayerOnly();
+        });
+        document.getElementById('turn-end-btn').addEventListener('click', () => {
             // ステージ上のカードのスタンバイ状態を解除
             gameState.zones.stage.forEach(column => {
                 ['green', 'blue', 'red'].forEach(color => {
@@ -1550,15 +1552,40 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 画面を再描画
         renderAll();
-    }function updateOpponentPreview() {
+    }
+
+    function switchPlayerOnly() {
+        if (!gameState.isDualMode || !gameState.players[2]) return;
+        
+        // 現在のプレイヤーのデータを保存
+        gameState.players[gameState.currentPlayer].counters = gameState.counters;
+        gameState.players[gameState.currentPlayer].zones = gameState.zones;
+        
+        // プレイヤーを切り替え
+        gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+        
+        // 新しいプレイヤーのデータを設定（ターンは進めない）
+        gameState.counters = gameState.players[gameState.currentPlayer].counters;
+        gameState.zones = gameState.players[gameState.currentPlayer].zones;
+        gameState.initialDeckOrder = gameState.players[gameState.currentPlayer].initialDeckOrder;
+        
+        // 相手プレビューを更新
+        updateOpponentPreview();
+        
+        // 画面を再描画
+        renderAll();
+    }    function updateOpponentPreview() {
         if (!gameState.isDualMode) {
             document.getElementById('view-opponent-btn').style.display = 'none';
+            document.getElementById('switch-player-btn').style.display = 'none';
             return;
         }
         
         // 相手の盤面を見るボタンを表示
         document.getElementById('view-opponent-btn').style.display = 'block';
-    }    function showOpponentFullscreen() {
+        // プレイヤー切り替えボタンを表示
+        document.getElementById('switch-player-btn').style.display = 'block';
+    }function showOpponentFullscreen() {
         if (!gameState.isDualMode) return;
         
         const opponentPlayer = gameState.currentPlayer === 1 ? 2 : 1;

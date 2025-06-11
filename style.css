@@ -622,6 +622,15 @@ body, html {
     color: black;
 }
 
+#switch-player-btn {
+    background-color: #17a2b8;
+    color: white;
+}
+
+#switch-player-btn:hover {
+    background-color: #138496;
+}
+
 #reset-btn {
     margin-bottom: 10px;
 }
