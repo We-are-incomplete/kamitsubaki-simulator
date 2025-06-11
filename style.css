@@ -115,6 +115,23 @@ body, html {
     font-size: clamp(0.8rem, 2vw, 1rem);
     resize: vertical;
     box-sizing: border-box;
+    margin-bottom: 1vh;
+}
+
+.clear-btn {
+    padding: 0.8vh 2vw;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: clamp(0.7rem, 1.8vw, 0.9rem);
+    transition: background-color 0.3s;
+    margin-bottom: 1vh;
+}
+
+.clear-btn:hover {
+    background-color: #c82333;
 }
 
 #deck-string { 

@@ -1229,7 +1229,63 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             console.log('No saved background found');
         }
-    }    function changeBackground() {
+    }
+
+    // デッキデータをクッキーに保存する関数
+    function saveDeckDataToCookie() {
+        const singleDeck = document.getElementById('deck-string').value.trim();
+        const dualDeckP1 = document.getElementById('deck-string-p1').value.trim();
+        const dualDeckP2 = document.getElementById('deck-string-p2').value.trim();
+        
+        setCookie('deck-single', singleDeck, 30);
+        setCookie('deck-p1', dualDeckP1, 30);
+        setCookie('deck-p2', dualDeckP2, 30);
+        
+        console.log('Deck data saved to cookies');
+    }
+
+    // クッキーからデッキデータを読み込む関数
+    function loadDeckDataFromCookie() {
+        console.log('Loading deck data from cookies...');
+        
+        const savedSingleDeck = getCookie('deck-single');
+        const savedDeckP1 = getCookie('deck-p1');
+        const savedDeckP2 = getCookie('deck-p2');
+        
+        if (savedSingleDeck) {
+            document.getElementById('deck-string').value = savedSingleDeck;
+            console.log('Loaded single deck data');
+        }
+        
+        if (savedDeckP1) {
+            document.getElementById('deck-string-p1').value = savedDeckP1;
+            console.log('Loaded player 1 deck data');
+        }
+        
+        if (savedDeckP2) {
+            document.getElementById('deck-string-p2').value = savedDeckP2;
+            console.log('Loaded player 2 deck data');
+        }
+    }
+
+    // デッキデータをクリアする関数
+    function clearDeckData(deckType) {
+        switch (deckType) {
+            case 'single':
+                document.getElementById('deck-string').value = '';
+                setCookie('deck-single', '', 30);
+                break;
+            case 'p1':
+                document.getElementById('deck-string-p1').value = '';
+                setCookie('deck-p1', '', 30);
+                break;
+            case 'p2':
+                document.getElementById('deck-string-p2').value = '';
+                setCookie('deck-p2', '', 30);
+                break;
+        }
+        console.log(`Cleared deck data for: ${deckType}`);
+    }function changeBackground() {
         const currentBg = document.body.style.backgroundImage;
         console.log('Current background:', currentBg);
         
@@ -1383,8 +1439,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 authenticatePassword();
             }
         });    }    
-    
-    // モード選択ボタンのイベントリスナー
+      // モード選択ボタンのイベントリスナー
     document.getElementById('single-deck-mode-btn').addEventListener('click', () => {
         document.getElementById('single-deck-mode-btn').classList.add('active');
         document.getElementById('dual-deck-mode-btn').classList.remove('active');
@@ -1397,6 +1452,32 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('single-deck-mode-btn').classList.remove('active');
         document.getElementById('single-deck-input').style.display = 'none';
         document.getElementById('dual-deck-input').style.display = 'block';
+    });
+
+    // デッキデータ入力欄の変更時にクッキーに保存
+    document.getElementById('deck-string').addEventListener('input', () => {
+        saveDeckDataToCookie();
+    });
+    
+    document.getElementById('deck-string-p1').addEventListener('input', () => {
+        saveDeckDataToCookie();
+    });
+    
+    document.getElementById('deck-string-p2').addEventListener('input', () => {
+        saveDeckDataToCookie();
+    });
+
+    // クリアボタンのイベントリスナー
+    document.getElementById('clear-deck-btn').addEventListener('click', () => {
+        clearDeckData('single');
+    });
+    
+    document.getElementById('clear-deck-p1-btn').addEventListener('click', () => {
+        clearDeckData('p1');
+    });
+    
+    document.getElementById('clear-deck-p2-btn').addEventListener('click', () => {
+        clearDeckData('p2');
     });
     
     document.getElementById('start-game-btn').addEventListener('click', () => {
@@ -1435,7 +1516,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen();
         } else if (document.documentElement.webkitRequestFullscreen) { // Safari
-            document.documentElement.webkitRequestFullscreen();        } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+            document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
             document.documentElement.msRequestFullscreen();
         }
     });
@@ -1514,13 +1596,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // ウィンドウサイズ変更時にも更新
     window.addEventListener('resize', updateMobileFullscreenButton);    // 初期表示状態を設定
     setTimeout(updateMobileFullscreenButton, 100);
-    
-    // クッキーから保存されたプレイマット設定を復元
+      // クッキーから保存されたプレイマット設定を復元
     console.log('GitHub Pages Cookie Test - Page loaded');
     console.log('Current location:', window.location.href);
     console.log('Current protocol:', window.location.protocol);
     console.log('Current hostname:', window.location.hostname);
-    loadBackgroundFromCookie();    // パスワード認証システムの初期化
+    loadBackgroundFromCookie();
+
+    // デッキデータを復元
+    loadDeckDataFromCookie();
+
+    // デッキデータを復元
+    loadDeckDataFromCookie();// パスワード認証システムの初期化
     setupPasswordAuthentication();
     
     // 認証チェックを実行（認証済みならデッキ選択画面、未認証ならパスワード画面を表示）
