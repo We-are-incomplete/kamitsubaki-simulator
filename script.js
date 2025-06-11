@@ -42,26 +42,59 @@ document.addEventListener('DOMContentLoaded', () => {
                 turnEndMessageEl.style.display = 'none';
             }, 1000); // 1秒後に非表示
         }
-    }
-
-    function initGameState(deckList = []) {
+    }    function initGameState(deckList = [], isDualMode = false, deckList2 = []) {
         const NUM_SLOTS = 5;
         gameState = {
-            counters: { turn: 1, vol: 0, manaAlpha: 0, manaBeta: 0, manaOmega: 0 },
-            zones: {
-                deck: shuffle([...deckList]),
-                hand: [],
-                stage: Array(NUM_SLOTS).fill(null).map(() => ({ red: [], blue: [], green: [] })),
-                direction: Array(NUM_SLOTS).fill(null).map(() => []),
-                trash: [],
-                volNoise: [], // VOLノイズ置き場を初期化
-                temporary: [], // テンポラリーゾーンを初期化
-            },
-            initialDeckOrder: [...deckList] // 初期デッキの順番を保存
+            isDualMode: isDualMode,
+            currentPlayer: 1, // 1 or 2
+            players: {
+                1: {
+                    counters: { turn: 1, vol: 0, manaAlpha: 0, manaBeta: 0, manaOmega: 0 },
+                    zones: {
+                        deck: shuffle([...deckList]),
+                        hand: [],
+                        stage: Array(NUM_SLOTS).fill(null).map(() => ({ red: [], blue: [], green: [] })),
+                        direction: Array(NUM_SLOTS).fill(null).map(() => []),
+                        trash: [],
+                        volNoise: [],
+                        temporary: [],
+                    },
+                    initialDeckOrder: [...deckList]
+                },
+                2: isDualMode ? {
+                    counters: { turn: 1, vol: 0, manaAlpha: 0, manaBeta: 0, manaOmega: 0 },
+                    zones: {
+                        deck: shuffle([...deckList2]),
+                        hand: [],
+                        stage: Array(NUM_SLOTS).fill(null).map(() => ({ red: [], blue: [], green: [] })),
+                        direction: Array(NUM_SLOTS).fill(null).map(() => []),
+                        trash: [],
+                        volNoise: [],
+                        temporary: [],
+                    },
+                    initialDeckOrder: [...deckList2]
+                } : null
+            }
         };
+        
+        // 現在のプレイヤーのデータを直接アクセス用に設定
+        gameState.counters = gameState.players[gameState.currentPlayer].counters;
+        gameState.zones = gameState.players[gameState.currentPlayer].zones;
+        gameState.initialDeckOrder = gameState.players[gameState.currentPlayer].initialDeckOrder;
+        
+        // 初期手札を引く
         for (let i = 0; i < 7; i++) {
             if (gameState.zones.deck.length > 0) {
                 gameState.zones.hand.push(gameState.zones.deck.pop());
+            }
+        }
+        
+        if (isDualMode && gameState.players[2]) {
+            // プレイヤー2の初期手札
+            for (let i = 0; i < 7; i++) {
+                if (gameState.players[2].zones.deck.length > 0) {
+                    gameState.players[2].zones.hand.push(gameState.players[2].zones.deck.pop());
+                }
             }
         }
     }
@@ -774,8 +807,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 gameState.zones.hand = [];
                 renderAll();
             }
-        });
-        document.getElementById('turn-end-btn').addEventListener('click', () => {
+        });        document.getElementById('turn-end-btn').addEventListener('click', () => {
             // ステージ上のカードのスタンバイ状態を解除
             gameState.zones.stage.forEach(column => {
                 ['green', 'blue', 'red'].forEach(color => {
@@ -796,17 +828,33 @@ document.addEventListener('DOMContentLoaded', () => {
                             card.isStandby = false;
                         }
                     });
-                }            });
-            // ターンカウンターを進める
-            gameState.counters.turn++;
+                }
+            });
+            
             // TURN ENDメッセージを表示
             displayTurnEndMessage();
-            // 山札から1枚ドロー
-            if (gameState.zones.deck.length > 0) {
-                const drawnCard = gameState.zones.deck.pop();
-                gameState.zones.hand.push(drawnCard);
+            
+            // 2デッキモードの場合とシングルモードで処理を分ける
+            if (gameState.isDualMode) {
+                // 2デッキモード：プレイヤーを切り替えて、新しいプレイヤーが1枚ドロー
+                setTimeout(() => {
+                    switchPlayer();
+                    // プレイヤー切り替え後に新しいプレイヤーが1枚ドロー
+                    if (gameState.zones.deck.length > 0) {
+                        const drawnCard = gameState.zones.deck.pop();
+                        gameState.zones.hand.push(drawnCard);
+                    }
+                    renderAll();
+                }, 1000); // TURN ENDメッセージ表示後に切り替え
+            } else {
+                // シングルモード：従来通りターンカウンターを進めて1枚ドロー
+                gameState.counters.turn++;
+                if (gameState.zones.deck.length > 0) {
+                    const drawnCard = gameState.zones.deck.pop();
+                    gameState.zones.hand.push(drawnCard);
+                }
+                renderAll();
             }
-            renderAll();
         });document.getElementById('reset-btn').addEventListener('click', () => {
             showResetPopup();
         });
@@ -954,31 +1002,120 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('deck-string').value = '';
             // モバイル全画面ボタンの表示状態を更新
             updateMobileFullscreenButton();
-        });
-
-        document.getElementById('reset-same-deck').addEventListener('click', () => {
+        });        document.getElementById('reset-same-deck').addEventListener('click', () => {
             hideResetPopup();
             // 同じデッキでリセット
-            const currentDeck = gameState.initialDeckOrder.slice(); // 初期デッキをコピー
-            initGameState(currentDeck);
+            if (gameState.isDualMode) {
+                // 二人対戦モードの場合
+                const currentDeck1 = gameState.players[1].zones.deck.concat(
+                    gameState.players[1].zones.hand,
+                    gameState.players[1].zones.stage.flatMap(col => [...col.red, ...col.blue, ...col.green]),
+                    gameState.players[1].zones.direction.flat(),
+                    gameState.players[1].zones.trash,
+                    gameState.players[1].zones.volNoise,
+                    gameState.players[1].zones.temporary
+                ).filter(card => card !== null);
+                
+                const currentDeck2 = gameState.players[2].zones.deck.concat(
+                    gameState.players[2].zones.hand,
+                    gameState.players[2].zones.stage.flatMap(col => [...col.red, ...col.blue, ...col.green]),
+                    gameState.players[2].zones.direction.flat(),
+                    gameState.players[2].zones.trash,
+                    gameState.players[2].zones.volNoise,
+                    gameState.players[2].zones.temporary
+                ).filter(card => card !== null);
+                
+                initGameState(currentDeck1, true, currentDeck2);
+            } else {
+                // 一人モードの場合
+                const currentDeck = gameState.initialDeckOrder.slice();
+                initGameState(currentDeck, false);
+            }
             renderAll();
-        });
-
-        document.getElementById('reset-cancel').addEventListener('click', () => {
+        });        document.getElementById('reset-cancel').addEventListener('click', () => {
             hideResetPopup();
         });
 
-        // ポップアップオーバーレイをクリックした時にポップアップを閉じる
+        document.getElementById('reset-swap-players').addEventListener('click', () => {
+            hideResetPopup();
+            // 先後を入れ替えてリセット（二人対戦モードのみ）
+            if (gameState.isDualMode) {
+                const currentDeck1 = gameState.players[1].zones.deck.concat(
+                    gameState.players[1].zones.hand,
+                    gameState.players[1].zones.stage.flatMap(col => [...col.red, ...col.blue, ...col.green]),
+                    gameState.players[1].zones.direction.flat(),
+                    gameState.players[1].zones.trash,
+                    gameState.players[1].zones.volNoise,
+                    gameState.players[1].zones.temporary
+                ).filter(card => card !== null);
+                
+                const currentDeck2 = gameState.players[2].zones.deck.concat(
+                    gameState.players[2].zones.hand,
+                    gameState.players[2].zones.stage.flatMap(col => [...col.red, ...col.blue, ...col.green]),
+                    gameState.players[2].zones.direction.flat(),
+                    gameState.players[2].zones.trash,
+                    gameState.players[2].zones.volNoise,
+                    gameState.players[2].zones.temporary
+                ).filter(card => card !== null);
+                
+                // デッキを入れ替えて初期化（プレイヤー1が元のプレイヤー2のデッキ、プレイヤー2が元のプレイヤー1のデッキ）
+                initGameState(currentDeck2, true, currentDeck1);
+                renderAll();
+            }
+        });// ポップアップオーバーレイをクリックした時にポップアップを閉じる
         document.getElementById('reset-popup-overlay').addEventListener('click', (event) => {
             if (event.target === document.getElementById('reset-popup-overlay')) {
                 hideResetPopup();
             }
-        });    }
-
-    // リセットポップアップを表示
+        });
+        
+        // 相手の盤面を見るボタンのイベントリスナー
+        const viewOpponentBtn = document.getElementById('view-opponent-btn');
+        
+        // マウスダウン・タッチスタートで表示
+        viewOpponentBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            showOpponentFullscreen();
+        });
+        
+        viewOpponentBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            showOpponentFullscreen();
+        });
+        
+        // マウスアップ・タッチエンド・マウスリーブで非表示
+        viewOpponentBtn.addEventListener('mouseup', () => {
+            hideOpponentFullscreen();
+        });
+        
+        viewOpponentBtn.addEventListener('mouseleave', () => {
+            hideOpponentFullscreen();
+        });
+        
+        viewOpponentBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            hideOpponentFullscreen();
+        });
+        
+        viewOpponentBtn.addEventListener('touchcancel', () => {
+            hideOpponentFullscreen();
+        });
+        
+        // 全画面表示をクリックした時に非表示
+        document.getElementById('opponent-fullscreen').addEventListener('click', () => {
+            hideOpponentFullscreen();
+        });
+    }    // リセットポップアップを表示
     function showResetPopup() {
+        // 二人対戦モードの場合のみ「先後を入れ替えてもう一度」ボタンを表示
+        const swapPlayersBtn = document.getElementById('reset-swap-players');
+        if (gameState.isDualMode) {
+            swapPlayersBtn.style.display = 'block';
+        } else {
+            swapPlayersBtn.style.display = 'none';
+        }
         document.getElementById('reset-popup-overlay').style.display = 'flex';
-    }    // リセットポップアップを非表示
+    }// リセットポップアップを非表示
     function hideResetPopup() {
         document.getElementById('reset-popup-overlay').style.display = 'none';
     }    // クッキー管理関数
@@ -1193,17 +1330,49 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter') {
                 authenticatePassword();
             }
-        });
-    }    document.getElementById('start-game-btn').addEventListener('click', () => {
-        const deckList = document.getElementById('deck-string').value.trim().split('/').filter(id => id);
-        if (deckList.length === 0) {
-            alert('有効なデッキリストを入力してください。');
-            return;
+        });    }    
+    
+    // モード選択ボタンのイベントリスナー
+    document.getElementById('single-deck-mode-btn').addEventListener('click', () => {
+        document.getElementById('single-deck-mode-btn').classList.add('active');
+        document.getElementById('dual-deck-mode-btn').classList.remove('active');
+        document.getElementById('single-deck-input').style.display = 'block';
+        document.getElementById('dual-deck-input').style.display = 'none';
+    });
+    
+    document.getElementById('dual-deck-mode-btn').addEventListener('click', () => {
+        document.getElementById('dual-deck-mode-btn').classList.add('active');
+        document.getElementById('single-deck-mode-btn').classList.remove('active');
+        document.getElementById('single-deck-input').style.display = 'none';
+        document.getElementById('dual-deck-input').style.display = 'block';
+    });
+    
+    document.getElementById('start-game-btn').addEventListener('click', () => {
+        const isDualMode = document.getElementById('dual-deck-mode-btn').classList.contains('active');
+        
+        if (isDualMode) {
+            const deckList1 = document.getElementById('deck-string-p1').value.trim().split('/').filter(id => id);
+            const deckList2 = document.getElementById('deck-string-p2').value.trim().split('/').filter(id => id);
+            
+            if (deckList1.length === 0 || deckList2.length === 0) {
+                alert('両方のプレイヤーのデッキリストを入力してください。');
+                return;
+            }
+            
+            initGameState(deckList1, true, deckList2);
+        } else {
+            const deckList = document.getElementById('deck-string').value.trim().split('/').filter(id => id);
+            if (deckList.length === 0) {
+                alert('有効なデッキリストを入力してください。');
+                return;
+            }
+            initGameState(deckList, false);
         }
-        initGameState(deckList);
+        
         showGameScreen();
         setupEventListeners();
         renderAll();
+        updateOpponentPreview();
         
         // ゲーム開始後にモバイル全画面ボタンの表示状態を更新
         setTimeout(updateMobileFullscreenButton, 100);
@@ -1244,7 +1413,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // モバイル用ボタンの表示状態を強制更新
         updateMobileFullscreenButton();
     }
-      // モバイル用全画面ボタンの表示状態を更新
+      // モバイル用全画面表示ボタンの表示状態を更新
     function updateMobileFullscreenButton() {
         const gameBoard = document.getElementById('game-board');
         const mobileBtn = document.getElementById('fullscreen-mobile-btn');
@@ -1308,5 +1477,160 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize with default deck（認証後にデッキ選択画面で実行される）
     // 初期化はゲーム開始時に行うため、ここでは空のデッキで初期化
     initGameState([]);
-    renderAll();
+    renderAll();    function switchPlayer() {
+        if (!gameState.isDualMode || !gameState.players[2]) return;
+        
+        // 現在のプレイヤーのデータを保存
+        gameState.players[gameState.currentPlayer].counters = gameState.counters;
+        gameState.players[gameState.currentPlayer].zones = gameState.zones;
+        
+        // プレイヤーを切り替え
+        gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+        
+        // 新しいプレイヤーのデータを設定
+        gameState.counters = gameState.players[gameState.currentPlayer].counters;
+        gameState.zones = gameState.players[gameState.currentPlayer].zones;
+        gameState.initialDeckOrder = gameState.players[gameState.currentPlayer].initialDeckOrder;
+        
+        // 新しいプレイヤーのターンカウンターを進める
+        gameState.counters.turn++;
+        
+        // 相手プレビューを更新
+        updateOpponentPreview();
+        
+        // 画面を再描画
+        renderAll();
+    }function updateOpponentPreview() {
+        if (!gameState.isDualMode) {
+            document.getElementById('view-opponent-btn').style.display = 'none';
+            return;
+        }
+        
+        // 相手の盤面を見るボタンを表示
+        document.getElementById('view-opponent-btn').style.display = 'block';
+    }    function showOpponentFullscreen() {
+        if (!gameState.isDualMode) return;
+        
+        const opponentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+        const opponent = gameState.players[opponentPlayer];
+        
+        if (!opponent) return;
+        
+        const fullscreen = document.getElementById('opponent-fullscreen');
+        fullscreen.style.display = 'flex';
+        
+        
+        // 相手の盤面を完全に再現する形で表示
+        const boardContent = document.getElementById('opponent-fullscreen-board');
+        boardContent.innerHTML = `
+            <div style="display: flex; height: 80%; gap: 20px;">
+                <!-- 左カラム -->
+                <div style="flex: 0 0 120px; display: flex; flex-direction: column; gap: 10px;">
+                    <div class="opponent-zone-box">
+                        <div class="zone-title">VOLノイズ</div>
+                        <div class="opponent-pile-count">${opponent.zones.volNoise.length}枚</div>
+                    </div>
+                    <div class="opponent-zone-box">
+                        <div class="zone-title">トラッシュ</div>
+                        <div class="opponent-pile-count">${opponent.zones.trash.length}枚</div>
+                    </div>
+                </div>
+                
+                <!-- 中央カラム（ステージとディレクション） -->
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+                    <!-- ステージゾーン -->
+                    <div class="opponent-stage-zone">
+                        <div class="zone-title">ステージ</div>
+                        <div style="display: flex; gap: 15px; justify-content: center;">
+                            ${Array.from({length: 5}, (_, i) => `
+                                <div class="opponent-stage-column">
+                                    <div class="opponent-column-header">列${i + 1}</div>
+                                    <div class="opponent-card-slots">
+                                        ${['green', 'blue', 'red'].map(color => {
+                                            const cards = opponent.zones.stage[i][color] || [];                                            return `<div class="opponent-card-slot opponent-${color}-slot">
+                                                ${cards.map((card, cardIndex) => `                                                    <div class="opponent-card ${card.isStandby ? 'standby' : ''}" 
+                                                         style="z-index: ${cardIndex + 1}; 
+                                                                transform: translate(${cardIndex * 2}px, ${cardIndex * 2}px);
+                                                                background-image: url('./Cards/${card.cardId}.png');
+                                                                background-size: 180%;
+                                                                background-position: center 40%;">
+                                                    </div>
+                                                `).join('')}
+                                            </div>`;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- ディレクションゾーン -->
+                    <div class="opponent-direction-zone">
+                        <div class="zone-title">Direction</div>
+                        <div style="display: flex; gap: 15px; justify-content: center;">
+                            ${Array.from({length: 5}, (_, i) => {
+                                const directionCards = opponent.zones.direction[i] || [];
+                                return `
+                                    <div class="opponent-direction-slot">                                        ${directionCards.map((card, cardIndex) => `                                            <div class="opponent-card ${card.isStandby ? 'standby' : ''}"
+                                                 style="z-index: ${cardIndex + 1}; 
+                                                        transform: translate(${cardIndex * 2}px, ${cardIndex * 2}px);
+                                                        background-image: url('./Cards/${card.cardId}.png');
+                                                        background-size: 180%;
+                                                        background-position: center 40%;">
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右カラム -->
+                <div style="flex: 0 0 120px; display: flex; flex-direction: column; gap: 10px;">
+                    <div class="opponent-zone-box">
+                        <div class="zone-title">山札</div>
+                        <div class="opponent-pile-count">${opponent.zones.deck.length}枚</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 手札エリア -->
+            <div class="opponent-hand-area">
+                <div class="zone-title">手札 (${opponent.zones.hand.length}枚)</div>
+                <div class="opponent-hand-cards">                    ${opponent.zones.hand.map(cardId => `
+                        <div class="opponent-hand-card" style="background-image: url('./item/back.png'); background-size: cover; background-position: center;"></div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <!-- カウンター表示 -->
+            <div class="opponent-counters-display">
+                <div class="opponent-counter">
+                    <span class="counter-label">ターン:</span>
+                    <span class="counter-value">${opponent.counters.turn}</span>
+                </div>
+                <div class="opponent-counter">
+                    <span class="counter-label">VOL:</span>
+                    <span class="counter-value">${opponent.counters.vol}</span>
+                </div>
+                <div class="opponent-counter">
+                    <span class="counter-label">α:</span>
+                    <span class="counter-value">${opponent.counters.manaAlpha}</span>
+                </div>
+                <div class="opponent-counter">
+                    <span class="counter-label">β:</span>
+                    <span class="counter-value">${opponent.counters.manaBeta}</span>
+                </div>
+                <div class="opponent-counter">
+                    <span class="counter-label">Ω:</span>
+                    <span class="counter-value">${opponent.counters.manaOmega}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function hideOpponentFullscreen() {
+        document.getElementById('opponent-fullscreen').style.display = 'none';
+    }
 });

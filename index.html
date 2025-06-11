@@ -21,18 +21,45 @@
                 パスワードが正しくありません
             </div>
         </div>
-        
-        <div id="deck-input-screen" class="screen">
+          <div id="deck-input-screen" class="screen">
             <h1>KAMITSUBAKI CARD GAME</h1>
-            <p>デッキリストを / 区切りで入力してください</p>
-            <textarea id="deck-string" placeholder="例: AA-01/AA-01/AA-02/..."></textarea>
-            <button id="start-game-btn">ゲーム開始</button>
-            <button id="fullscreen-btn">全画面表示</button>
-        </div>
-        <div id="game-board" class="screen">
+            <div id="deck-input-mode-selection">
+                <button id="single-deck-mode-btn" class="mode-btn active">1デッキモード</button>
+                <button id="dual-deck-mode-btn" class="mode-btn">2デッキ対戦モード</button>
+            </div>
+            
+            <div id="single-deck-input" class="deck-input-section">
+                <p>デッキリストを / 区切りで入力してください</p>
+                <textarea id="deck-string" placeholder="例: AA-01/AA-01/AA-02/..."></textarea>
+            </div>
+            
+            <div id="dual-deck-input" class="deck-input-section" style="display: none;">
+                <div class="deck-input-group">
+                    <h3>プレイヤー1のデッキ</h3>
+                    <textarea id="deck-string-p1" placeholder="例: AA-01/AA-01/AA-02/..."></textarea>
+                </div>
+                <div class="deck-input-group">
+                    <h3>プレイヤー2のデッキ</h3>
+                    <textarea id="deck-string-p2" placeholder="例: BA-01/BA-01/BA-02/..."></textarea>
+                </div>            </div>
+            
+            <div class="button-group">
+                <button id="start-game-btn">ゲーム開始</button>
+                <button id="fullscreen-btn">全画面表示</button>
+            </div>
+        </div>        <div id="game-board" class="screen">            <!-- 相手の盤面全画面表示 -->
+            <div id="opponent-fullscreen" style="display: none;">
+                <div class="opponent-fullscreen-content">
+                    <div id="opponent-fullscreen-board">
+                        <!-- 相手の盤面がJavaScriptで動的に生成されます -->
+                    </div>
+                </div>
+            </div>
+            
             <div id="board-content"> <!-- New wrapper -->
                 <div id="main-area">                    <div id="left-column">
                         <div id="volNoise-zone" class="zone pile-zone drop-zone" data-zone-id="volNoise"><div class="zone-title">VOLノイズ</div></div>
+                        <button id="view-opponent-btn" style="display: none;">対面</button>
                         <button id="open-temporary-zone-btn">テンポラリー</button>
                         <button id="fullscreen-mobile-btn" class="fullscreen-mobile-btn">全画面表示</button>
                         <div id="trash-zone" class="zone pile-zone drop-zone" data-zone-id="trash"><div class="zone-title">トラッシュ</div></div>
@@ -163,10 +190,10 @@
     <!-- リセット確認ポップアップ -->
     <div id="reset-popup-overlay" class="popup-overlay">
         <div id="reset-popup" class="popup">
-            <h3>ゲームをリセットしますか？</h3>
-            <div class="popup-buttons">
+            <h3>ゲームをリセットしますか？</h3>            <div class="popup-buttons">
                 <button id="reset-to-deck-select" class="popup-btn reset-primary">デッキ選択画面に戻る</button>
                 <button id="reset-same-deck" class="popup-btn reset-secondary">同じデッキでもう一度</button>
+                <button id="reset-swap-players" class="popup-btn reset-secondary" style="display: none;">先後を入れ替えてもう一度</button>
                 <button id="reset-cancel" class="popup-btn reset-cancel">キャンセル</button>
             </div>
         </div>
