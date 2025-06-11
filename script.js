@@ -1682,21 +1682,22 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const fullscreen = document.getElementById('opponent-fullscreen');
         fullscreen.style.display = 'flex';
-        
-        
-        // 相手の盤面を完全に再現する形で表示
+          // 相手の盤面を完全に再現する形で表示
         const boardContent = document.getElementById('opponent-fullscreen-board');
         boardContent.innerHTML = `
-            <div style="display: flex; height: 80%; gap: 20px;">
-                <!-- 左カラム -->
-                <div style="flex: 0 0 120px; display: flex; flex-direction: column; gap: 10px;">
-                    <div class="opponent-zone-box">
-                        <div class="zone-title">VOLノイズ</div>
-                        <div class="opponent-pile-count">${opponent.zones.volNoise.length}枚</div>
+            <div style="display: flex; height: 80%; gap: 20px;">                <!-- 左カラム（VOLノイズ、トラッシュ、山札） -->
+                <div style="flex: 0 0 70px; display: flex; flex-direction: column; gap: 5px;">
+                    <div class="opponent-zone-box" style="text-align: center; width: 60px;">
+                        <div class="zone-title" style="font-size: 0.6rem;">VOL</div>
+                        <div class="opponent-pile-count" style="font-size: 0.7rem;">${opponent.zones.volNoise.length}</div>
                     </div>
-                    <div class="opponent-zone-box">
-                        <div class="zone-title">トラッシュ</div>
-                        <div class="opponent-pile-count">${opponent.zones.trash.length}枚</div>
+                    <div class="opponent-zone-box" style="text-align: center; width: 60px;">
+                        <div class="zone-title" style="font-size: 0.6rem;">トラッシュ</div>
+                        <div class="opponent-pile-count" style="font-size: 0.7rem;">${opponent.zones.trash.length}</div>
+                    </div>
+                    <div class="opponent-zone-box" style="text-align: center; width: 60px;">
+                        <div class="zone-title" style="font-size: 0.6rem;">山札</div>
+                        <div class="opponent-pile-count" style="font-size: 0.7rem;">${opponent.zones.deck.length}</div>
                     </div>
                 </div>
                 
