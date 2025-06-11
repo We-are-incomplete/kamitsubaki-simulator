@@ -325,13 +325,14 @@ body, html {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
     display: none;
-    justify-content: center;
-    align-items: center;
     z-index: 6000;
     pointer-events: none;
 }
 
 #zoomed-card-image {
+    position: absolute;
+    top: 20px;
+    right: 20px;
     width: calc(var(--card-width) * 3);
     height: calc(var(--card-height) * 3);
     background-size: contain;
