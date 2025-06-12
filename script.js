@@ -1050,16 +1050,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // リセットポップアップのイベントリスナー
-        document.getElementById('reset-to-deck-select').addEventListener('click', () => {
+        // リセットポップアップのイベントリスナー        document.getElementById('reset-to-deck-select').addEventListener('click', () => {
             hideResetPopup();
             // デッキ選択画面に戻る
             showDeckInputScreen();
-            // デッキ入力欄を空にする
-            document.getElementById('deck-string').value = '';
+            // クッキーからデッキデータを復元
+            loadDeckDataFromCookie();
             // モバイル全画面ボタンの表示状態を更新
             updateMobileFullscreenButton();
-        });        document.getElementById('reset-same-deck').addEventListener('click', () => {
+        });document.getElementById('reset-same-deck').addEventListener('click', () => {
             hideResetPopup();
             // 同じデッキでリセット
             if (gameState.isDualMode) {
