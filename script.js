@@ -24,7 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
             [array[i], array[j]] = [array[j], array[i]];
         }
         return array;
-    }    function displayShuffleMessage() {
+    }
+    
+    function displayShuffleMessage() {
         const shuffleMessageEl = document.getElementById('shuffle-message');
         if (shuffleMessageEl) {
             shuffleMessageEl.style.display = 'block';
@@ -42,7 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 turnEndMessageEl.style.display = 'none';
             }, 1000); // 1秒後に非表示
         }
-    }    function initGameState(deckList = [], isDualMode = false, deckList2 = []) {
+    }
+    
+    function initGameState(deckList = [], isDualMode = false, deckList2 = []) {
         const NUM_SLOTS = 5;
         gameState = {
             isDualMode: isDualMode,
@@ -137,9 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 //     if (cardInVolNoise) {
                 //         console.log('[RenderAll] volNoise-zone .card style:', cardInVolNoise.style.backgroundImage);
                 //     } else {
-                //         console.log('[RenderAll] volNoise-zone .card not found after append.');
-                //     }
-                // }
+                //         console.log('[RenderAll] volNoise-zone .card not found after append.');                // }
             } else {
                 console.warn(`[RenderAll] gameState.zones.${zoneId} is undefined.`);
             }
@@ -816,7 +818,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 volNoiseExpandedZoneEl.style.display = 'flex';
             }
             renderAll(); // 展開ゾーンのカードを再描画
-        });        document.getElementById('open-temporary-zone-btn').addEventListener('click', () => {
+        });
+        
+        document.getElementById('open-temporary-zone-btn').addEventListener('click', () => {
             const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone');
             if ( temporaryExpandedZoneEl.style.display === 'flex') {
                 temporaryExpandedZoneEl.style.display = 'none';
@@ -846,7 +850,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone');
                 temporaryExpandedZoneEl.style.display = 'none'; // ゾーンを閉じる
             }
-        });        document.getElementById('temp-to-deck-bottom-btn').addEventListener('click', () => {
+        });
+        
+        document.getElementById('temp-to-deck-bottom-btn').addEventListener('click', () => {
             if (gameState.zones.temporary.length > 0) {
                 shuffle(gameState.zones.temporary); // まずテンポラリーゾーンのカードをシャッフル
                 gameState.zones.deck.unshift(...gameState.zones.temporary); // 山札の先頭（底）に追加
@@ -861,7 +867,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 gameState.zones.hand = [];
                 renderAll();
             }
-        });        document.getElementById('switch-player-btn').addEventListener('click', () => {
+        });
+        
+        document.getElementById('switch-player-btn').addEventListener('click', () => {
             switchPlayerOnly();
         });
         document.getElementById('turn-end-btn').addEventListener('click', () => {
@@ -912,7 +920,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 renderAll();
             }
-        });document.getElementById('reset-btn').addEventListener('click', () => {
+        });
+        
+        document.getElementById('reset-btn').addEventListener('click', () => {
             showResetPopup();
         });
         document.getElementById('change-mat-btn').addEventListener('click', changeBackground);
@@ -1049,8 +1059,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 temporaryExpandedZoneEl.style.display = 'none';
             }
         });
-        
-        // リセットポップアップのイベントリスナー        document.getElementById('reset-to-deck-select').addEventListener('click', () => {
+
+        // リセットポップアップのイベントリスナー
+        document.getElementById('reset-to-deck-select').addEventListener('click', () => {
             hideResetPopup();
             // デッキ選択画面に戻る
             showDeckInputScreen();
@@ -1058,7 +1069,9 @@ document.addEventListener('DOMContentLoaded', () => {
             loadDeckDataFromCookie();
             // モバイル全画面ボタンの表示状態を更新
             updateMobileFullscreenButton();
-        });document.getElementById('reset-same-deck').addEventListener('click', () => {
+        });
+        
+        document.getElementById('reset-same-deck').addEventListener('click', () => {
             hideResetPopup();
             // 同じデッキでリセット
             if (gameState.isDualMode) {
@@ -1088,7 +1101,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 initGameState(currentDeck, false);
             }
             renderAll();
-        });        document.getElementById('reset-cancel').addEventListener('click', () => {
+        });
+        
+        document.getElementById('reset-cancel').addEventListener('click', () => {
             hideResetPopup();
         });
 
@@ -1161,20 +1176,24 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('opponent-fullscreen').addEventListener('click', () => {
             hideOpponentFullscreen();
         });
-    }    // リセットポップアップを表示
+    }
+    
+    // リセットポップアップを表示
     function showResetPopup() {
         // 二人対戦モードの場合のみ「先後を入れ替えてもう一度」ボタンを表示
-        const swapPlayersBtn = document.getElementById('reset-swap-players');
-        if (gameState.isDualMode) {
+        const swapPlayersBtn = document.getElementById('reset-swap-players');        if (gameState.isDualMode) {
             swapPlayersBtn.style.display = 'block';
         } else {
             swapPlayersBtn.style.display = 'none';
         }
         document.getElementById('reset-popup-overlay').style.display = 'flex';
-    }// リセットポップアップを非表示
+    }
+      // リセットポップアップを非表示
     function hideResetPopup() {
         document.getElementById('reset-popup-overlay').style.display = 'none';
-    }    // クッキー管理関数
+    }
+    
+    // クッキー管理関数
     function setCookie(name, value, days = 30) {
         const expires = new Date();
         expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -1199,7 +1218,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // デバッグ用ログ（GitHub Pages環境での確認用）
         console.log('Cookie set:', cookieString);
-    }    function getCookie(name) {
+    }
+    
+    function getCookie(name) {
         // デバッグ用ログ（GitHub Pages環境での確認用）
         console.log('Getting cookie:', name);
         console.log('All cookies:', document.cookie);
@@ -1217,7 +1238,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         console.log('Cookie not found:', name);
         return null;
-    }    function loadBackgroundFromCookie() {
+    }
+    
+    function loadBackgroundFromCookie() {
         console.log('Loading background from cookie...');
         const savedBackground = getCookie('playmat-background');
         console.log('Saved background value:', savedBackground);
@@ -1289,7 +1312,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
         }
         console.log(`Cleared deck data for: ${deckType}`);
-    }function changeBackground() {
+    }
+    
+    function changeBackground() {
         const currentBg = document.body.style.backgroundImage;
         console.log('Current background:', currentBg);
         
@@ -1320,7 +1345,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.style.backgroundImage = '';
             setCookie('playmat-background', 'none');
         }
-    }function setBackgroundWithCheck(imagePath) {
+    }
+    
+    function setBackgroundWithCheck(imagePath) {
         // 画像の存在確認
         const img = new Image();
         img.onload = function() {
@@ -1679,7 +1706,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 画面を再描画
         renderAll();
-    }    function updateOpponentPreview() {
+    }
+    
+    function updateOpponentPreview() {
         if (!gameState.isDualMode) {
             document.getElementById('view-opponent-btn').style.display = 'none';
             document.getElementById('switch-player-btn').style.display = 'none';
@@ -1690,7 +1719,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('view-opponent-btn').style.display = 'block';
         // プレイヤー切り替えボタンを表示
         document.getElementById('switch-player-btn').style.display = 'block';
-    }function showOpponentFullscreen() {
+    }
+    
+    function showOpponentFullscreen() {
         if (!gameState.isDualMode) return;
         
         const opponentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
