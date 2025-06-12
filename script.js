@@ -724,12 +724,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // 一人モードの場合は、従来の gameState.counters を使用
             return gameState.counters || gameState.players[1].counters;
         }
-    }
-
-    // イベントリスナーをクリアする関数
+    }    // イベントリスナーをクリアする関数
     function clearEventListeners() {
         // カウンターボタンのイベントリスナーをクリア
         document.querySelectorAll('.counter-btn').forEach(btn => {
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+        });
+        
+        // チェンジボタンのイベントリスナーをクリア
+        document.querySelectorAll('.change-stage-btn').forEach(btn => {
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
         });
@@ -738,7 +742,8 @@ document.addEventListener('DOMContentLoaded', () => {
             'mulligan-btn', 'move-hand-to-trash-btn', 'sort-hand-btn',
             'shuffle-btn', 'search-deck-btn', 'search-volnoise-btn',
             'open-temporary-zone-btn', 'draw-btn', 'draw-bottom-deck-btn',
-            'switch-player-btn', 'turn-end-btn', 'reset-btn', 'change-mat-btn'
+            'switch-player-btn', 'turn-end-btn', 'reset-btn', 'change-mat-btn',
+            'roll-dice-btn'
         ];
         
         buttonIds.forEach(id => {
