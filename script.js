@@ -1775,9 +1775,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const fullscreen = document.getElementById('opponent-fullscreen');
         fullscreen.style.display = 'flex';
           // 相手の盤面を完全に再現する形で表示
-        const boardContent = document.getElementById('opponent-fullscreen-board');
-        boardContent.innerHTML = `
-            <div style="display: flex; height: 80%; gap: 20px;">
+        const boardContent = document.getElementById('opponent-fullscreen-board');        boardContent.innerHTML = `
+            <div style="display: flex; height: 80%; gap: 15px; justify-content: flex-start; padding-left: 10px;">
+                <!-- 左カラム（VOLノイズ、トラッシュのみ） -->
+                <div style="flex: 0 0 65px; display: flex; flex-direction: column; gap: 5px;">
+                    <div class="opponent-zone-box" style="text-align: center; width: 60px;">
+                        <div class="zone-title" style="font-size: 0.6rem;">VOL</div>
+                        <div class="opponent-pile-count" style="font-size: 0.7rem;">${opponent.zones.volNoise.length}</div>
+                    </div>
+                    <div class="opponent-zone-box" style="text-align: center; width: 60px;">
+                        <div class="zone-title" style="font-size: 0.6rem;">トラッシュ</div>
+                        <div class="opponent-pile-count" style="font-size: 0.7rem;">${opponent.zones.trash.length}</div>
+                    </div>
+                </div>
                 
                 <!-- 中央カラム（ステージとディレクション） -->
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
@@ -1789,15 +1799,32 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="opponent-stage-column">
                                     <div class="opponent-column-header">列${i + 1}</div>
                                     <div class="opponent-card-slots">                                        ${['green', 'blue', 'red'].map(color => {
-                                            const cards = opponent.zones.stage[i][color] || [];                                            return `<div class="opponent-card-slot opponent-${color}-slot">
-                                                ${cards.map((card, cardIndex) => `                                                    <div class="opponent-card ${card.isStandby ? 'standby' : ''}" 
+                                            const cards = opponent.zones.stage[i][color] || [];
+                                            return `<div class="opponent-card-slot opponent-${color}-slot">
+                                                ${cards.map((card, cardIndex) => {
+                                                    // 緑と赤の場合は被らないように縦方向にずらす
+                                                    let transformValue;
+                                                    if (color === 'green') {
+                                                        // 緑は上方向にずらす（新しいカードが手前）
+                                                        const yOffset = (cards.length - 1 - cardIndex) * 12;
+                                                        transformValue = `translate(${cardIndex * 2}px, ${yOffset}px)`;
+                                                    } else if (color === 'red') {
+                                                        // 赤は下方向にずらす
+                                                        const yOffset = cardIndex * 15;
+                                                        transformValue = `translate(${cardIndex * 2}px, ${yOffset}px)`;
+                                                    } else {
+                                                        // 青は斜めにずらす（従来通り）
+                                                        transformValue = `translate(${cardIndex * 8}px, ${cardIndex * 6}px)`;
+                                                    }
+                                                    
+                                                    return `<div class="opponent-card ${card.isStandby ? 'standby' : ''}" 
                                                          style="z-index: ${cardIndex + 1}; 
-                                                                transform: translate(${cardIndex * 8}px, ${cardIndex * 6}px);
+                                                                transform: ${transformValue};
                                                                 background-image: url('./Cards/${card.cardId}.png');
                                                                 background-size: 180%;
                                                                 background-position: center 40%;">
-                                                    </div>
-                                                `).join('')}
+                                                    </div>`;
+                                                }).join('')}
                                             </div>`;
                                         }).join('')}
                                     </div>
@@ -1821,16 +1848,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                             </div>
                                         `).join('')}
                                     </div>
-                                `;
-                            }).join('')}
+                                `;                            }).join('')}
                         </div>
                     </div>
-                </div>                
-                <!-- 右カラム（山札情報のみ、幅を半分に縮小） -->
-                <div style="flex: 0 0 60px; display: flex; flex-direction: column; gap: 10px;">
-                    <div class="opponent-zone-box">
-                        <div class="zone-title">山札</div>
-                        <div class="opponent-pile-count">${opponent.zones.deck.length}枚</div>
+                </div>
+                
+                <!-- 右カラム（山札ゾーン） -->
+                <div style="flex: 0 0 70px; display: flex; flex-direction: column; gap: 5px;">
+                    <div class="opponent-zone-box" style="text-align: center; width: 60px;">
+                        <div class="zone-title" style="font-size: 0.6rem;">山札</div>
+                        <div class="opponent-pile-count" style="font-size: 0.7rem;">${opponent.zones.deck.length}</div>
                     </div>
                 </div>
             </div>
