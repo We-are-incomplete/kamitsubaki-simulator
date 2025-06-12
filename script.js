@@ -1788,12 +1788,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${Array.from({length: 5}, (_, i) => `
                                 <div class="opponent-stage-column">
                                     <div class="opponent-column-header">列${i + 1}</div>
-                                    <div class="opponent-card-slots">
-                                        ${['green', 'blue', 'red'].map(color => {
+                                    <div class="opponent-card-slots">                                        ${['green', 'blue', 'red'].map(color => {
                                             const cards = opponent.zones.stage[i][color] || [];                                            return `<div class="opponent-card-slot opponent-${color}-slot">
                                                 ${cards.map((card, cardIndex) => `                                                    <div class="opponent-card ${card.isStandby ? 'standby' : ''}" 
                                                          style="z-index: ${cardIndex + 1}; 
-                                                                transform: translate(${cardIndex * 2}px, ${cardIndex * 2}px);
+                                                                transform: translate(${cardIndex * 8}px, ${cardIndex * 6}px);
                                                                 background-image: url('./Cards/${card.cardId}.png');
                                                                 background-size: 180%;
                                                                 background-position: center 40%;">
@@ -1813,10 +1812,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="display: flex; gap: 15px; justify-content: center;">
                             ${Array.from({length: 5}, (_, i) => {
                                 const directionCards = opponent.zones.direction[i] || [];
-                                return `
-                                    <div class="opponent-direction-slot">                                        ${directionCards.map((card, cardIndex) => `                                            <div class="opponent-card ${card.isStandby ? 'standby' : ''}"
+                                return `                                    <div class="opponent-direction-slot">                                        ${directionCards.map((card, cardIndex) => `                                            <div class="opponent-card ${card.isStandby ? 'standby' : ''}"
                                                  style="z-index: ${cardIndex + 1}; 
-                                                        transform: translate(${cardIndex * 2}px, ${cardIndex * 2}px);
+                                                        transform: translate(${cardIndex * 8}px, ${cardIndex * 6}px);
                                                         background-image: url('./Cards/${card.cardId}.png');
                                                         background-size: 180%;
                                                         background-position: center 40%;">
