@@ -1764,8 +1764,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // プレイヤー切り替えボタンを表示
         document.getElementById('switch-player-btn').style.display = 'block';
     }
-    
-    function showOpponentFullscreen() {
+      function showOpponentFullscreen() {
         if (!gameState.isDualMode) return;
         
         const opponentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
@@ -1778,21 +1777,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // 相手の盤面を完全に再現する形で表示
         const boardContent = document.getElementById('opponent-fullscreen-board');
         boardContent.innerHTML = `
-            <div style="display: flex; height: 80%; gap: 20px;">                <!-- 左カラム（VOLノイズ、トラッシュ、山札） -->
-                <div style="flex: 0 0 70px; display: flex; flex-direction: column; gap: 5px;">
-                    <div class="opponent-zone-box" style="text-align: center; width: 60px;">
-                        <div class="zone-title" style="font-size: 0.6rem;">VOL</div>
-                        <div class="opponent-pile-count" style="font-size: 0.7rem;">${opponent.zones.volNoise.length}</div>
-                    </div>
-                    <div class="opponent-zone-box" style="text-align: center; width: 60px;">
-                        <div class="zone-title" style="font-size: 0.6rem;">トラッシュ</div>
-                        <div class="opponent-pile-count" style="font-size: 0.7rem;">${opponent.zones.trash.length}</div>
-                    </div>
-                    <div class="opponent-zone-box" style="text-align: center; width: 60px;">
-                        <div class="zone-title" style="font-size: 0.6rem;">山札</div>
-                        <div class="opponent-pile-count" style="font-size: 0.7rem;">${opponent.zones.deck.length}</div>
-                    </div>
-                </div>
+            <div style="display: flex; height: 80%; gap: 20px;">
                 
                 <!-- 中央カラム（ステージとディレクション） -->
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
@@ -1842,10 +1827,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             }).join('')}
                         </div>
                     </div>
-                </div>
-                
-                <!-- 右カラム -->
-                <div style="flex: 0 0 120px; display: flex; flex-direction: column; gap: 10px;">
+                </div>                
+                <!-- 右カラム（山札情報のみ、幅を半分に縮小） -->
+                <div style="flex: 0 0 60px; display: flex; flex-direction: column; gap: 10px;">
                     <div class="opponent-zone-box">
                         <div class="zone-title">山札</div>
                         <div class="opponent-pile-count">${opponent.zones.deck.length}枚</div>
