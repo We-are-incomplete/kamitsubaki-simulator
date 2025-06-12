@@ -435,11 +435,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.removeEventListener('mouseup', onEnd);
             document.removeEventListener('touchend', onEnd);
             if (!isPile && element) element.style.opacity = '1'; // elementが存在する場合のみ
-            
-            if (isDragging) {
+              if (isDragging) {
                 if (draggedCardData) { // ドラッグデータがある場合のみ処理
-                    removeCardFromState(draggedCardData, sourceInfo);
-                    
                     const endX = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientX;
                     const endY = (endEvent.changedTouches ? endEvent.changedTouches[0] : endEvent).clientY;
                     const targetEl = document.elementFromPoint(endX, endY);
@@ -447,8 +444,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const targetSlot = targetEl ? targetEl.closest('.card-slot.drop-zone') : null;
                     const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#direction-zone):not(#temporary-expanded-zone), .temporary-zone-card-area.drop-zone') : null;
                     const targetExpandedTrash = targetEl ? targetEl.closest('#trash-expanded-zone') : null;
-                    const targetTemporaryZone = targetEl ? (targetEl.closest('#temporary-expanded-zone') || targetEl.closest('.temporary-zone-card-area')) : null;
+                    const targetTemporaryZone = targetEl ? (targetEl.closest('#temporary-expanded-zone') || targetEl.closest('.temporary-zone-card-area')) : null;                    // まず元の場所からカードを削除
+                    removeCardFromState(draggedCardData, sourceInfo);
 
+                    // ドロップ先を判定してから移動処理を実行
                     if (targetSlot) {
                         const targetInfo = {
                             zoneId: targetSlot.dataset.zoneId,
@@ -465,8 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (targetExpandedTrash && targetExpandedTrash.style.display === 'flex') {
                         if (addCardToState(draggedCardData, { zoneId: 'trash' })) {
                             dropped = true;
-                        }
-                    } else if (targetTemporaryZone && document.getElementById('temporary-expanded-zone').style.display === 'flex') {
+                        }                    } else if (targetTemporaryZone && document.getElementById('temporary-expanded-zone').style.display === 'flex') {
                         if (addCardToState(draggedCardData, { zoneId: 'temporary' })) {
                             dropped = true;
                         }
@@ -488,7 +486,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
-            if (draggedCardVisual) draggedCardVisual.remove();
+              // ドラッグビジュアルの確実な削除
+            try {
+                if (draggedCardVisual) {
+                    draggedCardVisual.remove();
+                    draggedCardVisual = null;
+                }
+            } catch (error) {
+                console.warn('[onEnd] Error removing drag visual:', error);
+                draggedCardVisual = null;
+            }
+            
+            // 孤立したドラッグビジュアルの削除
+            document.querySelectorAll('.card.dragging').forEach(el => {
+                try {
+                    el.remove();
+                } catch (error) {
+                    console.warn('[onEnd] Error removing orphaned drag visual:', error);
+                }
+            });
+            
+            // ドラッグ状態のリセット
+            isDragging = false;
+            draggedCardData = null;
+            
             renderAll();
         };
 
@@ -496,10 +517,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('touchmove', onMove, { passive: false });
         document.addEventListener('mouseup', onEnd);
         document.addEventListener('touchend', onEnd);
-    }
-
-    function removeCardFromState(cardData, fromInfo) {
-        if (!cardData || !fromInfo) return;
+    }    function removeCardFromState(cardData, fromInfo) {
+        if (!cardData || !fromInfo) {
+            console.warn('[removeCardFromState] Invalid parameters:', { cardData, fromInfo });
+            return;
+        }
         const zoneId = fromInfo.zoneId; // 'trash-expanded'からドラッグした場合、ここは'trash'になる
         const cardIdToRemove = cardData.cardId;
         let slotArray;
@@ -516,14 +538,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const topCardObject = slotArray[slotArray.length - 1];
             if (topCardObject.cardId === cardIdToRemove) {
                 slotArray.pop();
+                // console.log(`[removeCardFromState] Successfully removed card ${cardIdToRemove} from ${zoneId}`);
+            } else {
+                console.warn(`[removeCardFromState] Card mismatch in ${zoneId}. Expected: ${cardIdToRemove}, Found: ${topCardObject.cardId}`);
             }
         } else if (zoneId !== 'direction' && zoneId !== 'stage') { // hand, deck, trash, volNoise, temporary (these are arrays of cardId strings)
             const zone = gameState.zones[zoneId];
-            if (!zone) return;
+            if (!zone) {
+                console.warn(`[removeCardFromState] Zone ${zoneId} not found`);
+                return;
+            }
 
             if (zoneId === 'deck' || zoneId === 'volNoise') { // Zones that should behave strictly as LIFO for drag operations
                 if (zone.length > 0 && zone[zone.length - 1] === cardIdToRemove) {
                     zone.pop();
+                    // console.log(`[removeCardFromState] Successfully removed card ${cardIdToRemove} from ${zoneId} (LIFO)`);
                 } else {
                     // This case might occur if the card dragged was not the top one, or zone became empty.
                     // Or if cardIdToRemove is somehow not matching the actual top card string.
@@ -533,19 +562,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     const index = zone.indexOf(cardIdToRemove);
                     if (index > -1) {
                         zone.splice(index, 1);
+                        console.log(`[removeCardFromState] Removed card ${cardIdToRemove} from ${zoneId} using indexOf`);
+                    } else {
+                        console.error(`[removeCardFromState] Failed to find card ${cardIdToRemove} in ${zoneId}`);
                     }
                 }
             } else { // For hand, trash, temporary: remove the specific card by ID using indexOf
                 const index = zone.indexOf(cardIdToRemove);
                 if (index > -1) {
                     zone.splice(index, 1);
+                    // console.log(`[removeCardFromState] Successfully removed card ${cardIdToRemove} from ${zoneId}`);
+                } else {
+                    console.warn(`[removeCardFromState] Card ${cardIdToRemove} not found in ${zoneId}`);
                 }
             }
         }
-    }
-
-    function addCardToState(cardData, toInfo) {
-        if (!cardData || !toInfo || !toInfo.zoneId) return false;
+    }    function addCardToState(cardData, toInfo) {
+        if (!cardData || !toInfo || !toInfo.zoneId) {
+            console.warn('[addCardToState] Invalid parameters:', { cardData, toInfo });
+            return false;
+        }
         const zoneId = toInfo.zoneId;
         const cardObject = { cardId: cardData.cardId, isStandby: false };
 
@@ -557,6 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return false; 
                 }
                 gameState.zones.direction[toInfo.slotIndex].push(cardObject);
+                // console.log(`[addCardToState] Added card ${cardData.cardId} to direction slot ${toInfo.slotIndex}`);
                 return true;
             }
             return false; // slotIndex が undefined の場合
@@ -572,18 +609,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 // 他の色（green, red）のスロットや、空の青スロットへの追加
                 gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor].push(cardObject);
+                // console.log(`[addCardToState] Added card ${cardData.cardId} to stage slot ${toInfo.slotIndex} ${toInfo.slotColor}`);
                 return true;
             }
             return false; // slotIndex または slotColor が undefined の場合
         } else {
             const zone = gameState.zones[zoneId];
             if (zone && typeof cardObject.cardId === 'string') {
+                // 重複チェック（デバッグ用）
+                if (zone.includes(cardObject.cardId)) {
+                    console.warn(`[addCardToState] Duplicate card detected: ${cardObject.cardId} already exists in ${zoneId}`);
+                }
                 zone.push(cardObject.cardId);
                 if (zoneId === 'volNoise') {
                     shuffle(gameState.zones.volNoise); // VOLノイズ置き場に追加されたらシャッフル
                 }
+                // console.log(`[addCardToState] Added card ${cardData.cardId} to ${zoneId}`);
                 return true;
             }
+            console.warn(`[addCardToState] Failed to add card ${cardData.cardId} to ${zoneId}:`, { zone: !!zone, cardIdType: typeof cardObject.cardId });
             return false; // zone が無効、または cardId が文字列でない場合
         }
     }
