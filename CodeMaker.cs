@@ -298,9 +298,16 @@ public class CodeMaker : MonoBehaviour
       Debug.Log(cardData);
       //int num = cardData.Substring(4).ToInt();
       int num = int.Parse( cardData.Substring(4) );
-      string shopcode = ""; shopcode = cardData[0].ToString();Debug.Log("ShopCode : " + shopcode);
-      string typecode = ""; typecode = cardData[1].ToString(); Debug.Log("TypeCode : " + typecode);
-      string no = ""; no = cardData.Substring(2,2); Debug.Log("noCode : " + no);
+      string shopcode = cardData[0].ToString();
+      string typecode = cardData[1].ToString();
+      string no = cardData.Substring(2,2);
+
+      // exまたはprmの場合、枚数から5を引く
+      if (shopcode == "0") 
+      {
+          num -= 5;
+      }
+
       string id = CodetoNumber_alter[shopcode];
       id += ElementtoNumber_alter[typecode];
       id += '-' + (NumbertoNumber_alter.ContainsKey(no) ? NumbertoNumber_alter[no] : no);

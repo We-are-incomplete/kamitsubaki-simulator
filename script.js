@@ -136,6 +136,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let typecode = cardData[1];
             let no = cardData.substring(2, 4); // Card number (e.g., "01", "10")
 
+            // exまたはprmの場合、枚数から5を引く
+            if (shopcode === "0") {
+                num -= 5;
+            }
+
             console.log(`Processing chunk: ${cardData}, num: ${num}, shopcode: ${shopcode}, typecode: ${typecode}, no: ${no}`);
 
             let idPrefix = CodetoNumber_alter[shopcode];
