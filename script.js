@@ -1,6 +1,151 @@
 // KAMITSUBAKI CARD GAME 一人回し用シミュレーター - メインスクリプト
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Helper dictionaries/arrays from CodeMaker.cs
+    const CodetoNumber_alter = {
+        "0": "ex", "1": "A", "2": "B", "3": "C", "4": "D",
+        "5": "E", "6": "F", "7": "G", "8": "H"
+    };
+
+    const ElementtoNumber_alter = {
+        "1": "A", "2": "S", "3": "M", "4": "D"
+    };
+
+    const NumbertoNumber_alter = {
+        "01": "1", "02": "2", "03": "3", "04": "4", "05": "5",
+        "06": "6", "07": "7", "08": "8", "09": "9"
+    };
+
+    const numberToLetter = [
+        ['A', 'I', 'Q', 'Y', 'g', 'o', 'w', '5'],
+        ['B', 'J', 'R', 'Z', 'h', 'p', 'x', '6'],
+        ['C', 'K', 'S', 'a', 'i', 'q', 'y', '7'],
+        ['D', 'L', 'T', 'b', 'j', 'r', 'z', '8'],
+        ['E', 'M', 'U', 'c', 'k', 's', '1', '9'],
+        ['F', 'N', 'V', 'd', 'l', 't', '2', '!'],
+        ['G', 'O', 'W', 'e', 'm', 'u', '3', '?'],
+        ['H', 'P', 'X', 'f', 'n', 'v', '4', '/'],
+    ];
+
+    const letterToNumber_x = {};
+    const letterToNumber_y = {};
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            letterToNumber_x[numberToLetter[i][j]] = j;
+            letterToNumber_y[numberToLetter[i][j]] = i;
+        }
+    }
+
+    function readKCGCode(codeData) {
+        let resultDeckList = [];
+
+        // Change 6: Decode zeroCount1 and remove KCG- prefix and key
+        let parts = codeData.split('-');
+        if (parts.length < 2 || parts[0] !== "KCG") {
+            console.error("Invalid KCG code format.");
+            return [];
+        }
+        let encodedPart = parts[1];
+        let key = encodedPart[0];
+        let zeroCount1 = 7 - letterToNumber_y[key];
+        encodedPart = encodedPart.substring(1);
+
+        let Code6 = [];
+        for (let i = 0; i < encodedPart.length; i++) {
+            let char = encodedPart[i];
+            if (letterToNumber_y[char] === undefined || letterToNumber_x[char] === undefined) {
+                console.error(`Invalid character in KCG code: ${char}`);
+                return [];
+            }
+            Code6.push(letterToNumber_y[char]);
+            Code6.push(letterToNumber_x[char]);
+        }
+
+        // Change 5: Convert back to binary string and remove zeroCount1 padding
+        let binaryString = "";
+        for (let i = 0; i < Code6.length; i++) {
+            binaryString += Code6[i].toString(2).padStart(3, '0');
+        }
+        binaryString = binaryString.substring(0, binaryString.length - zeroCount1);
+
+        // Reconstruct Code5 (10-bit binary strings)
+        let Code5 = [];
+        for (let i = 0; i < binaryString.length; i += 10) {
+            Code5.push(binaryString.substring(i, i + 10));
+        }
+
+        // Change 4 & 3: Reconstruct Code4 (original numbers before 500 - value and binary conversion)
+        let Code4 = [];
+        for (let i = 0; i < Code5.length; i++) {
+            let item = Code5[i];
+            let signedValue;
+            if (item[0] === '0') {
+                signedValue = parseInt(item, 2);
+            } else {
+                signedValue = parseInt(item, 2) - (1 << 10);
+            }
+            Code4.push(500 - signedValue);
+        }
+
+        // Reconstruct the intermediate deckData string (concatenation of 5-char card codes)
+        let intermediateDeckCode = "";
+        let ct0 = 0;
+        for (let i = 0; i < Code4.length - 1; i++) {
+            let item = Code4[i];
+            let str = item.toString();
+            if (item >= 1 && item <= 9) str = "00" + str;
+            else if (item >= 10 && item <= 99) str = "0" + str;
+            intermediateDeckCode += str;
+            ct0 += 3;
+        }
+        // Handle the last element
+        let lastItem = Code4[Code4.length - 1];
+        let lastItemStr = lastItem.toString();
+        let totalLengthAfterLastItem = ct0 + lastItemStr.length;
+
+        if (totalLengthAfterLastItem % 5 === 0) {
+            intermediateDeckCode += lastItemStr;
+        } else if (totalLengthAfterLastItem % 5 === 4) {
+            intermediateDeckCode += "0" + lastItemStr;
+        } else if (totalLengthAfterLastItem % 5 === 3) {
+            intermediateDeckCode += "00" + lastItemStr;
+        }
+
+        // Change 2: Split into 5-character chunks and decode card IDs
+        let Code2 = [];
+        for (let i = 0; i < intermediateDeckCode.length; i += 5) {
+            Code2.push(intermediateDeckCode.substring(i, i + 5));
+        }
+
+        for (let i = 0; i < Code2.length; i++) {
+            let cardData = Code2[i];
+            let num = parseInt(cardData.substring(4)); // Count of the card
+            let shopcode = cardData[0];
+            let typecode = cardData[1];
+            let no = cardData.substring(2, 4); // Card number (e.g., "01", "10")
+
+            let idPrefix = CodetoNumber_alter[shopcode];
+            if (!idPrefix) {
+                console.warn(`Unknown shop code: ${shopcode}`);
+                continue;
+            }
+            let idElement = ElementtoNumber_alter[typecode];
+            if (!idElement) {
+                console.warn(`Unknown element code: ${typecode}`);
+                continue;
+            }
+
+            let actualNo = NumbertoNumber_alter[no] ? NumbertoNumber_alter[no] : parseInt(no).toString();
+            let cardId = idPrefix + idElement + '-' + actualNo;
+
+            for (let j = 0; j < num; j++) {
+                resultDeckList.push(cardId);
+            }
+        }
+
+        return resultDeckList;
+    }
+
     const counters = {
         vol: document.getElementById('vol-value'),
         manaAlpha: document.getElementById('mana-alpha-value'),
@@ -1569,7 +1714,19 @@ document.addEventListener('DOMContentLoaded', () => {
             
             initGameState(deckList1, true, deckList2);
         } else {
-            const deckList = document.getElementById('deck-string').value.trim().split('/').filter(id => id);
+            let deckString = document.getElementById('deck-string').value.trim();
+            let deckList;
+
+            if (deckString.startsWith('KCG-')) {
+                deckList = readKCGCode(deckString);
+                if (deckList.length === 0) {
+                    alert('KCGコードの解析に失敗しました。正しいコードを入力してください。');
+                    return;
+                }
+            } else {
+                deckList = deckString.split('/').filter(id => id);
+            }
+
             if (deckList.length === 0) {
                 alert('有効なデッキリストを入力してください。');
                 return;
