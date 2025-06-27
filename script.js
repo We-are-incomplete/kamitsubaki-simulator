@@ -1719,8 +1719,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const isDualMode = document.getElementById('dual-deck-mode-btn').classList.contains('active');
         
         if (isDualMode) {
-            const deckList1 = document.getElementById('deck-string-p1').value.trim().split('/').filter(id => id);
-            const deckList2 = document.getElementById('deck-string-p2').value.trim().split('/').filter(id => id);
+            let deckString1 = document.getElementById('deck-string-p1').value.trim();
+            let deckList1;
+            if (deckString1.startsWith('KCG-')) {
+                deckList1 = readKCGCode(deckString1);
+                if (deckList1.length === 0) {
+                    alert('プレイヤー1のKCGコードの解析に失敗しました。正しいコードを入力してください。');
+                    return;
+                }
+            } else {
+                deckList1 = deckString1.split('/').filter(id => id);
+            }
+
+            let deckString2 = document.getElementById('deck-string-p2').value.trim();
+            let deckList2;
+            if (deckString2.startsWith('KCG-')) {
+                deckList2 = readKCGCode(deckString2);
+                if (deckList2.length === 0) {
+                    alert('プレイヤー2のKCGコードの解析に失敗しました。正しいコードを入力してください。');
+                    return;
+                }
+            } else {
+                deckList2 = deckString2.split('/').filter(id => id);
+            }
             
             if (deckList1.length === 0 || deckList2.length === 0) {
                 alert('両方のプレイヤーのデッキリストを入力してください。');
