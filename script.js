@@ -60,19 +60,23 @@ document.addEventListener('DOMContentLoaded', () => {
             Code6.push(letterToNumber_y[char]);
             Code6.push(letterToNumber_x[char]);
         }
+        console.log("Code6:", Code6);
 
         // Change 5: Convert back to binary string and remove zeroCount1 padding
         let binaryString = "";
         for (let i = 0; i < Code6.length; i++) {
             binaryString += Code6[i].toString(2).padStart(3, '0');
         }
+        console.log("Binary String (before zeroCount1 removal):", binaryString);
         binaryString = binaryString.substring(0, binaryString.length - zeroCount1);
+        console.log("Binary String (after zeroCount1 removal):", binaryString);
 
         // Reconstruct Code5 (10-bit binary strings)
         let Code5 = [];
         for (let i = 0; i < binaryString.length; i += 10) {
             Code5.push(binaryString.substring(i, i + 10));
         }
+        console.log("Code5:", Code5);
 
         // Change 4 & 3: Reconstruct Code4 (original numbers before 500 - value and binary conversion)
         let Code4 = [];
@@ -82,10 +86,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (item[0] === '0') {
                 signedValue = parseInt(item, 2);
             } else {
+                // C#の負の数表現をJavaScriptで再現
+                // C#のConvert.ToInt32(string, 2)は、文字列が32bitの2進数として解釈される
+                // JavaScriptでは、10bitの2進数として扱い、最上位ビットが1の場合は負の数として解釈する
+                // 10bitの2の補数表現で負の数を表す場合、10bitの最大値 + 1 (1 << 10) を引く
                 signedValue = parseInt(item, 2) - (1 << 10);
             }
             Code4.push(500 - signedValue);
         }
+        console.log("Code4:", Code4);
 
         // Reconstruct the intermediate deckData string (concatenation of 5-char card codes)
         let intermediateDeckCode = "";
@@ -110,12 +119,15 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (totalLengthAfterLastItem % 5 === 3) {
             intermediateDeckCode += "00" + lastItemStr;
         }
+        console.log("Intermediate Deck Code:", intermediateDeckCode);
+
 
         // Change 2: Split into 5-character chunks and decode card IDs
         let Code2 = [];
         for (let i = 0; i < intermediateDeckCode.length; i += 5) {
             Code2.push(intermediateDeckCode.substring(i, i + 5));
         }
+        console.log("Code2 (5-char chunks):", Code2);
 
         for (let i = 0; i < Code2.length; i++) {
             let cardData = Code2[i];
@@ -123,6 +135,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let shopcode = cardData[0];
             let typecode = cardData[1];
             let no = cardData.substring(2, 4); // Card number (e.g., "01", "10")
+
+            console.log(`Processing chunk: ${cardData}, num: ${num}, shopcode: ${shopcode}, typecode: ${typecode}, no: ${no}`);
 
             let idPrefix = CodetoNumber_alter[shopcode];
             if (!idPrefix) {
@@ -137,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let actualNo = NumbertoNumber_alter[no] ? NumbertoNumber_alter[no] : parseInt(no).toString();
             let cardId = idPrefix + idElement + '-' + actualNo;
+            console.log(`Decoded cardId: ${cardId} (x${num})`);
 
             for (let j = 0; j < num; j++) {
                 resultDeckList.push(cardId);
