@@ -86,11 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (item[0] === '0') {
                 signedValue = parseInt(item, 2);
             } else {
-                // C#の負の数表現をJavaScriptで再現
-                // C#のConvert.ToInt32(string, 2)は、文字列が32bitの2進数として解釈される
-                // JavaScriptでは、10bitの2進数として扱い、最上位ビットが1の場合は負の数として解釈する
-                // 10bitの2の補数表現で負の数を表す場合、10bitの最大値 + 1 (1 << 10) を引く
-                signedValue = parseInt(item, 2) - (1 << 10);
+                // 10bitの2の補数として解釈
+                // JavaScriptで32bitの符号付き整数として扱うためのビット演算トリック
+                signedValue = (parseInt(item, 2) << (32 - 10)) >> (32 - 10);
             }
             Code4.push(500 - signedValue);
         }
