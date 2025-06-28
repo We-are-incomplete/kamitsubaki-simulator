@@ -131,25 +131,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let i = 0; i < Code2.length; i++) {
             let cardData = Code2[i];
-            let num = parseInt(cardData.substring(4)); // Count of the card
+            let num = parseInt(cardData.substring(4)); // Count of the card (encoded)
             let shopcode = cardData[0];
             let typecode = cardData[1];
             let no = cardData.substring(2, 4); // Card number (e.g., "01", "10")
 
-            // exまたはprmの場合、枚数から5を引く
-            if (shopcode === "0") {
-                num -= 5;
+            // まず、デコードされた枚数から5を引いて元の枚数を算出
+            let originalNum = num;
+            if (shopcode === "0") { // 'ex'または'prm'の場合
+                originalNum -= 5;
             }
 
-            console.log(`Processing chunk: ${cardData}, num: ${num}, shopcode: ${shopcode}, typecode: ${typecode}, no: ${no}`);
+            console.log(`Processing chunk: ${cardData}, encoded num: ${num}, original num: ${originalNum}, shopcode: ${shopcode}, typecode: ${typecode}, no: ${no}`);
 
             let idPrefix = CodetoNumber_alter[shopcode];
             let idElement = ElementtoNumber_alter[typecode];
             let actualNo = NumbertoNumber_alter[no] ? NumbertoNumber_alter[no] : parseInt(no).toString();
 
-            // 根本的な解決策: 枚数が4を超える場合はprmとして判別
+            // 根本的な解決策: 元の枚数が5以上の場合はprmとして判別
             // ただし、これはKCGコード上で'0'としてエンコードされたもの（idPrefixが'ex'）にのみ適用
-            if (idPrefix === 'ex' && num > 4) {
+            if (idPrefix === 'ex' && originalNum >= 5) {
                 idPrefix = 'prm';
             }
 
@@ -1750,7 +1751,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('両方のプレイヤーのデッキリストを入力してください。');
                 return;
             }
-            
+            console.log("Player 1 Converted Deck List:", deckList1.join('/')); // デバッグ表示
+            console.log("Player 2 Converted Deck List:", deckList2.join('/')); // デバッグ表示
             initGameState(deckList1, true, deckList2);
         } else {
             let deckString = document.getElementById('deck-string').value.trim();
@@ -1770,6 +1772,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('有効なデッキリストを入力してください。');
                 return;
             }
+            console.log("Converted Deck List:", deckList.join('/')); // デバッグ表示
             initGameState(deckList, false);
         }
           showGameScreen();
