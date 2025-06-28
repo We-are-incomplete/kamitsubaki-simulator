@@ -83,14 +83,18 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < Code5.length; i++) {
             let item = Code5[i];
             let signedValue;
-            let value = parseInt(item, 2); // 10bitの値をまず数値として取得
-
-            // 10bitの2の補数表現を符号付き整数に変換
-            // 最上位ビットが1の場合（負の数）
-            if ((value & (1 << (10 - 1))) !== 0) { // 10bit目のビットが立っているかチェック
-                signedValue = value - (1 << 10); // 2の補数から元の負の数を計算
-            } else { // 最上位ビットが0の場合（正の数）
-                signedValue = value;
+            // C#のConvert.ToInt32(string, 2)の挙動を再現
+            // JavaScriptのparseIntは、文字列の長さに応じて自動的にビット数を判断しないため、
+            // 32bitの符号付き整数として明示的に扱う必要がある。
+            // 10bitのバイナリ文字列を32bitの符号付き整数として解釈する。
+            // item[0]が'1'の場合、それは負の数なので、上位ビットを1で埋める。
+            if (item[0] === '1') {
+                // 10bitのバイナリ文字列を32bitの符号付き整数として解釈
+                // まず、10bitの数値を取得し、それを32bitの符号付き整数に変換する
+                // 10bitの2の補数表現を32bitの2の補数表現に拡張する
+                signedValue = parseInt(item, 2) | (~((1 << 10) - 1)); // 上位ビットを1で埋める
+            } else {
+                signedValue = parseInt(item, 2);
             }
             Code4.push(500 - signedValue);
         }
