@@ -83,12 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < Code5.length; i++) {
             let item = Code5[i];
             let signedValue;
-            if (item[0] === '0') {
-                signedValue = parseInt(item, 2);
+            let value = parseInt(item, 2); // 10bitの値をまず数値として取得
+            if (item[0] === '1') { // 最上位ビットが1の場合、負の数として扱う
+                signedValue = value - (1 << 10); // 2の補数から元の負の数を計算
             } else {
-                // 10bitの2の補数として解釈
-                // JavaScriptで32bitの符号付き整数として扱うためのビット演算トリック
-                signedValue = (parseInt(item, 2) << (32 - 10)) >> (32 - 10);
+                signedValue = value;
             }
             Code4.push(500 - signedValue);
         }
