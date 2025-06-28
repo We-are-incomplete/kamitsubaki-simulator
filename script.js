@@ -144,17 +144,15 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`Processing chunk: ${cardData}, num: ${num}, shopcode: ${shopcode}, typecode: ${typecode}, no: ${no}`);
 
             let idPrefix = CodetoNumber_alter[shopcode];
-            if (!idPrefix) {
-                console.warn(`Unknown shop code: ${shopcode}`);
-                continue;
-            }
             let idElement = ElementtoNumber_alter[typecode];
-            if (!idElement) {
-                console.warn(`Unknown element code: ${typecode}`);
-                continue;
+            let actualNo = NumbertoNumber_alter[no] ? NumbertoNumber_alter[no] : parseInt(no).toString();
+
+            // 根本的な解決策: 枚数が4を超える場合はprmとして判別
+            // ただし、これはKCGコード上で'0'としてエンコードされたもの（idPrefixが'ex'）にのみ適用
+            if (idPrefix === 'ex' && num > 4) {
+                idPrefix = 'prm';
             }
 
-            let actualNo = NumbertoNumber_alter[no] ? NumbertoNumber_alter[no] : parseInt(no).toString();
             let cardId = idPrefix + idElement + '-' + actualNo;
             console.log(`Decoded cardId: ${cardId} (x${num})`);
 
