@@ -135,33 +135,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let i = 0; i < Code2.length; i++) {
             let cardData = Code2[i];
-            let num = parseInt(cardData.substring(4)); // Count of the card (encoded)
+            let encodedNum = parseInt(cardData.substring(4)); // Encoded count from KCG code
             let shopcode = cardData[0];
             let typecode = cardData[1];
             let no = cardData.substring(2, 4); // Card number (e.g., "01", "10")
 
-            // まず、デコードされた枚数から5を引いて元の枚数を算出
-            let originalNum = num;
-            if (shopcode === "0") { // 'ex'または'prm'の場合
-                originalNum -= 5;
+            let idPrefix;
+            let originalNum; // Actual count of the card
+
+            // Determine idPrefix and originalNum based on shopcode and encodedNum
+            if (shopcode === '0') { // If the first digit is '0', it's either 'ex' or 'prm'
+                if (encodedNum >= 5) { // If encoded count is 5 or more, it's 'prm'
+                    idPrefix = 'prm';
+                    originalNum = encodedNum - 5; // Subtract 5 to get the true count
+                } else { // If encoded count is less than 5, it's 'ex'
+                    idPrefix = 'ex';
+                    originalNum = encodedNum; // True count is the encoded count
+                }
+            } else { // For other shopcodes (not '0'), it's a regular card
+                idPrefix = CodetoNumber_alter[shopcode];
+                originalNum = encodedNum; // True count is the encoded count
             }
 
-            console.log(`Processing chunk: ${cardData}, encoded num: ${num}, original num: ${originalNum}, shopcode: ${shopcode}, typecode: ${typecode}, no: ${no}`);
+            console.log(`Processing chunk: ${cardData}, encoded num: ${encodedNum}, original num: ${originalNum}, shopcode: ${shopcode}, typecode: ${typecode}, no: ${no}`);
 
-            let idPrefix = CodetoNumber_alter[shopcode];
+            if (!idPrefix) {
+                console.warn(`Unknown shop code: ${shopcode}`);
+                continue;
+            }
             let idElement = ElementtoNumber_alter[typecode];
-            let actualNo = NumbertoNumber_alter[no] ? NumbertoNumber_alter[no] : parseInt(no).toString();
-
-            // 根本的な解決策: 元の枚数が5以上の場合はprmとして判別
-            // ただし、これはKCGコード上で'0'としてエンコードされたもの（idPrefixが'ex'）にのみ適用
-            if (idPrefix === 'ex' && originalNum >= 5) {
-                idPrefix = 'prm';
+            if (!idElement) {
+                console.warn(`Unknown element code: ${typecode}`);
+                continue;
             }
 
+            let actualNo = NumbertoNumber_alter[no] ? NumbertoNumber_alter[no] : parseInt(no).toString();
             let cardId = idPrefix + idElement + '-' + actualNo;
-            console.log(`Decoded cardId: ${cardId} (x${num})`);
+            console.log(`Decoded cardId: ${cardId} (x${originalNum})`);
 
-            for (let j = 0; j < num; j++) {
+            for (let j = 0; j < originalNum; j++) { // Use originalNum here
                 resultDeckList.push(cardId);
             }
         }
