@@ -84,9 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
             let item = Code5[i];
             let signedValue;
             let value = parseInt(item, 2); // 10bitの値をまず数値として取得
-            if (item[0] === '1') { // 最上位ビットが1の場合、負の数として扱う
+
+            // 10bitの2の補数表現を符号付き整数に変換
+            // 最上位ビットが1の場合（負の数）
+            if ((value & (1 << (10 - 1))) !== 0) { // 10bit目のビットが立っているかチェック
                 signedValue = value - (1 << 10); // 2の補数から元の負の数を計算
-            } else {
+            } else { // 最上位ビットが0の場合（正の数）
                 signedValue = value;
             }
             Code4.push(500 - signedValue);
