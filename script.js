@@ -285,7 +285,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Render hand
         const handZone = document.getElementById('hand-zone');
-        // handZone.innerHTML = ''; // この行をコメントアウトまたは削除
         // 手札ゾーン内の既存のカード要素のみを削除
         handZone.querySelectorAll('.card').forEach(cardEl => cardEl.remove());
         gameState.zones.hand.forEach(cardId => {
@@ -719,10 +718,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             const zone = gameState.zones[zoneId];
             if (zone && typeof cardObject.cardId === 'string') {
-                // 重複チェック（デバッグ用）
-                if (zone.includes(cardObject.cardId)) {
-                    console.warn(`[addCardToState] Duplicate card detected: ${cardObject.cardId} already exists in ${zoneId}`);
-                }
                 zone.push(cardObject.cardId);
                 if (zoneId === 'volNoise') {
                     shuffle(gameState.zones.volNoise); // VOLノイズ置き場に追加されたらシャッフル
