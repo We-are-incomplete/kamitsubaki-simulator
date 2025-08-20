@@ -3,8 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Helper dictionaries/arrays from CodeMaker.cs
     const CodetoNumber_alter = {
-        "0": "ex", "1": "A", "2": "B", "3": "C", "4": "D",
-        "5": "E", "6": "F", "7": "G", "8": "H"
+        "0": "ex", "1": "A", "2": "B", "3": "C", "4": "D", "5": "E", "6": "F", "7": "G", "8": "H"
     };
 
     const ElementtoNumber_alter = {
@@ -12,8 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const NumbertoNumber_alter = {
-        "01": "1", "02": "2", "03": "3", "04": "4", "05": "5",
-        "06": "6", "07": "7", "08": "8", "09": "9"
+        "01": "1", "02": "2", "03": "3", "04": "4", "05": "5", "06": "6", "07": "7", "08": "8", "09": "9"
     };
 
     const numberToLetter = [
@@ -85,19 +83,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let intermediateDeckCode = "";
-        let ct0 = 0;
         for (let i = 0; i < Code4.length - 1; i++) {
             let item = Code4[i];
             let str = item.toString();
             if (item >= 1 && item <= 9) str = "00" + str;
             else if (item >= 10 && item <= 99) str = "0" + str;
             intermediateDeckCode += str;
-            ct0 += 3;
         }
 
         let lastItem = Code4[Code4.length - 1];
         let lastItemStr = lastItem.toString();
-        let totalLengthAfterLastItem = ct0 + lastItemStr.length;
+        let totalLengthAfterLastItem = intermediateDeckCode.length + lastItemStr.length;
 
         if (totalLengthAfterLastItem % 5 === 0) {
             intermediateDeckCode += lastItemStr;
@@ -289,7 +285,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Render hand
         const handZone = document.getElementById('hand-zone');
-        // handZone.innerHTML = ''; // この行をコメントアウトまたは削除
         // 手札ゾーン内の既存のカード要素のみを削除
         handZone.querySelectorAll('.card').forEach(cardEl => cardEl.remove());
         gameState.zones.hand.forEach(cardId => {
@@ -723,10 +718,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             const zone = gameState.zones[zoneId];
             if (zone && typeof cardObject.cardId === 'string') {
-                // 重複チェック（デバッグ用）
-                if (zone.includes(cardObject.cardId)) {
-                    console.warn(`[addCardToState] Duplicate card detected: ${cardObject.cardId} already exists in ${zoneId}`);
-                }
                 zone.push(cardObject.cardId);
                 if (zoneId === 'volNoise') {
                     shuffle(gameState.zones.volNoise); // VOLノイズ置き場に追加されたらシャッフル
@@ -1916,7 +1907,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     return `<div class="opponent-card ${card.isStandby ? 'standby' : ''}" 
                                                          style="z-index: ${cardIndex + 1}; 
                                                                 transform: ${transformValue};
-                                                                background-image: url('./cards/${card.cardId}.webp');
+                                                                background-image: url('${CARD_IMAGE_PATH}${card.cardId}.webp');
                                                                 background-size: 180%;
                                                                 background-position: center 40%;">
                                                     </div>`;
@@ -1938,7 +1929,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 return `                                    <div class="opponent-direction-slot">                                        ${directionCards.map((card, cardIndex) => `                                            <div class="opponent-card ${card.isStandby ? 'standby' : ''}"
                                                  style="z-index: ${cardIndex + 1}; 
                                                         transform: translate(${cardIndex * 8}px, ${cardIndex * 6}px);
-                                                        background-image: url('./cards/${card.cardId}.webp');
+                                                        background-image: url('${CARD_IMAGE_PATH}${card.cardId}.webp');
                                                         background-size: 180%;
                                                         background-position: center 40%;">
                                             </div>
