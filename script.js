@@ -923,17 +923,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const trashZoneEl = document.getElementById('trash-zone');
         trashZoneEl.addEventListener('mousedown', e => handlePressStart(e, trashZoneEl, 'trash'));
         trashZoneEl.addEventListener('touchstart', e => handlePressStart(e, trashZoneEl, 'trash'), { passive: false });
-        trashZoneEl.addEventListener('click', e => handleTap(trashZoneEl, { zoneId: 'trash' }));
 
         const deckZoneEl = document.getElementById('deck-zone');
         deckZoneEl.addEventListener('mousedown', e => handlePressStart(e, deckZoneEl, 'deck'));
         deckZoneEl.addEventListener('touchstart', e => handlePressStart(e, deckZoneEl, 'deck'), { passive: false });
-        deckZoneEl.addEventListener('click', e => handleTap(deckZoneEl, { zoneId: 'deck' }));
 
         const volNoiseZoneEl = document.getElementById('volNoise-zone'); // IDを 'vol-noise-zone' から 'volNoise-zone' に修正
         volNoiseZoneEl.addEventListener('mousedown', e => handlePressStart(e, volNoiseZoneEl, 'volNoise'));
         volNoiseZoneEl.addEventListener('touchstart', e => handlePressStart(e, volNoiseZoneEl, 'volNoise'), { passive: false });
-        volNoiseZoneEl.addEventListener('click', e => handleTap(volNoiseZoneEl, { zoneId: 'volNoise' }));        document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => {
+        document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => {
             const counter = btn.dataset.counter;
             const currentPlayerCounters = getCurrentPlayerCounters();
             currentPlayerCounters[counter] += parseInt(btn.dataset.amount, 10);
