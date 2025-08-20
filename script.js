@@ -522,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // 山札からのドラッグの場合は裏面を表示
                         if (isPile && sourceInfo.zoneId === 'deck') {
-                            draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.webp')`;
+                            draggedCardVisual.style.backgroundImage = `url('items/back.webp')`;
                         } else {
                             draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.webp')`;
                         }
@@ -923,21 +923,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const trashZoneEl = document.getElementById('trash-zone');
         trashZoneEl.addEventListener('mousedown', e => handlePressStart(e, trashZoneEl, 'trash'));
         trashZoneEl.addEventListener('touchstart', e => handlePressStart(e, trashZoneEl, 'trash'), { passive: false });
-        trashZoneEl.addEventListener('click', e => handleTap(trashZoneEl, { zoneId: 'trash' }));
 
         const deckZoneEl = document.getElementById('deck-zone');
         deckZoneEl.addEventListener('mousedown', e => handlePressStart(e, deckZoneEl, 'deck'));
         deckZoneEl.addEventListener('touchstart', e => handlePressStart(e, deckZoneEl, 'deck'), { passive: false });
-        deckZoneEl.addEventListener('click', e => handleTap(deckZoneEl, { zoneId: 'deck' }));
 
         const volNoiseZoneEl = document.getElementById('volNoise-zone'); // IDを 'vol-noise-zone' から 'volNoise-zone' に修正
         volNoiseZoneEl.addEventListener('mousedown', e => handlePressStart(e, volNoiseZoneEl, 'volNoise'));
         volNoiseZoneEl.addEventListener('touchstart', e => handlePressStart(e, volNoiseZoneEl, 'volNoise'), { passive: false });
-        volNoiseZoneEl.addEventListener('click', e => handleTap(volNoiseZoneEl, { zoneId: 'volNoise' }));        document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => {
-            const counter = btn.dataset.counter;
+        document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => {
+            const { counter, amount } = btn.dataset;
+            const delta = Number.parseInt(amount, 10);
+            if (!counter || Number.isNaN(delta)) {
+                console.warn('[counter-btn] invalid dataset', { counter, amount });
+                return;
+            }
             const currentPlayerCounters = getCurrentPlayerCounters();
-            currentPlayerCounters[counter] += parseInt(btn.dataset.amount, 10);
-            if (currentPlayerCounters[counter] < 0) currentPlayerCounters[counter] = 0;
+            const prev = Number(currentPlayerCounters[counter]) || 0;
+            const next = Math.max(0, prev + delta);
+            currentPlayerCounters[counter] = next;
             renderAll();
         }));
         document.getElementById('shuffle-btn').addEventListener('click', () => {
