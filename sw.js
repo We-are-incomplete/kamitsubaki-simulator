@@ -5,21 +5,20 @@ const coreAssets = [
   '/style.css',
   '/script.js',
   '/manifest.json',
-  '/Cards/back1.png', // manifest.jsonで指定されているアイコン
-  '/item/alpha.png',
-  '/item/back.png',
-  '/item/beta.png',
-  '/item/dice1.png',
-  '/item/dice2.png',
-  '/item/dice3.png',
-  '/item/dice4.png',
-  '/item/dice5.png',
-  '/item/dice6.png',
-  '/item/omega.png',
-  '/item/vol.png',
-  '/item/wall.png',
-  '/item/wall1.png',
-  '/item/wall2.png'
+  '/items/alpha.webp',
+  '/items/back.webp',
+  '/items/beta.webp',
+  '/items/dice1.webp',
+  '/items/dice2.webp',
+  '/items/dice3.webp',
+  '/items/dice4.webp',
+  '/items/dice5.webp',
+  '/items/dice6.webp',
+  '/items/omega.webp',
+  '/items/vol.webp',
+  '/items/wall.webp',
+  '/items/wall1.webp',
+  '/items/wall2.webp'
 ];
 
 self.addEventListener('install', event => {
