@@ -60,47 +60,30 @@ document.addEventListener('DOMContentLoaded', () => {
             Code6.push(letterToNumber_y[char]);
             Code6.push(letterToNumber_x[char]);
         }
-        console.log("Code6:", Code6);
 
-        // Change 5: Convert back to binary string and remove zeroCount1 padding
         let binaryString = "";
         for (let i = 0; i < Code6.length; i++) {
             binaryString += Code6[i].toString(2).padStart(3, '0');
         }
-        console.log("Binary String (before zeroCount1 removal):", binaryString);
         binaryString = binaryString.substring(0, binaryString.length - zeroCount1);
-        console.log("Binary String (after zeroCount1 removal):", binaryString);
 
-        // Reconstruct Code5 (10-bit binary strings)
         let Code5 = [];
         for (let i = 0; i < binaryString.length; i += 10) {
             Code5.push(binaryString.substring(i, i + 10));
         }
-        console.log("Code5:", Code5);
 
-        // Change 4 & 3: Reconstruct Code4 (original numbers before 500 - value and binary conversion)
         let Code4 = [];
         for (let i = 0; i < Code5.length; i++) {
             let item = Code5[i];
             let signedValue;
-            // C#のConvert.ToInt32(string, 2)の挙動を再現
-            // JavaScriptのparseIntは、文字列の長さに応じて自動的にビット数を判断しないため、
-            // 32bitの符号付き整数として明示的に扱う必要がある。
-            // 10bitのバイナリ文字列を32bitの符号付き整数として解釈する。
-            // item[0]が'1'の場合、それは負の数なので、上位ビットを1で埋める。
             if (item[0] === '1') {
-                // 10bitのバイナリ文字列を32bitの符号付き整数として解釈
-                // まず、10bitの数値を取得し、それを32bitの符号付き整数に変換する
-                // 10bitの2の補数表現を32bitの2の補数表現に拡張する
-                signedValue = parseInt(item, 2) | (~((1 << 10) - 1)); // 上位ビットを1で埋める
+                signedValue = parseInt(item, 2) | (~((1 << 10) - 1));
             } else {
                 signedValue = parseInt(item, 2);
             }
             Code4.push(500 - signedValue);
         }
-        console.log("Code4:", Code4);
 
-        // Reconstruct the intermediate deckData string (concatenation of 5-char card codes)
         let intermediateDeckCode = "";
         let ct0 = 0;
         for (let i = 0; i < Code4.length - 1; i++) {
@@ -111,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
             intermediateDeckCode += str;
             ct0 += 3;
         }
-        // Handle the last element
+
         let lastItem = Code4[Code4.length - 1];
         let lastItemStr = lastItem.toString();
         let totalLengthAfterLastItem = ct0 + lastItemStr.length;
@@ -123,41 +106,34 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (totalLengthAfterLastItem % 5 === 3) {
             intermediateDeckCode += "00" + lastItemStr;
         }
-        console.log("Intermediate Deck Code:", intermediateDeckCode);
 
-
-        // Change 2: Split into 5-character chunks and decode card IDs
         let Code2 = [];
         for (let i = 0; i < intermediateDeckCode.length; i += 5) {
             Code2.push(intermediateDeckCode.substring(i, i + 5));
         }
-        console.log("Code2 (5-char chunks):", Code2);
 
         for (let i = 0; i < Code2.length; i++) {
             let cardData = Code2[i];
-            let encodedNum = parseInt(cardData.substring(4)); // Encoded count from KCG code
+            let encodedNum = parseInt(cardData.substring(4));
             let shopcode = cardData[0];
             let typecode = cardData[1];
-            let no = cardData.substring(2, 4); // Card number (e.g., "01", "10")
+            let no = cardData.substring(2, 4);
 
             let idPrefix;
-            let originalNum; // Actual count of the card
+            let originalNum;
 
-            // Determine idPrefix and originalNum based on shopcode and encodedNum
-            if (shopcode === '0') { // If the first digit is '0', it's either 'ex' or 'prm'
-                if (encodedNum >= 5) { // If encoded count is 5 or more, it's 'prm'
+            if (shopcode === '0') {
+                if (encodedNum >= 5) {
                     idPrefix = 'prm';
-                    originalNum = encodedNum - 5; // Subtract 5 to get the true count
-                } else { // If encoded count is less than 5, it's 'ex'
+                    originalNum = encodedNum - 5;
+                } else {
                     idPrefix = 'ex';
-                    originalNum = encodedNum; // True count is the encoded count
+                    originalNum = encodedNum;
                 }
-            } else { // For other shopcodes (not '0'), it's a regular card
+            } else {
                 idPrefix = CodetoNumber_alter[shopcode];
-                originalNum = encodedNum; // True count is the encoded count
+                originalNum = encodedNum;
             }
-
-            console.log(`Processing chunk: ${cardData}, encoded num: ${encodedNum}, original num: ${originalNum}, shopcode: ${shopcode}, typecode: ${typecode}, no: ${no}`);
 
             if (!idPrefix) {
                 console.warn(`Unknown shop code: ${shopcode}`);
@@ -171,9 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let actualNo = NumbertoNumber_alter[no] ? NumbertoNumber_alter[no] : parseInt(no).toString();
             let cardId = idPrefix + idElement + '-' + actualNo;
-            console.log(`Decoded cardId: ${cardId} (x${originalNum})`);
 
-            for (let j = 0; j < originalNum; j++) { // Use originalNum here
+            for (let j = 0; j < originalNum; j++) {
                 resultDeckList.push(cardId);
             }
         }
@@ -191,8 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameState = {};
     const CARD_IMAGE_PATH = './Cards/';
     const DOUBLE_TAP_THRESHOLD = 300;
-    const LONG_PRESS_DELAY = 500; // 長押しとみなすまでの時間（ミリ秒）
-// ここから下は変更なし
+    const LONG_PRESS_DELAY = 500;
     let lastTapTime = 0;
     let lastTapTargetCardId = null;
     let longPressTimer = null; // 長押しタイマーのIDを保持
@@ -298,30 +272,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const zoneData = gameState.zones[zoneId];
             if (zoneData) { 
-                // if (zoneId === 'volNoise') { // VOLノイズゾーンの処理開始ログ (必要に応じてコメント解除)
-                //     console.log(`[RenderAll] Processing volNoise zone. Card count: ${zoneData.length}`);
-                // }
                 if (zoneData.length > 0) {
                     // パイルの一番上のカードIDを取得 (gameState.zonesの各パイルはカードID文字列の配列を想定)
                     const topCardDisplayId = zoneData.slice(-1)[0];
-                    // if (zoneId === 'volNoise') console.log(`[RenderAll] volNoise has cards. Top card for display (should be back): ${topCardDisplayId}`);
                     zoneEl.appendChild(createCardElement(topCardDisplayId, false, zoneId, 'none'));
                 } 
-                // else { // カードがない場合は、以前はプレースホルダーを表示していたが、何も表示しないように変更
-                    // zoneEl.appendChild(createCardElement(null, false, zoneId, 'none')); 
-                // }
                 const countEl = document.createElement('span');
                 countEl.className = 'zone-count';
                 countEl.textContent = zoneData.length;
                 zoneEl.appendChild(countEl);
 
-                // if (zoneId === 'volNoise') { // VOLノイズゾーンの処理完了後、中身を確認 (必要に応じてコメント解除)
-                //     console.log(`[RenderAll] volNoise-zone innerHTML after append:`, zoneEl.innerHTML);
-                //     const cardInVolNoise = zoneEl.querySelector('.card');
-                //     if (cardInVolNoise) {
-                //         console.log('[RenderAll] volNoise-zone .card style:', cardInVolNoise.style.backgroundImage);
-                //     } else {
-                //         console.log('[RenderAll] volNoise-zone .card not found after append.');                // }
             } else {
                 console.warn(`[RenderAll] gameState.zones.${zoneId} is undefined.`);
             }
@@ -444,28 +404,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const actualCardId = (typeof cardId === 'object' && cardId !== null) ? cardId.cardId : cardId;
         cardEl.dataset.cardId = actualCardId;
 
-        // if (zoneId === 'volNoise' && interactiveType === 'none') { // 必要に応じてコメント解除
-        //     console.log(`[CreateCardElement] For volNoise pile. actualCardId: "${actualCardId}", interactiveType: ${interactiveType}`);
-        // }
-        // デバッグログ: トラッシュのパイル表示時にactualCardIdを確認
-        if (zoneId === 'trash' && interactiveType === 'none') {
-            // console.log(`[CreateCardElement] Rendering trash pile card. actualCardId: "${actualCardId}", type: ${typeof actualCardId}`);
-        }
-
         if ((zoneId === 'deck' || zoneId === 'volNoise') && interactiveType === 'none') { // 山札またはVOLノイズのパイル表示のみ裏面
              cardEl.style.backgroundImage = `url('item/back.png')`;
-             // if (zoneId === 'volNoise') console.log('[CreateCardElement] volNoise: Set back.png (condition: deck/volNoise pile)');
         } else if (actualCardId && typeof actualCardId === 'string' && actualCardId.trim() !== '') { // actualCardId が null でなく、空でない有効な文字列の場合のみ表面画像を設定
              cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}${actualCardId}.png')`;
-        } else {
-             // カードIDがない、または無効な場合（空のパイルゾーンのプレースホルダーや、actualCardIdが期待する文字列でない場合など）は裏面を表示
-             // if (zoneId === 'volNoise') console.log('[CreateCardElement] volNoise: Set back.png (condition: else - invalid actualCardId or not deck/volNoise pile)');
-             if (interactiveType === 'none' && zoneId === 'trash') { // トラッシュのパイル表示でactualCardIdが無効だった場合
-                // console.warn(`[CreateCardElement] Trash pile: actualCardId "${actualCardId}" was invalid or empty. Displaying back.png.`);
-             }
+        } else {           
              cardEl.style.backgroundImage = `url('item/back.png')`;
         }
-
 
         if (isStandby) cardEl.style.transform = 'rotate(90deg)';
         
@@ -519,7 +464,6 @@ document.addEventListener('DOMContentLoaded', () => {
             sourceInfo.zoneId = 'temporary'; 
         }
         if (!draggedCardData && !isPile) { // パイルでない場合、カードデータがなければ終了
-             // console.log("No dragged card data for non-pile, exiting press start.");
              return;
         }
         // パイルの場合、draggedCardDataは上で設定されているか、空ならreturn済み
@@ -585,9 +529,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (draggedCardData.isStandby) draggedCardVisual.style.transform = 'rotate(90deg)';
                         document.body.appendChild(draggedCardVisual);
-                    } else if (isPile) {
-                        // パイルからのドラッグの場合、draggedCardDataは最初に設定されているはず
-                        // もし空のパイルなら、そもそもここまで来ない (最初のifでreturn)
                     }
                 }
             }
@@ -624,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const targetSlot = targetEl ? targetEl.closest('.card-slot.drop-zone') : null;
                     const targetNonSlotZone = targetEl ? targetEl.closest('.zone.drop-zone:not(#stage-zone):not(#direction-zone):not(#temporary-expanded-zone), .temporary-zone-card-area.drop-zone') : null;
                     const targetExpandedTrash = targetEl ? targetEl.closest('#trash-expanded-zone') : null;
-                    const targetTemporaryZone = targetEl ? (targetEl.closest('#temporary-expanded-zone') || targetEl.closest('.temporary-zone-card-area')) : null;                    // まず元の場所からカードを削除
+                    const targetTemporaryZone = targetEl ? (targetEl.closest('#temporary-expanded-zone') || targetEl.closest('.temporary-zone-card-area')) : null; // まず元の場所からカードを削除
                     removeCardFromState(draggedCardData, sourceInfo);
 
                     // ドロップ先を判定してから移動処理を実行
@@ -712,46 +653,36 @@ document.addEventListener('DOMContentLoaded', () => {
             slotArray = gameState.zones.stage[fromInfo.slotIndex][fromInfo.slotColor];
         }
 
-        if (slotArray && slotArray.length > 0) { // direction or stage (these are arrays of objects like {cardId: "...", isStandby: ...})
-            // For these zones, we assume the dragged card is the one visually on top,
-            // which corresponds to the last element in the array.
+        if (slotArray && slotArray.length > 0) {
             const topCardObject = slotArray[slotArray.length - 1];
             if (topCardObject.cardId === cardIdToRemove) {
                 slotArray.pop();
-                // console.log(`[removeCardFromState] Successfully removed card ${cardIdToRemove} from ${zoneId}`);
             } else {
                 console.warn(`[removeCardFromState] Card mismatch in ${zoneId}. Expected: ${cardIdToRemove}, Found: ${topCardObject.cardId}`);
             }
-        } else if (zoneId !== 'direction' && zoneId !== 'stage') { // hand, deck, trash, volNoise, temporary (these are arrays of cardId strings)
+        } else if (zoneId !== 'direction' && zoneId !== 'stage') {
             const zone = gameState.zones[zoneId];
             if (!zone) {
                 console.warn(`[removeCardFromState] Zone ${zoneId} not found`);
                 return;
             }
 
-            if (zoneId === 'deck' || zoneId === 'volNoise') { // Zones that should behave strictly as LIFO for drag operations
+            if (zoneId === 'deck' || zoneId === 'volNoise') {
                 if (zone.length > 0 && zone[zone.length - 1] === cardIdToRemove) {
                     zone.pop();
-                    // console.log(`[removeCardFromState] Successfully removed card ${cardIdToRemove} from ${zoneId} (LIFO)`);
                 } else {
-                    // This case might occur if the card dragged was not the top one, or zone became empty.
-                    // Or if cardIdToRemove is somehow not matching the actual top card string.
-                    // Fallback to indexOf, though this was the source of the original issue with duplicates.
-                    // Proper logging helps understand if this path is taken unexpectedly.
                     console.warn(`[removeCardFromState] ${zoneId} top card mismatch or zone empty. Card to remove: ${cardIdToRemove}. Actual top: ${zone.length > 0 ? zone[zone.length-1] : 'N/A'}. Falling back to indexOf search.`);
                     const index = zone.indexOf(cardIdToRemove);
                     if (index > -1) {
                         zone.splice(index, 1);
-                        console.log(`[removeCardFromState] Removed card ${cardIdToRemove} from ${zoneId} using indexOf`);
                     } else {
                         console.error(`[removeCardFromState] Failed to find card ${cardIdToRemove} in ${zoneId}`);
                     }
                 }
-            } else { // For hand, trash, temporary: remove the specific card by ID using indexOf
+            } else {
                 const index = zone.indexOf(cardIdToRemove);
                 if (index > -1) {
                     zone.splice(index, 1);
-                    // console.log(`[removeCardFromState] Successfully removed card ${cardIdToRemove} from ${zoneId}`);
                 } else {
                     console.warn(`[removeCardFromState] Card ${cardIdToRemove} not found in ${zoneId}`);
                 }
@@ -769,11 +700,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (toInfo.slotIndex !== undefined) {
                 // ディレクションスロットに既にカードがある場合は追加しない
                 if (gameState.zones.direction[toInfo.slotIndex].length > 0) {
-                    // console.log("Direction slot already full. Card not added.");
                     return false; 
                 }
                 gameState.zones.direction[toInfo.slotIndex].push(cardObject);
-                // console.log(`[addCardToState] Added card ${cardData.cardId} to direction slot ${toInfo.slotIndex}`);
                 return true;
             }
             return false; // slotIndex が undefined の場合
@@ -782,14 +711,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (toInfo.slotColor === 'blue') {
                     // 青スロットに既にカードがある場合は追加しない
                     if (gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor].length > 0) {
-                        // console.log("Blue stage slot already full. Card not added.");
                         return false;
                     }
                     cardObject.isStandby = true;
                 }
                 // 他の色（green, red）のスロットや、空の青スロットへの追加
                 gameState.zones.stage[toInfo.slotIndex][toInfo.slotColor].push(cardObject);
-                // console.log(`[addCardToState] Added card ${cardData.cardId} to stage slot ${toInfo.slotIndex} ${toInfo.slotColor}`);
                 return true;
             }
             return false; // slotIndex または slotColor が undefined の場合
@@ -804,7 +731,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (zoneId === 'volNoise') {
                     shuffle(gameState.zones.volNoise); // VOLノイズ置き場に追加されたらシャッフル
                 }
-                // console.log(`[addCardToState] Added card ${cardData.cardId} to ${zoneId}`);
                 return true;
             }
             console.warn(`[addCardToState] Failed to add card ${cardData.cardId} to ${zoneId}:`, { zone: !!zone, cardIdType: typeof cardObject.cardId });
@@ -844,8 +770,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // 「山札からサーチ」ボタンの処理は setupEventListeners で個別に行う
         // 「VOLノイズからサーチ」ボタンの処理は setupEventListeners で個別に行う
         // 「テンポラリーゾーンを開く」ボタンの処理は setupEventListeners で個別に行う
-
-
         if (element.classList.contains('pile-zone')) {
             if (zoneId === 'deck' && gameState.zones.deck.length > 0) {
                 // テンポラリーゾーンが開いているか確認
@@ -872,7 +796,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (cardId) { // cardId が存在する場合のみ（カードのタップ）
             if (currentTime - lastTapTime <= DOUBLE_TAP_THRESHOLD && lastTapTargetCardId === cardId) {
                 // Double tap detected
-                // console.log('Double tap on card:', cardId);
                 // ここでカード拡大表示などの処理を将来的に追加可能
                 lastTapTime = 0;
             } else {
@@ -1439,16 +1362,9 @@ document.addEventListener('DOMContentLoaded', () => {
         cookieString += `;path=${basePath || '/'}`;
         
         document.cookie = cookieString;
-        
-        // デバッグ用ログ（GitHub Pages環境での確認用）
-        console.log('Cookie set:', cookieString);
     }
     
     function getCookie(name) {
-        // デバッグ用ログ（GitHub Pages環境での確認用）
-        console.log('Getting cookie:', name);
-        console.log('All cookies:', document.cookie);
-        
         const nameEQ = name + "=";
         const ca = document.cookie.split(';');
         for (let i = 0; i < ca.length; i++) {
@@ -1456,29 +1372,21 @@ document.addEventListener('DOMContentLoaded', () => {
             while (c.charAt(0) === ' ') c = c.substring(1, c.length);
             if (c.indexOf(nameEQ) === 0) {
                 const value = c.substring(nameEQ.length, c.length);
-                console.log('Cookie found:', name, '=', value);
                 return value;
             }
         }
-        console.log('Cookie not found:', name);
         return null;
     }
     
     function loadBackgroundFromCookie() {
-        console.log('Loading background from cookie...');
         const savedBackground = getCookie('playmat-background');
-        console.log('Saved background value:', savedBackground);
         
         if (savedBackground) {
             if (savedBackground === 'none') {
-                console.log('Setting background to none');
                 document.body.style.backgroundImage = '';
             } else {
-                console.log('Setting background to:', savedBackground);
                 setBackgroundWithCheck(savedBackground);
             }
-        } else {
-            console.log('No saved background found');
         }
     }
 
@@ -1491,31 +1399,24 @@ document.addEventListener('DOMContentLoaded', () => {
         setCookie('deck-single', singleDeck, 30);
         setCookie('deck-p1', dualDeckP1, 30);
         setCookie('deck-p2', dualDeckP2, 30);
-        
-        console.log('Deck data saved to cookies');
     }
 
     // クッキーからデッキデータを読み込む関数
     function loadDeckDataFromCookie() {
-        console.log('Loading deck data from cookies...');
-        
         const savedSingleDeck = getCookie('deck-single');
         const savedDeckP1 = getCookie('deck-p1');
         const savedDeckP2 = getCookie('deck-p2');
         
         if (savedSingleDeck) {
             document.getElementById('deck-string').value = savedSingleDeck;
-            console.log('Loaded single deck data');
         }
         
         if (savedDeckP1) {
             document.getElementById('deck-string-p1').value = savedDeckP1;
-            console.log('Loaded player 1 deck data');
         }
         
         if (savedDeckP2) {
             document.getElementById('deck-string-p2').value = savedDeckP2;
-            console.log('Loaded player 2 deck data');
         }
     }
 
@@ -1535,37 +1436,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 setCookie('deck-p2', '', 30);
                 break;
         }
-        console.log(`Cleared deck data for: ${deckType}`);
     }
     
     function changeBackground() {
         const currentBg = document.body.style.backgroundImage;
-        console.log('Current background:', currentBg);
         
         // 現在の背景状態を判定
         if (!currentBg || currentBg === '' || currentBg === 'none') {
             // 未設定 → wall.png
-            console.log('Changing to wall.png');
             setBackgroundWithCheck('item/wall.png');
             setCookie('playmat-background', 'item/wall.png');
         } else if (currentBg.includes('wall.png') && !currentBg.includes('wall1.png') && !currentBg.includes('wall2.png')) {
             // wall.png → wall1.png
-            console.log('Changing to wall1.png');
             setBackgroundWithCheck('item/wall1.png');
             setCookie('playmat-background', 'item/wall1.png');
         } else if (currentBg.includes('wall1.png')) {
             // wall1.png → wall2.png
-            console.log('Changing to wall2.png');
             setBackgroundWithCheck('item/wall2.png');
             setCookie('playmat-background', 'item/wall2.png');
         } else if (currentBg.includes('wall2.png')) {
             // wall2.png → 未設定
-            console.log('Changing to none');
             document.body.style.backgroundImage = '';
             setCookie('playmat-background', 'none');
         } else {
             // 不明な状態の場合は未設定に戻す
-            console.log('Unknown state, changing to none');
             document.body.style.backgroundImage = '';
             setCookie('playmat-background', 'none');
         }
@@ -1604,8 +1498,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkAuthentication() {
         const authCookie = getCookie(AUTH_COOKIE_NAME);
         const isAuthenticated = authCookie === 'authenticated';
-        
-        console.log('Authentication check:', { authCookie, isAuthenticated });
         
         if (isAuthenticated) {
             showDeckInputScreen();
@@ -1652,7 +1544,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (enteredPasswordHash === CORRECT_PASSWORD_HASH) {
                 // 認証成功
                 setCookie(AUTH_COOKIE_NAME, 'authenticated', AUTH_EXPIRY_DAYS);
-                console.log('Authentication successful');
                 
                 // エラーメッセージを隠す
                 errorMessage.style.display = 'none';
@@ -1662,7 +1553,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showDeckInputScreen();
             } else {
                 // 認証失敗
-                console.log('Authentication failed');
                 errorMessage.style.display = 'block';
                 passwordInput.value = '';
                 passwordInput.focus();
@@ -1767,8 +1657,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('両方のプレイヤーのデッキリストを入力してください。');
                 return;
             }
-            console.log("Player 1 Converted Deck List:", deckList1.join('/')); // デバッグ表示
-            console.log("Player 2 Converted Deck List:", deckList2.join('/')); // デバッグ表示
             initGameState(deckList1, true, deckList2);
         } else {
             let deckString = document.getElementById('deck-string').value.trim();
@@ -1788,7 +1676,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('有効なデッキリストを入力してください。');
                 return;
             }
-            console.log("Converted Deck List:", deckList.join('/')); // デバッグ表示
             initGameState(deckList, false);
         }
           showGameScreen();
@@ -1831,9 +1718,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.remove('fullscreen-mode');
         }
         
-        // デバッグ用ログ（本番では削除可能）
-        console.log('全画面状態変更:', isFullscreen ? '全画面モード' : '通常モード');
-        
         // モバイル用ボタンの表示状態を強制更新
         updateMobileFullscreenButton();
     }
@@ -1855,10 +1739,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mobileBtn) {
             if (isGameVisible && !isFullscreen && isMobile) {
                 mobileBtn.style.display = 'block';
-                console.log('モバイル全画面ボタンを表示');
             } else {
                 mobileBtn.style.display = 'none';
-                console.log('モバイル全画面ボタンを非表示:', { isGameVisible, isFullscreen, isMobile });
             }
         }
     }
@@ -1887,17 +1769,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', updateMobileFullscreenButton);    // 初期表示状態を設定
     setTimeout(updateMobileFullscreenButton, 100);
       // クッキーから保存されたプレイマット設定を復元
-    console.log('GitHub Pages Cookie Test - Page loaded');
-    console.log('Current location:', window.location.href);
-    console.log('Current protocol:', window.location.protocol);
-    console.log('Current hostname:', window.location.hostname);
     loadBackgroundFromCookie();
 
     // デッキデータを復元
     loadDeckDataFromCookie();
-
-    // デッキデータを復元
-    loadDeckDataFromCookie();// パスワード認証システムの初期化
+    
+    // パスワード認証システムの初期化
     setupPasswordAuthentication();
     
     // 認証チェックを実行（認証済みならデッキ選択画面、未認証ならパスワード画面を表示）
