@@ -522,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // 山札からのドラッグの場合は裏面を表示
                         if (isPile && sourceInfo.zoneId === 'deck') {
-                            draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.webp')`;
+                            draggedCardVisual.style.backgroundImage = `url('items/back.webp')`;
                         } else {
                             draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.webp')`;
                         }
@@ -932,10 +932,16 @@ document.addEventListener('DOMContentLoaded', () => {
         volNoiseZoneEl.addEventListener('mousedown', e => handlePressStart(e, volNoiseZoneEl, 'volNoise'));
         volNoiseZoneEl.addEventListener('touchstart', e => handlePressStart(e, volNoiseZoneEl, 'volNoise'), { passive: false });
         document.querySelectorAll('.counter-btn').forEach(btn => btn.addEventListener('click', () => {
-            const counter = btn.dataset.counter;
+            const { counter, amount } = btn.dataset;
+            const delta = Number.parseInt(amount, 10);
+            if (!counter || Number.isNaN(delta)) {
+                console.warn('[counter-btn] invalid dataset', { counter, amount });
+                return;
+            }
             const currentPlayerCounters = getCurrentPlayerCounters();
-            currentPlayerCounters[counter] += parseInt(btn.dataset.amount, 10);
-            if (currentPlayerCounters[counter] < 0) currentPlayerCounters[counter] = 0;
+            const prev = Number(currentPlayerCounters[counter]) || 0;
+            const next = Math.max(0, prev + delta);
+            currentPlayerCounters[counter] = next;
             renderAll();
         }));
         document.getElementById('shuffle-btn').addEventListener('click', () => {
