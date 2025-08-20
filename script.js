@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         turn: document.getElementById('turn-value'),
     };
     let gameState = {};
-    const CARD_IMAGE_PATH = './Cards/';
+    const CARD_IMAGE_PATH = './cards/';
     const DOUBLE_TAP_THRESHOLD = 300;
     const LONG_PRESS_DELAY = 500;
     let lastTapTime = 0;
@@ -405,11 +405,11 @@ document.addEventListener('DOMContentLoaded', () => {
         cardEl.dataset.cardId = actualCardId;
 
         if ((zoneId === 'deck' || zoneId === 'volNoise') && interactiveType === 'none') { // 山札またはVOLノイズのパイル表示のみ裏面
-             cardEl.style.backgroundImage = `url('item/back.png')`;
+             cardEl.style.backgroundImage = `url('items/back.webp')`;
         } else if (actualCardId && typeof actualCardId === 'string' && actualCardId.trim() !== '') { // actualCardId が null でなく、空でない有効な文字列の場合のみ表面画像を設定
-             cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}${actualCardId}.png')`;
+             cardEl.style.backgroundImage = `url('${CARD_IMAGE_PATH}${actualCardId}.webp')`;
         } else {           
-             cardEl.style.backgroundImage = `url('item/back.png')`;
+             cardEl.style.backgroundImage = `url('items/back.webp')`;
         }
 
         if (isStandby) cardEl.style.transform = 'rotate(90deg)';
@@ -489,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cardZoomOverlay = document.getElementById('card-zoom-overlay');
                 const zoomedCardImage = document.getElementById('zoomed-card-image');
                 if (cardIdToZoom && cardZoomOverlay && zoomedCardImage) {
-                    zoomedCardImage.style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardIdToZoom}.png')`;
+                    zoomedCardImage.style.backgroundImage = `url('${CARD_IMAGE_PATH}${cardIdToZoom}.webp')`;
                     cardZoomOverlay.style.display = 'flex';
                     longPressActionCompleted = true; // 長押しアクションが完了したことをマーク
                 }
@@ -522,9 +522,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // 山札からのドラッグの場合は裏面を表示
                         if (isPile && sourceInfo.zoneId === 'deck') {
-                            draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.png')`;
+                            draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}back.webp')`;
                         } else {
-                            draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.png')`;
+                            draggedCardVisual.style.backgroundImage = `url('${CARD_IMAGE_PATH}${draggedCardData.cardId}.webp')`;
                         }
                         
                         if (draggedCardData.isStandby) draggedCardVisual.style.transform = 'rotate(90deg)';
@@ -1100,7 +1100,7 @@ document.addEventListener('DOMContentLoaded', () => {
             diceResultEl.className = 'dice-result';
 
             const roll = Math.floor(Math.random() * 6) + 1; // 1～6の乱数
-            diceResultEl.style.backgroundImage = `url('item/dice${roll}.png')`; // 画像変更
+            diceResultEl.style.backgroundImage = `url('items/dice${roll}.webp')`; // 画像変更
             diceResultEl.style.display = 'flex';
             diceContainerEl.appendChild(diceResultEl); // コンテナに追加
 
@@ -1443,19 +1443,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 現在の背景状態を判定
         if (!currentBg || currentBg === '' || currentBg === 'none') {
-            // 未設定 → wall.png
-            setBackgroundWithCheck('item/wall.png');
-            setCookie('playmat-background', 'item/wall.png');
-        } else if (currentBg.includes('wall.png') && !currentBg.includes('wall1.png') && !currentBg.includes('wall2.png')) {
-            // wall.png → wall1.png
-            setBackgroundWithCheck('item/wall1.png');
-            setCookie('playmat-background', 'item/wall1.png');
-        } else if (currentBg.includes('wall1.png')) {
-            // wall1.png → wall2.png
-            setBackgroundWithCheck('item/wall2.png');
-            setCookie('playmat-background', 'item/wall2.png');
-        } else if (currentBg.includes('wall2.png')) {
-            // wall2.png → 未設定
+            // 未設定 → wall.webp
+            setBackgroundWithCheck('items/wall.webp');
+            setCookie('playmat-background', 'items/wall.webp');
+        } else if (currentBg.includes('wall.webp') && !currentBg.includes('wall1.webp') && !currentBg.includes('wall2.webp')) {
+            // wall.webp → wall1.webp
+            setBackgroundWithCheck('items/wall1.webp');
+            setCookie('playmat-background', 'items/wall1.webp');
+        } else if (currentBg.includes('wall1.webp')) {
+            // wall1.webp → wall2.webp
+            setBackgroundWithCheck('items/wall2.webp');
+            setCookie('playmat-background', 'items/wall2.webp');
+        } else if (currentBg.includes('wall2.webp')) {
+            // wall2.webp → 未設定
             document.body.style.backgroundImage = '';
             setCookie('playmat-background', 'none');
         } else {
@@ -1912,7 +1912,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     return `<div class="opponent-card ${card.isStandby ? 'standby' : ''}" 
                                                          style="z-index: ${cardIndex + 1}; 
                                                                 transform: ${transformValue};
-                                                                background-image: url('./Cards/${card.cardId}.png');
+                                                                background-image: url('./cards/${card.cardId}.webp');
                                                                 background-size: 180%;
                                                                 background-position: center 40%;">
                                                     </div>`;
@@ -1934,7 +1934,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 return `                                    <div class="opponent-direction-slot">                                        ${directionCards.map((card, cardIndex) => `                                            <div class="opponent-card ${card.isStandby ? 'standby' : ''}"
                                                  style="z-index: ${cardIndex + 1}; 
                                                         transform: translate(${cardIndex * 8}px, ${cardIndex * 6}px);
-                                                        background-image: url('./Cards/${card.cardId}.png');
+                                                        background-image: url('./cards/${card.cardId}.webp');
                                                         background-size: 180%;
                                                         background-position: center 40%;">
                                             </div>
@@ -1958,7 +1958,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="opponent-hand-area">
                 <div class="zone-title">手札 (${opponent.zones.hand.length}枚)</div>
                 <div class="opponent-hand-cards">                    ${opponent.zones.hand.map(cardId => `
-                        <div class="opponent-hand-card" style="background-image: url('./item/back.png'); background-size: cover; background-position: center;"></div>
+                        <div class="opponent-hand-card" style="background-image: url('./items/back.webp'); background-size: cover; background-position: center;"></div>
                     `).join('')}
                 </div>
             </div>

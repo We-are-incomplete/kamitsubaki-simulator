@@ -751,7 +751,7 @@ html {
 	color: white;
 	z-index: 2000;
 	pointer-events: none;
-	background-image: url("item/dice1.png");
+	background-image: url("items/dice1.webp");
 	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;
