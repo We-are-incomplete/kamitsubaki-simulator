@@ -232,17 +232,23 @@
             });
         }
 
+        const container = document.getElementById('game-container');
+        const isInteractive = (el) =>
+          !!(el && el.closest('input, textarea, select, button, a, [contenteditable="true"]'));
         let lastTouchEnd = 0;
-        document.addEventListener('touchend', function (event) {
-            const now = Date.now();
-            if (now - lastTouchEnd <= 300) {
-            event.preventDefault();
-            }
-            lastTouchEnd = now;
+
+        container.addEventListener('touchend', (event) => {
+          if (isInteractive(event.target)) return;
+          const now = (typeof event.timeStamp === 'number') ? event.timeStamp : performance.now();
+          if (now - lastTouchEnd <= 300) {
+            if (event.cancelable) event.preventDefault();
+          }
+          lastTouchEnd = now;
         }, { passive: false });
 
-        document.addEventListener('touchmove', function (e) {
-            e.preventDefault();
+        container.addEventListener('touchmove', (e) => {
+          if (isInteractive(e.target)) return;
+          if (e.cancelable) e.preventDefault();
         }, { passive: false });
     </script>
 </body>
