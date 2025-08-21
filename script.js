@@ -161,7 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let gameState = {};
     const CARD_IMAGE_PATH = './cards/';
-    const DOUBLE_TAP_THRESHOLD = 300;
+    window.DOUBLE_TAP_THRESHOLD = 300;
+    const DOUBLE_TAP_THRESHOLD = window.DOUBLE_TAP_THRESHOLD || 300;
     const LONG_PRESS_DELAY = 500;
     let lastTapTime = 0;
     let lastTapTargetCardId = null;
@@ -730,7 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleTap(element, tapInfo) {
-        const currentTime = new Date().getTime();
+        const currentTime = performance.now();
         const { zoneId, slotIndex, slotColor } = tapInfo;
         // elementがカードかゾーンかでcardIdの取得方法を変える
         const cardId = element.classList.contains('card') ? element.dataset.cardId : null;

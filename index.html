@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>KAMITSUBAKI CARD GAME 一人回し用シミュレーター</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
@@ -224,10 +224,10 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then(registration => {
+                navigator.serviceWorker.register('./sw.js', { scope: './' }).then(registration => {
                     console.log('ServiceWorker registration successful with scope: ', registration.scope);
                 }, err => {
-                    console.log('ServiceWorker registration failed: ', err);
+                    console.error('ServiceWorker registration failed: ', err);
                 });
             });
         }
@@ -241,10 +241,8 @@
             'button, [role="button"]'
         );
         document.addEventListener('touchend', (e) => {
-            if (isInteractive(e.target)) return;
             const now = performance.now();
-            const threshold = (typeof DOUBLE_TAP_THRESHOLD !== 'undefined')
-              ? DOUBLE_TAP_THRESHOLD : 300;
+            const threshold = window.DOUBLE_TAP_THRESHOLD || 300;
             if (now - lastTouchEnd <= threshold) {
                 if (e.cancelable) e.preventDefault();
             }

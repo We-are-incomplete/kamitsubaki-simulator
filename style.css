@@ -19,6 +19,7 @@ html {
 	overflow: hidden;
 	user-select: none;
 	-webkit-user-select: none;
+	touch-action: manipulation;
 	/* 初期状態では背景画像なし */
 	background-size: cover; /* 画面全体に画像を拡大縮小 */
 	background-repeat: no-repeat; /* 画像を繰り返さない */
