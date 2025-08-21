@@ -242,8 +242,7 @@
         );
         document.addEventListener('touchend', (e) => {
             const now = performance.now();
-            const threshold = (typeof DOUBLE_TAP_THRESHOLD !== 'undefined')
-              ? DOUBLE_TAP_THRESHOLD : 300;
+            const threshold = window.DOUBLE_TAP_THRESHOLD || 300;
             if (now - lastTouchEnd <= threshold) {
                 if (e.cancelable) e.preventDefault();
             }

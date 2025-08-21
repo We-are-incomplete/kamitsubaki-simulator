@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let gameState = {};
     const CARD_IMAGE_PATH = './cards/';
-    const DOUBLE_TAP_THRESHOLD = 300;
+    window.DOUBLE_TAP_THRESHOLD = 300;
     const LONG_PRESS_DELAY = 500;
     let lastTapTime = 0;
     let lastTapTargetCardId = null;
