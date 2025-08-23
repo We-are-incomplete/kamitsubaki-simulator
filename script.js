@@ -1,155 +1,185 @@
 // KAMITSUBAKI CARD GAME 一人回し用シミュレーター - メインスクリプト
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Helper dictionaries/arrays from CodeMaker.cs
-    const CodetoNumber_alter = {
-        "0": "ex", "1": "A", "2": "B", "3": "C", "4": "D", "5": "E", "6": "F", "7": "G", "8": "H"
-    };
+    const CHAR_MAP =
+        "AIQYgow5BJRZhpx6CKSaiqy7DLTbjrz8EMUcks19FNVdlt2!GOWemu3?HPXfnv4/";
+    const MAP1_EXPANSION = "eABCDEFGHI";
+    const MAP2_EXPANSION = "pJKLMNOPQR";
 
-    const ElementtoNumber_alter = {
-        "1": "A", "2": "S", "3": "M", "4": "D"
-    };
-
-    const NumbertoNumber_alter = {
-        "01": "1", "02": "2", "03": "3", "04": "4", "05": "5", "06": "6", "07": "7", "08": "8", "09": "9"
-    };
-
-    const numberToLetter = [
-        ['A', 'I', 'Q', 'Y', 'g', 'o', 'w', '5'],
-        ['B', 'J', 'R', 'Z', 'h', 'p', 'x', '6'],
-        ['C', 'K', 'S', 'a', 'i', 'q', 'y', '7'],
-        ['D', 'L', 'T', 'b', 'j', 'r', 'z', '8'],
-        ['E', 'M', 'U', 'c', 'k', 's', '1', '9'],
-        ['F', 'N', 'V', 'd', 'l', 't', '2', '!'],
-        ['G', 'O', 'W', 'e', 'm', 'u', '3', '?'],
-        ['H', 'P', 'X', 'f', 'n', 'v', '4', '/'],
-    ];
-
-    const letterToNumber_x = {};
-    const letterToNumber_y = {};
-    for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
-            letterToNumber_x[numberToLetter[i][j]] = j;
-            letterToNumber_y[numberToLetter[i][j]] = i;
-        }
-    }
-
-    function readKCGCode(codeData) {
-        let resultDeckList = [];
-
-        // Change 6: Decode zeroCount1 and remove KCG- prefix and key
-        let parts = codeData.split('-');
-        if (parts.length < 2 || parts[0] !== "KCG") {
-            console.error("Invalid KCG code format.");
-            return [];
-        }
-        let encodedPart = parts[1];
-        let key = encodedPart[0];
-        let zeroCount1 = 7 - letterToNumber_y[key];
-        encodedPart = encodedPart.substring(1);
-
-        let Code6 = [];
-        for (let i = 0; i < encodedPart.length; i++) {
-            let char = encodedPart[i];
-            if (letterToNumber_y[char] === undefined || letterToNumber_x[char] === undefined) {
-                console.error(`Invalid character in KCG code: ${char}`);
-                return [];
+    function readKCGCode(deckCode) {
+        try {
+            // --- 1. 入力チェックと初期処理 ---
+            if (!deckCode || !deckCode.startsWith("KCG-")) {
+                console.error("Invalid deck code format: Must start with 'KCG-'.");
+                return []; // エラー時は空配列を返す
             }
-            Code6.push(letterToNumber_y[char]);
-            Code6.push(letterToNumber_x[char]);
-        }
-
-        let binaryString = "";
-        for (let i = 0; i < Code6.length; i++) {
-            binaryString += Code6[i].toString(2).padStart(3, '0');
-        }
-        binaryString = binaryString.substring(0, binaryString.length - zeroCount1);
-
-        let Code5 = [];
-        for (let i = 0; i < binaryString.length; i += 10) {
-            Code5.push(binaryString.substring(i, i + 10));
-        }
-
-        let Code4 = [];
-        for (let i = 0; i < Code5.length; i++) {
-            let item = Code5[i];
-            let signedValue;
-            if (item[0] === '1') {
-                signedValue = parseInt(item, 2) | (~((1 << 10) - 1));
-            } else {
-                signedValue = parseInt(item, 2);
+            const rawPayloadWithVersion = deckCode.substring(4);
+            if (rawPayloadWithVersion.length === 0) {
+                console.error("Invalid deck code: Payload is empty.");
+                return []; // エラー時は空配列を返す
             }
-            Code4.push(500 - signedValue);
-        }
-
-        let intermediateDeckCode = "";
-        for (let i = 0; i < Code4.length - 1; i++) {
-            let item = Code4[i];
-            let str = item.toString();
-            if (item >= 1 && item <= 9) str = "00" + str;
-            else if (item >= 10 && item <= 99) str = "0" + str;
-            intermediateDeckCode += str;
-        }
-
-        let lastItem = Code4[Code4.length - 1];
-        let lastItemStr = lastItem.toString();
-        let totalLengthAfterLastItem = intermediateDeckCode.length + lastItemStr.length;
-
-        if (totalLengthAfterLastItem % 5 === 0) {
-            intermediateDeckCode += lastItemStr;
-        } else if (totalLengthAfterLastItem % 5 === 4) {
-            intermediateDeckCode += "0" + lastItemStr;
-        } else if (totalLengthAfterLastItem % 5 === 3) {
-            intermediateDeckCode += "00" + lastItemStr;
-        }
-
-        let Code2 = [];
-        for (let i = 0; i < intermediateDeckCode.length; i += 5) {
-            Code2.push(intermediateDeckCode.substring(i, i + 5));
-        }
-
-        for (let i = 0; i < Code2.length; i++) {
-            let cardData = Code2[i];
-            let encodedNum = parseInt(cardData.substring(4));
-            let shopcode = cardData[0];
-            let typecode = cardData[1];
-            let no = cardData.substring(2, 4);
-
-            let idPrefix;
-            let originalNum;
-
-            if (shopcode === '0') {
-                if (encodedNum >= 5) {
-                    idPrefix = 'prm';
-                    originalNum = encodedNum - 5;
-                } else {
-                    idPrefix = 'ex';
-                    originalNum = encodedNum;
+            for (const char of rawPayloadWithVersion) {
+                if (CHAR_MAP.indexOf(char) === -1) {
+                    console.error(`Invalid character in deck code: ${char}`);
+                    return []; // エラー時は空配列を返す
                 }
+            }
+            // --- 2. パディングビット数の計算 ---
+            const fifthCharOriginal = rawPayloadWithVersion[0];
+            const indexFifthChar = CHAR_MAP.indexOf(fifthCharOriginal) + 1;
+            let deckCodeFifthCharQuotient = Math.floor(indexFifthChar / 8);
+            const remainderFifthChar = indexFifthChar % 8;
+            let charsToRemoveFromPayloadEnd;
+            if (remainderFifthChar === 0) {
+                charsToRemoveFromPayloadEnd = 0;
             } else {
-                idPrefix = CodetoNumber_alter[shopcode];
-                originalNum = encodedNum;
+                deckCodeFifthCharQuotient++;
+                charsToRemoveFromPayloadEnd = 8 - deckCodeFifthCharQuotient;
             }
+            // --- 3. ペイロードを6ビットのバイナリ文字列に変換 ---
+            let initialBinaryPayload = "";
+            const payload = rawPayloadWithVersion.substring(1);
+            for (let i = 0; i < payload.length; i++) {
+                const char = payload[i];
+                const charIndex = CHAR_MAP.indexOf(char);
+                initialBinaryPayload += charIndex.toString(2).padStart(6, "0");
+            }
+            // --- 4. パディングを削除 ---
+            let processedBinaryPayload = initialBinaryPayload;
+            if (
+                charsToRemoveFromPayloadEnd > 0 &&
+                initialBinaryPayload.length >= charsToRemoveFromPayloadEnd
+            ) {
+                processedBinaryPayload = initialBinaryPayload.substring(
+                    0,
+                    initialBinaryPayload.length - charsToRemoveFromPayloadEnd,
+                );
+            } else if (charsToRemoveFromPayloadEnd > 0) {
+                processedBinaryPayload = "";
+            }
+            // --- 5. バイナリを数値文字列に変換 ---
+            let intermediateString = "";
+            for (let i = 0; i + 10 <= processedBinaryPayload.length; i += 10) {
+                const tenBitChunk = processedBinaryPayload.substring(i, i + 10);
 
-            if (!idPrefix) {
-                console.warn(`Unknown shop code: ${shopcode}`);
-                continue;
-            }
-            let idElement = ElementtoNumber_alter[typecode];
-            if (!idElement) {
-                console.warn(`Unknown element code: ${typecode}`);
-                continue;
-            }
+                let signedDecimalVal;
+                if (tenBitChunk[0] === "1") {
+                    const unsignedVal = parseInt(tenBitChunk, 2);
+                    signedDecimalVal = unsignedVal - 1024; // 1024 = 2^10
+                } else {
+                    signedDecimalVal = parseInt(tenBitChunk, 2);
+                }
 
-            let actualNo = NumbertoNumber_alter[no] ? NumbertoNumber_alter[no] : parseInt(no).toString();
-            let cardId = idPrefix + idElement + '-' + actualNo;
+                const nVal = 500 - signedDecimalVal;
 
-            for (let j = 0; j < originalNum; j++) {
-                resultDeckList.push(cardId);
+                let formattedNVal;
+                if (nVal >= 0 && nVal < 10) {
+                    formattedNVal = "XX" + nVal.toString();
+                } else if (nVal >= 10 && nVal < 100) {
+                    formattedNVal = "X" + nVal.toString();
+                } else {
+                    formattedNVal = nVal.toString();
+                }
+                intermediateString += formattedNVal;
             }
+            // --- 6. 数値文字列を5の倍数に調整し、'X'を'0'に置換 ---
+            const remainderForFive = intermediateString.length % 5;
+            let adjustedString = intermediateString;
+            if (remainderForFive !== 0) {
+                let charsToActuallyRemove = remainderForFive;
+                let stringAsArray = intermediateString.split("");
+                let removedXCount = 0;
+                for (
+                    let i = stringAsArray.length - 1;
+                    i >= 0 && removedXCount < charsToActuallyRemove;
+                    i--
+                ) {
+                    if (stringAsArray[i] === "X") {
+                        stringAsArray.splice(i, 1);
+                        removedXCount++;
+                    }
+                }
+                const remainingCharsToRemove = charsToActuallyRemove - removedXCount;
+                if (remainingCharsToRemove > 0) {
+                    stringAsArray.splice(
+                        stringAsArray.length - remainingCharsToRemove,
+                        remainingCharsToRemove,
+                    );
+                }
+                adjustedString = stringAsArray.join("");
+            }
+            const finalNumericString = adjustedString.replace(/X/g, "0");
+            // --- 7. 数値文字列をカード情報にデコード ---
+            const decodedEntries = [];
+            if (finalNumericString.length % 5 !== 0) {
+                console.error("Final numeric string length is not a multiple of 5.");
+                return []; // エラー時は空配列を返す
+            }
+            for (let i = 0; i < finalNumericString.length; i += 5) {
+                const fiveDigitChunk = finalNumericString.substring(i, i + 5);
+                const c1 = parseInt(fiveDigitChunk[0], 10);
+                const c2 = parseInt(fiveDigitChunk[1], 10);
+                const c3 = parseInt(fiveDigitChunk[2], 10);
+                const c4 = parseInt(fiveDigitChunk[3], 10);
+                const c5 = parseInt(fiveDigitChunk[4], 10);
+                let expansionMap;
+                if (c5 >= 1 && c5 <= 4) {
+                    expansionMap = MAP1_EXPANSION;
+                } else if (c5 >= 6 && c5 <= 9) {
+                    expansionMap = MAP2_EXPANSION;
+                } else {
+                    continue;
+                }
+                if (c1 >= expansionMap.length) {
+                    continue;
+                }
+                const selectedCharFromMap = expansionMap[c1];
+                let expansion;
+                if (selectedCharFromMap === "e") {
+                    expansion = "ex";
+                } else if (selectedCharFromMap === "p") {
+                    expansion = "prm";
+                } else {
+                    expansion = selectedCharFromMap;
+                }
+                let type;
+                switch (c2) {
+                    case 1:
+                        type = "A";
+                        break;
+                    case 2:
+                        type = "S";
+                        break;
+                    case 3:
+                        type = "M";
+                        break;
+                    case 4:
+                        type = "D";
+                        break;
+                    default:
+                        continue;
+                }
+                const numberPartInt = c3 * 10 + c4;
+                if (numberPartInt < 1 || numberPartInt > 50) {
+                    continue;
+                }
+                const cardIdPart = `${expansion}${type}-${numberPartInt}`;
+                decodedEntries.push({ cardIdPart, originalC5Value: c5 });
+            }
+            // --- 8. 最終的なデッキデータ文字列を生成 ---
+            const deckListOutput = [];
+            for (const entry of decodedEntries) {
+                const repeatCount = entry.originalC5Value % 5;
+                for (let r = 0; r < repeatCount; r++) {
+                    deckListOutput.push(entry.cardIdPart);
+                }
+            }
+            console.log("KCGデッキコードのデコード完了:", deckListOutput);
+            return deckListOutput;
+        } catch (error) {
+            console.error("KCGデッキコードのデコード中にエラーが発生:", error);
+            return []; // エラー時は空配列を返す
         }
-
-        return resultDeckList;
     }
 
     const counters = {
@@ -231,19 +261,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 } : null
             }
         };
-        
         // 現在のプレイヤーのデータを直接アクセス用に設定
         gameState.counters = gameState.players[gameState.currentPlayer].counters;
         gameState.zones = gameState.players[gameState.currentPlayer].zones;
         gameState.initialDeckOrder = gameState.players[gameState.currentPlayer].initialDeckOrder;
-        
         // 初期手札を引く
         for (let i = 0; i < 7; i++) {
             if (gameState.zones.deck.length > 0) {
                 gameState.zones.hand.push(gameState.zones.deck.pop());
             }
         }
-        
         if (isDualMode && gameState.players[2]) {
             // プレイヤー2の初期手札
             for (let i = 0; i < 7; i++) {
@@ -255,22 +282,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderAll() {
-        // Remove all cards and zone counts
         document.querySelectorAll('.card, .zone-count').forEach(el => el.remove());
-
-        // Render deck, trash, and volNoise pile
         ['deck', 'trash', 'volNoise'].forEach(zoneId => {
             const zoneEl = document.getElementById(`${zoneId}-zone`);
             if (!zoneEl) {
                 console.error(`[RenderAll] Zone element with ID '${zoneId}-zone' not found.`);
                 return;
             }
-            zoneEl.innerHTML = ''; // Clear the zone before re-rendering
-
+            zoneEl.innerHTML = '';
             const zoneData = gameState.zones[zoneId];
             if (zoneData) { 
                 if (zoneData.length > 0) {
-                    // パイルの一番上のカードIDを取得 (gameState.zonesの各パイルはカードID文字列の配列を想定)
                     const topCardDisplayId = zoneData.slice(-1)[0];
                     zoneEl.appendChild(createCardElement(topCardDisplayId, false, zoneId, 'none'));
                 } 
@@ -278,21 +300,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 countEl.className = 'zone-count';
                 countEl.textContent = zoneData.length;
                 zoneEl.appendChild(countEl);
-
             } else {
                 console.warn(`[RenderAll] gameState.zones.${zoneId} is undefined.`);
             }
         });
-
-        // Render hand
         const handZone = document.getElementById('hand-zone');
-        // 手札ゾーン内の既存のカード要素のみを削除
         handZone.querySelectorAll('.card').forEach(cardEl => cardEl.remove());
         gameState.zones.hand.forEach(cardId => {
             handZone.appendChild(createCardElement(cardId, false, 'hand', 'drag'));
         });
-
-        // Render direction
         gameState.zones.direction.forEach((cardArray, index) => {
             const slotEl = document.querySelector(`.card-slot[data-zone-id="direction"][data-slot-index="${index}"]`);
             if (slotEl && cardArray.length > 0) {
@@ -306,8 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
-
-        // Render stage
         gameState.zones.stage.forEach((column, index) => {
             ['green', 'blue', 'red'].forEach(color => {
                 const cardArray = column[color];
@@ -317,50 +331,36 @@ document.addEventListener('DOMContentLoaded', () => {
                         const cardElement = createCardElement(card.cardId, card.isStandby, 'stage', 'drag', index, color);
                         let transformString = '';
                         if (color === 'green') {
-                            // 新しいカード(i = cardArray.length - 1)が一番手前(yOffset = 0)
-                            // 古いカードほど奥に、より上にずれる
-                            const yOffset = (i - (cardArray.length - 1)) * 30; // ずらす量を30pxに増加
+                            const yOffset = (i - (cardArray.length - 1)) * 30;
                             transformString = `translate(0px, ${yOffset}px)`;
                         } else if (color === 'red') {
-                            // 2枚目以降のカードを下に40pxずつずらす
                             const yOffset = i * 40;
                             transformString = `translate(0px, ${yOffset}px)`;
                         } else {
-                            // 青スロットは既存の斜め重ね表示 (現状、青は1枚しか置けない想定だが、念のため)
                             transformString = `translate(${i * 2}px, ${i * 2}px)`;
                         }
-                        
-
                         if (card.isStandby) transformString += ' rotate(90deg)';
                         cardElement.style.transform = transformString;
-                        cardElement.style.zIndex = i; // zIndexで手前に表示
+                        cardElement.style.zIndex = i;
                         slotEl.appendChild(cardElement);
                     });
                 }
             });
         });
-
-        // Update counters
         for (const counterId in counters) {
             counters[counterId].textContent = gameState.counters[counterId];
         }
-
-        // Render expanded trash zone if it's active
         const trashExpandedZoneEl = document.getElementById('trash-expanded-zone');
-        trashExpandedZoneEl.innerHTML = ''; // Clear previous cards
+        trashExpandedZoneEl.innerHTML = '';
         if (trashExpandedZoneEl.style.display === 'flex') { 
             gameState.zones.trash.forEach(cardId => {
-                // 展開ゾーンのカードはドラッグ可能にする
                 const cardElement = createCardElement(cardId, false, 'trash-expanded', 'drag'); 
                 trashExpandedZoneEl.appendChild(cardElement);
             });
         }
-
-        // Render expanded deck zone if it's active
         const deckExpandedZoneEl = document.getElementById('deck-expanded-zone');
-        deckExpandedZoneEl.innerHTML = ''; // Clear previous cards
+        deckExpandedZoneEl.innerHTML = '';
         if (deckExpandedZoneEl.style.display === 'flex') {
-            // 山札の上から（配列の末尾から）順番に表示するために逆順でループ
             for (let i = gameState.zones.deck.length - 1; i >= 0; i--) {
                 const cardId = gameState.zones.deck[i];
                 // 山札展開ゾーンのカードもドラッグ可能にする
@@ -368,28 +368,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 deckExpandedZoneEl.appendChild(cardElement);
             }
         }
-
-        // Render expanded volNoise zone if it's active
         const volNoiseExpandedZoneEl = document.getElementById('volnoise-expanded-zone');
-        volNoiseExpandedZoneEl.innerHTML = ''; // Clear previous cards
+        volNoiseExpandedZoneEl.innerHTML = '';
         if (volNoiseExpandedZoneEl.style.display === 'flex') {
             gameState.zones.volNoise.forEach(cardId => {
-                // VOLノイズ展開ゾーンのカードもドラッグ可能にする
                 const cardElement = createCardElement(cardId, false, 'volnoise-expanded', 'drag');
                 volNoiseExpandedZoneEl.appendChild(cardElement);
             });
         }
-
-        // Render expanded temporary zone if it's active
         const temporaryExpandedZoneEl = document.getElementById('temporary-expanded-zone');
         const temporaryCardAreaEl = temporaryExpandedZoneEl.querySelector('.temporary-zone-card-area');
-        temporaryCardAreaEl.innerHTML = ''; // Clear previous cards
+        temporaryCardAreaEl.innerHTML = '';
         if (temporaryExpandedZoneEl.style.display === 'flex') {
             gameState.zones.temporary.forEach(cardId => {
                 const cardElement = createCardElement(cardId, false, 'temporary-expanded', 'drag');
                 temporaryCardAreaEl.appendChild(cardElement);
             });
-        }        // Update temporary zone button text with card count and color
+        }
         updateTemporaryButtonState();
     }
 
@@ -492,7 +487,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             longPressTimer = null; // タイマー実行後はクリア
         }, LONG_PRESS_DELAY);
-
 
         const onMove = (moveEvent) => {
             const moveX = (moveEvent.touches ? moveEvent.touches[0] : moveEvent).clientX;
@@ -1627,6 +1621,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isDualMode) {
             let deckString1 = document.getElementById('deck-string-p1').value.trim();
             let deckList1;
+            if (!deckString1) { // deckCode.tsの空文字列チェックを適用
+                alert('プレイヤー1のデッキコードが空です。');
+                return;
+            }
             if (deckString1.startsWith('KCG-')) {
                 deckList1 = readKCGCode(deckString1);
                 if (deckList1.length === 0) {
@@ -1634,11 +1632,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             } else {
-                deckList1 = deckString1.split('/').filter(id => id);
+                deckList1 = deckString1.split('/').filter(id => id.trim() !== ''); // trim()を追加
             }
 
             let deckString2 = document.getElementById('deck-string-p2').value.trim();
             let deckList2;
+            if (!deckString2) { // deckCode.tsの空文字列チェックを適用
+                alert('プレイヤー2のデッキコードが空です。');
+                return;
+            }
             if (deckString2.startsWith('KCG-')) {
                 deckList2 = readKCGCode(deckString2);
                 if (deckList2.length === 0) {
@@ -1646,7 +1648,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             } else {
-                deckList2 = deckString2.split('/').filter(id => id);
+                deckList2 = deckString2.split('/').filter(id => id.trim() !== ''); // trim()を追加
             }
             
             if (deckList1.length === 0 || deckList2.length === 0) {
@@ -1658,6 +1660,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let deckString = document.getElementById('deck-string').value.trim();
             let deckList;
 
+            if (!deckString) { // deckCode.tsの空文字列チェックを適用
+                alert('デッキコードが空です。');
+                return;
+            }
             if (deckString.startsWith('KCG-')) {
                 deckList = readKCGCode(deckString);
                 if (deckList.length === 0) {
@@ -1665,7 +1671,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             } else {
-                deckList = deckString.split('/').filter(id => id);
+                deckList = deckString.split('/').filter(id => id.trim() !== ''); // trim()を追加
             }
 
             if (deckList.length === 0) {
